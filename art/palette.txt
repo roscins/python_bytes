@@ -1,9 +1,22 @@
-# The game's colour palette. One colour per line:
+# The game's 16-colour palette, from docs/art-style-guide.md.
+# Keep this file and the table in the guide the same.
+# One colour per line:
 #   code  red  green  blue  name
 # The code is a single character used in sprite files. Red, green and blue
 # go from 0 to 255. "." is reserved for transparent pixels.
-#
-# Placeholder colours until the art style guide picks all 16.
-1 194 195 199 light-grey
-2 29 43 83 dark-blue
-3 41 173 255 bright-blue
+0 13 13 26 void
+1 27 42 74 navy
+2 62 76 102 slate
+3 138 147 166 steel
+4 215 220 230 silver
+5 255 255 255 white
+6 41 197 246 cyan
+7 26 138 138 teal
+8 76 217 100 green
+9 42 122 58 moss
+a 255 210 63 gold
+b 255 140 26 orange
+c 230 57 70 red
+d 138 28 43 maroon
+e 155 93 229 violet
+f 247 143 179 pink
