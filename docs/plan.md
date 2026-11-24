@@ -62,7 +62,7 @@ Inside a level. Every level runs the same short loop, like stages in a shoot-'em
 5.  Wave 3 – Debug: predict the output of code, or find and fix the bug.
 6.  Level clear – stars, XP, and a power-up command.
 Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 lives (one lost per failed submission). Losing all lives restarts the fight, not the world.
-What we keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
+What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
 Example cutscene from Level 1-2, where variables are new and print() is already known:
 # >> ARIA's memory banks flicker. Two empty cells light up.
 name = "ARIA"
@@ -198,10 +198,10 @@ Style checks on Wave 2: naming, indentation, comments, docstrings
 • Three hint levels per wave, paid in coins: a nudge (cheap), an approach outline (medium), a partial solution (expensive, and it caps that level at 2 stars).
 • Written answers in World 7 and 8 (trade-off notes, review reports) are graded against a published rubric, by self-assessment or a classmate.
 • A local high-score table is opt-in, so nobody is ranked against classmates without choosing it.
-Tier grade. Levels count 50 %, Bosses 1–3 (or 5–7) 20 % and the tier's final boss 30 %. The game shows the result on an A–F scale as a proposal: A ≥ 90 %, B ≥ 80 %, C ≥ 60 %, D ≥ 50 %, E ≥ 40 %, F below 40 %. These bands are our own choice for motivation and do not represent OsloMet's grading.
+Tier grade. Levels count 50 %, Bosses 1–3 (or 5–7) 20 % and the tier's final boss 30 %. The game shows the result on an A–F scale as a proposal: A ≥ 90 %, B ≥ 80 %, C ≥ 60 %, D ≥ 50 %, E ≥ 40 %, F below 40 %. These bands are my own choice for motivation and do not represent OsloMet's grading.
 Look and feel: pixel art in the terminal
 The game runs in an ordinary terminal but looks like an 8-bit console game. The trick is the Unicode half-block character ▀: with a different foreground and background colour, each character cell shows two stacked pixels, so an 80 × 24 terminal becomes an 80 × 48 pixel screen.
-• Palette: one fixed 16-colour palette of our own, used for every sprite, so the game looks consistent.
+• Palette: one fixed 16-colour palette of my own, used for every sprite, so the game looks consistent.
 • Sprites: ARIA (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
 • Screens: title screen, world map, level intro card, code-wave screen, boss fight screen, level-clear screen, Codex, shop, stats.
 • Animation: a few frames only (ARIA walking on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
@@ -505,16 +505,15 @@ forbid = ["For"]
 [[wave.test]]
 stdin = "\n\nstop\n"
 expected_stdout_contains = ["Battery: 10 %"]
-Limits we accept. The runner protects against infinite loops and crashes, but it is not a security sandbox; it is meant for players running their own code on their own machine. ANSI colours work in Windows Terminal, macOS Terminal and Linux terminals; the plain-ASCII mode covers the rest.
+Limits I accept. The runner protects against infinite loops and crashes, but it is not a security sandbox; it is meant for players running their own code on their own machine. ANSI colours work in Windows Terminal, macOS Terminal and Linux terminals; the plain-ASCII mode covers the rest.
 Development roadmap, step by step
-The build runs in ten phases (0–9), each ending in a gate that must be met before the next starts. World 1 is playable, with real pixel art, at the end of Phase 3, so every later phase can be playtested.
+The build runs in ten phases (0–9), each ending in a gate that must be met before the next starts. World 1 is playable, with real pixel art, at the end of Phase 3, so students can playtest every later phase.
 Phase 0 – Foundations
-[ ] Create the shared Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
-[ ] Agree on Python 3.12 and the standard library only
+[ ] Create the Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
+[ ] Choose Python 3.12 and the standard library only
 [ ] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
 [ ] Write the art style guide: the 16-colour palette, sprite sizes, a sample ARIA sprite
-[ ] Assign roles (see Collaboration)
-Gate: repository exists; both style guides approved by the group.
+Gate: repository exists; both style guides approved by me.
 Phase 1 – Engine and renderer prototype
 [ ] Command loop with help, map, play, submit, quit
 [ ] Half-block pixel renderer that draws a sprite from a text file
@@ -532,14 +531,14 @@ Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-4 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2
 [ ] Draw ARIA's states and the first two boss sprites
-[ ] Build the progression checker; peer-review every level before merging
+[ ] Build the progression checker; review every level against the level style guide before merging
 Gate: Worlds 1–2 playable end to end.
 Phase 4 – Playtest round 1
-[ ] At least 5 testers who have not seen the content play Worlds 1–2
-[ ] Record time per level, hints bought, stars earned and where players got stuck
+[ ] At least 5 students who have not seen the content playtest Worlds 1–2
+[ ] Record time per level, hints bought, stars earned and where students got stuck
 [ ] Ask whether the rewards feel motivating, not just whether the tasks are clear
-[ ] Rewrite the levels where most testers stalled
-Gate: the median tester clears Worlds 1–2 without outside help.
+[ ] Rewrite the levels where most students stalled
+Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
 [ ] Write Levels 3-1 to 4-3 and Bosses 3 and 4 (both phases)
 [ ] Add the shop, badges, the Codex screen and the peer-review mode
@@ -557,7 +556,7 @@ Phase 7 – Worlds 5–8 (content and art)
 [ ] Draw the factory tileset and the remaining boss sprites
 Gate: Advanced tier playable end to end.
 Phase 8 – Playtest round 2 and balancing
-[ ] Full playthrough by testers from both tiers
+[ ] Full playthrough by student playtesters from both tiers
 [ ] Tune XP, coin prices, star thresholds, boss timers and pass marks from the data
 [ ] Fix all bugs in the issue tracker
 Gate: no open critical bugs; pass rates per level reviewed.
@@ -565,40 +564,23 @@ Phase 9 – Release 1.0
 [ ] Installation guide and player handbook
 [ ] Contributor guide: how to make a new level and its sprites
 [ ] Tag version 1.0 and share it with the class
-Collaboration, quality assurance and open questions
-The team builds Python Bytes the way the courses ask students to work: in small reviewed changes. Writing and reviewing the game is itself practice for the "code review" outcomes of both courses.
-Roles (one person can hold several)
-Role
-Responsible for
-Engine developer
-Command loop, level loader, save system, pixel renderer
-Grader developer
-Runner, test types, style and structure checks
-Content author
-Writing levels: cutscenes, tips, waves and power-ups
-Test writer
-Reference solutions, wrong solutions and test cases for each task
-Reviewer
-Reviewing every pull request against the style guide
-Playtest lead
-Recruiting testers, collecting and summarising feedback
-Pixel artist
-Palette, ARIA and boss sprites, map tiles, level-clear animations
+How I work, quality assurance and open questions
+Python Bytes is a solo project: I build it on my own, for students. I work the way the courses ask students to work: in small reviewed changes. Students take part as playtesters in Phases 4 and 8.
 Working rules
-• Every change goes through a pull request and needs one approving review from someone other than the author.
+• Every change goes through a pull request and is reviewed by me before it is merged.
 • A level is "done" only when its reference solutions pass, its wrong solutions fail, and the progression checker accepts it.
-• Bugs and ideas go in the issue tracker, never only in chat.
+• Bugs and ideas go in the issue tracker.
 Quality checks
 • Automated tests for the engine and grader, run before each merge.
 • For every task: one reference solution that must pass and at least one typical wrong solution that must fail, so grading is neither too strict nor too lenient.
 • Progression checker run on all content, so no level uses a construct before it is taught.
-• Playtest data (time, hints, failure points) reviewed after each round.
-Open questions for the group
+• Playtest data from the student playtesters (time, hints, failure points) reviewed after each round.
+Open questions
 • How should players write code: in the terminal itself, or in their own editor with the game watching a workspace/ folder? (Proposal: own editor, because that is how real work is done.)
-• Should the style checker use our own ast-based rules only, or the third-party pycodestyle package as an optional extra?
+• Should the style checker use my own ast-based rules only, or the third-party pycodestyle package as an optional extra?
 • How should the game treat AI-generated or copied answers, given that it is self-study?
 • Is the grade scale in Game design acceptable, or should it be removed so the game is not confused with official OsloMet grading?
 • Which licence should the code and content use if the game is shared beyond the class?
-• Do we keep the ARIA robotics-lab story, or vote on alternatives before drawing the sprites?
-• Do we stay with pixel art in the terminal (standard library only), or move to a real graphics window with the third-party pygame package for true pixels and sound? (Proposal: terminal first; it keeps the game text-based and easy to install.)
+• Do I keep the ARIA robotics-lab story, or look at alternatives before drawing more sprites?
+• Do I stay with pixel art in the terminal (standard library only), or move to a real graphics window with the third-party pygame package for true pixels and sound? (Proposal: terminal first; it keeps the game text-based and easy to install.)
 • Should a class-wide leaderboard exist at all, or only personal bests?
