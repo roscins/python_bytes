@@ -23,16 +23,36 @@ def parse_command(line):
     return name, arguments
 
 
+def extra_words_message(name):
+    """Return the answer for a command that was typed with words after it.
+
+    Commands like help and quit take nothing after their name, so
+    "quit now" gets this answer instead of quietly ignoring "now".
+    """
+    return f"{name} does not take anything after it. Type just: {name}"
+
+
 def do_help(state, arguments):
     """Return a list of all commands with a short description of each."""
+    if arguments:
+        return extra_words_message("help")
     lines = ["Commands:"]
-    for name, (function, description) in COMMANDS.items():
+    # COMMANDS is defined further down in this file. That is fine: Python
+    # only looks the name up when do_help runs, and by then the whole file
+    # has been read.
+    for name in COMMANDS:
+        # Each entry is (function, description). help only needs the
+        # description, so the function goes into _, the usual Python name
+        # for "a value that is not used".
+        _, description = COMMANDS[name]
         lines.append(f"  {name:<8} {description}")
     return "\n".join(lines)
 
 
 def do_map(state, arguments):
     """Return the list of levels, marking the one being played."""
+    if arguments:
+        return extra_words_message("map")
     lines = ["Levels:"]
     for level_id in state.levels:
         if level_id == state.current_level:
@@ -59,6 +79,8 @@ def do_submit(state, arguments):
     Grading arrives in Phase 2; for now this only checks that a level has
     been started.
     """
+    if arguments:
+        return extra_words_message("submit")
     if state.current_level is None:
         return "You are not playing a level. Type play <level> first."
     return f"Grading is not ready yet, so level {state.current_level} cannot be checked."
@@ -66,6 +88,8 @@ def do_submit(state, arguments):
 
 def do_quit(state, arguments):
     """Stop the game."""
+    if arguments:
+        return extra_words_message("quit")
     state.running = False
     return "Goodbye, technician."
 
@@ -92,5 +116,6 @@ def handle_line(state, line):
         return ""
     if name not in COMMANDS:
         return f"Unknown command: {name}. Type help to see the commands."
-    function, description = COMMANDS[name]
+    # Each entry is (function, description); only the function is needed here.
+    function, _ = COMMANDS[name]
     return function(state, arguments)

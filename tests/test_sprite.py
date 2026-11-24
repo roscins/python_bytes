@@ -12,11 +12,12 @@ from render.sprite import (
     UPPER_HALF_BLOCK,
     SpriteError,
     draw_cell,
+    draw_row_pair,
     load_sprite,
     render_sprite,
 )
-from render.palette import background, foreground, load_palette
-from tests.test_palette import write_temporary_file
+from render.palette import TRANSPARENT, background, foreground, load_palette
+from tests.helpers import write_temporary_file
 
 ART_FOLDER = Path(__file__).parent.parent / "art"
 
@@ -47,13 +48,49 @@ class TestDrawCell(unittest.TestCase):
         self.assertEqual(draw_cell("1", "2", PALETTE), expected)
 
 
+class TestDrawRowPair(unittest.TestCase):
+    """Check that two pixel rows become one terminal line."""
+
+    def test_row_pair_is_cells_then_reset(self):
+        """Each column becomes one cell, and the line ends with a reset."""
+        expected = draw_cell("1", ".", PALETTE) + draw_cell("2", "1", PALETTE) + RESET
+        self.assertEqual(draw_row_pair("12", ".1", PALETTE), expected)
+
+
+class TestRenderSprite(unittest.TestCase):
+    """Check render_sprite on sprites made in code."""
+
+    def test_odd_number_of_rows_is_an_error(self):
+        """A sprite that did not come from load_sprite may have odd rows."""
+        with self.assertRaisesRegex(SpriteError, "even number"):
+            render_sprite(["12", "21", "11"], PALETTE)
+
+
 class TestLoadSprite(unittest.TestCase):
     """Check reading sprite files, good and broken."""
 
-    def test_reads_rows_and_skips_comments(self):
-        """Comment and blank lines are skipped; pixel rows are kept."""
-        path = write_temporary_file(self, "# a comment\n12\n\n21\n")
+    def test_reads_rows(self):
+        """Each line of the file is one row of pixels."""
+        path = write_temporary_file(self, "12\n21\n")
         self.assertEqual(load_sprite(path, PALETTE), ["12", "21"])
+
+    def test_comment_is_an_error(self):
+        """The art style guide does not allow comments in sprite files."""
+        path = write_temporary_file(self, "# a comment\n12\n21\n")
+        with self.assertRaisesRegex(SpriteError, "line 1: comments are not allowed"):
+            load_sprite(path, PALETTE)
+
+    def test_blank_line_is_an_error(self):
+        """The art style guide does not allow blank lines in sprite files."""
+        path = write_temporary_file(self, "12\n\n21\n")
+        with self.assertRaisesRegex(SpriteError, "line 2: blank lines are not allowed"):
+            load_sprite(path, PALETTE)
+
+    def test_space_gets_a_clear_message(self):
+        """A trailing space says to use "." instead."""
+        path = write_temporary_file(self, "12 \n21.\n")
+        with self.assertRaisesRegex(SpriteError, "spaces are not allowed, use '.'"):
+            load_sprite(path, PALETTE)
 
     def test_odd_number_of_rows_gets_a_transparent_row(self):
         """Three rows become four, with a transparent row at the bottom."""
@@ -73,38 +110,14 @@ class TestLoadSprite(unittest.TestCase):
             load_sprite(path, PALETTE)
 
     def test_empty_file_is_an_error(self):
-        """A file with only comments has nothing to draw."""
-        path = write_temporary_file(self, "# nothing here\n")
+        """An empty file has nothing to draw."""
+        path = write_temporary_file(self, "")
         with self.assertRaisesRegex(SpriteError, "no rows"):
             load_sprite(path, PALETTE)
 
     def test_sprite_error_is_a_value_error(self):
         """Code that catches ValueError also catches SpriteError."""
         self.assertTrue(issubclass(SpriteError, ValueError))
-
-
-class TestRobot(unittest.TestCase):
-    """Check the real robot sprite with the real palette."""
-
-    def setUp(self):
-        """Load the game's palette and the robot sprite."""
-        self.palette = load_palette(ART_FOLDER / "palette.txt")
-        self.robot = load_sprite(ART_FOLDER / "robot.txt", self.palette)
-
-    def test_robot_is_eight_by_eight(self):
-        """The robot sprite has 8 rows of 8 pixels each."""
-        self.assertEqual(len(self.robot), 8)
-        for row in self.robot:
-            self.assertEqual(len(row), 8)
-
-    def test_eight_rows_become_four_lines(self):
-        """Two pixel rows share one terminal line."""
-        self.assertEqual(len(render_sprite(self.robot, self.palette)), 4)
-
-    def test_every_line_ends_with_reset(self):
-        """Each line resets colours so the next line starts clean."""
-        for line in render_sprite(self.robot, self.palette):
-            self.assertTrue(line.endswith(RESET))
 
 
 class TestAriaOffline(unittest.TestCase):
@@ -125,11 +138,56 @@ class TestAriaOffline(unittest.TestCase):
         """Sixteen pixel rows become eight terminal lines."""
         self.assertEqual(len(render_sprite(self.aria, self.palette)), 8)
 
-    def test_aria_file_has_no_comments(self):
-        """The art style guide says sprite files contain only pixel rows."""
-        with open(ART_FOLDER / "aria-offline.txt", encoding="utf-8") as sprite_file:
-            for line in sprite_file:
-                self.assertFalse(line.startswith("#"))
+    def test_every_line_ends_with_reset(self):
+        """Each line resets colours so the next line starts clean."""
+        for line in render_sprite(self.aria, self.palette):
+            self.assertTrue(line.endswith(RESET))
+
+
+class TestEverySpriteFollowsTheArtGuide(unittest.TestCase):
+    """Check every sprite file in art/ against the art style guide."""
+
+    def setUp(self):
+        """Load the palette and find every sprite file (all but palette.txt)."""
+        self.palette = load_palette(ART_FOLDER / "palette.txt")
+        self.sprite_paths = []
+        for path in sorted(ART_FOLDER.glob("*.txt")):
+            if path.name != "palette.txt":
+                self.sprite_paths.append(path)
+
+    def test_there_are_sprites_to_check(self):
+        """The art folder has at least the ARIA reference sprite."""
+        self.assertIn(ART_FOLDER / "aria-offline.txt", self.sprite_paths)
+
+    def test_names_are_subject_dash_state(self):
+        """Files are named <subject>-<state>.txt, for example aria-offline.txt."""
+        for path in self.sprite_paths:
+            with self.subTest(sprite=path.name):
+                self.assertIn("-", path.stem)
+                self.assertEqual(path.stem, path.stem.lower())
+
+    def test_sprites_load_and_have_an_even_row_count(self):
+        """Every sprite loads (so it has no comments or blank lines) and has even rows.
+
+        load_sprite would pad an odd sprite, so the file itself is counted.
+        """
+        for path in self.sprite_paths:
+            with self.subTest(sprite=path.name):
+                load_sprite(path, self.palette)
+                with open(path, encoding="utf-8") as sprite_file:
+                    row_count = len(sprite_file.read().splitlines())
+                self.assertEqual(row_count % 2, 0)
+
+    def test_at_most_four_colours_plus_outline(self):
+        """Style rule 3: a sprite uses at most 4 colours plus the Slate outline (2)."""
+        for path in self.sprite_paths:
+            with self.subTest(sprite=path.name):
+                colours = set()
+                for row in load_sprite(path, self.palette):
+                    for pixel in row:
+                        if pixel != TRANSPARENT and pixel != "2":
+                            colours.add(pixel)
+                self.assertLessEqual(len(colours), 4)
 
 
 class TestCommandLine(unittest.TestCase):
@@ -142,11 +200,11 @@ class TestCommandLine(unittest.TestCase):
             exit_code = render_main.main(arguments)
         return exit_code, output.getvalue()
 
-    def test_draws_the_robot(self):
-        """Drawing the robot prints four lines and succeeds."""
-        exit_code, text = self.run_main([str(ART_FOLDER / "robot.txt")])
+    def test_draws_aria(self):
+        """Drawing ARIA prints eight lines and succeeds."""
+        exit_code, text = self.run_main([str(ART_FOLDER / "aria-offline.txt")])
         self.assertEqual(exit_code, 0)
-        self.assertEqual(len(text.splitlines()), 4)
+        self.assertEqual(len(text.splitlines()), 8)
 
     def test_no_file_shows_usage(self):
         """Without a file name, it explains how to use it."""
@@ -157,6 +215,13 @@ class TestCommandLine(unittest.TestCase):
     def test_missing_file_is_reported(self):
         """A file that does not exist gives a message, not a crash."""
         exit_code, text = self.run_main(["no/such/sprite.txt"])
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Cannot draw the sprite", text)
+
+    def test_broken_file_is_reported(self):
+        """A sprite file with a mistake gives a message, not a crash."""
+        path = write_temporary_file(self, "12\n1\n")
+        exit_code, text = self.run_main([path])
         self.assertEqual(exit_code, 1)
         self.assertIn("Cannot draw the sprite", text)
 
