@@ -232,7 +232,7 @@ Boot Sector
 
 1-1
 Hello, Terminal (ARIA's voice)
-print(), string literals, comments, running a script
+print(), string literals, comments
 Make ARIA print a three-line start-up message
 status
 1-2
