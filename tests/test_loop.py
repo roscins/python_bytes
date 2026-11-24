@@ -2,8 +2,11 @@
 
 import unittest
 
+import json
+
 from engine.game_state import GameState
-from engine.loop import WELCOME, run
+from engine.loop import WELCOME, run, welcome_text
+from tests.helpers import make_levels, make_temporary_folder
 
 
 class ScriptedPlayer:
@@ -30,12 +33,12 @@ class ScriptedPlayer:
 class TestRun(unittest.TestCase):
     """Check the command loop from start to finish."""
 
-    def play(self, lines, end_with=EOFError):
+    def play(self, lines, end_with=EOFError, save_path=None):
         """Run a game with scripted lines; return the state and the output."""
-        state = GameState(["1-1", "1-2"])
+        state = GameState(make_levels("1-1", "1-2"))
         player = ScriptedPlayer(lines, end_with)
         output = []
-        run(state, read_line=player.read_line, write=output.append)
+        run(state, read_line=player.read_line, write=output.append, save_path=save_path)
         return state, output
 
     def test_welcome_is_shown_first(self):
@@ -52,8 +55,8 @@ class TestRun(unittest.TestCase):
     def test_commands_run_in_order(self):
         """Each line is run as a command, and its answer is written out."""
         state, output = self.play(["play 1-2", "map", "quit"])
-        self.assertIn("Starting level 1-2.", output)
-        self.assertIn("[1-2]  <- you are here", "\n".join(output))
+        self.assertIn("Starting level 1-2: Level 1-2.", output)
+        self.assertIn("[1-2] Level 1-2  <- you are here", "\n".join(output))
         self.assertEqual(state.current_level, "1-2")
 
     def test_blank_line_writes_nothing(self):
@@ -77,6 +80,40 @@ class TestRun(unittest.TestCase):
         state, output = self.play(["map"], end_with=KeyboardInterrupt)
         self.assertFalse(state.running)
         self.assertEqual(output[-1], "Goodbye, technician.")
+
+    def test_progress_is_saved_after_each_command(self):
+        """With a save path, the save holds the level that was started."""
+        save_path = make_temporary_folder(self) / "save.json"
+        self.play(["play 1-2", "quit"], save_path=save_path)
+        with open(save_path, encoding="utf-8") as save_file:
+            self.assertEqual(json.load(save_file)["current_level"], "1-2")
+
+    def test_failed_save_is_reported_and_the_game_goes_on(self):
+        """If the save cannot be written, the player is told, every time."""
+        # A save path inside a file cannot work, because a file is not a folder.
+        blocker = make_temporary_folder(self) / "not-a-folder"
+        blocker.write_text("", encoding="utf-8")
+        state, output = self.play(["map", "quit"], save_path=blocker / "save.json")
+        self.assertFalse(state.running)
+        messages = []
+        for text in output:
+            if text.startswith("Could not save your progress"):
+                messages.append(text)
+        self.assertEqual(len(messages), 2)
+
+
+class TestWelcomeText(unittest.TestCase):
+    """Check the first thing the player sees."""
+
+    def test_new_player_sees_the_welcome(self):
+        """Without a current level, only the welcome is shown."""
+        self.assertEqual(welcome_text(GameState()), WELCOME)
+
+    def test_returning_player_is_told_where_they_were(self):
+        """With a current level, the player is welcomed back to it."""
+        state = GameState(make_levels("1-1"))
+        state.current_level = "1-1"
+        self.assertIn("Welcome back. You were on level 1-1.", welcome_text(state))
 
 
 if __name__ == "__main__":

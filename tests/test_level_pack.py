@@ -1,0 +1,190 @@
+"""Tests for engine/level_pack.py, using level packs in temporary folders."""
+
+import unittest
+
+from engine.level_pack import LevelError, load_level, load_levels
+from tests.helpers import VALID_LEVEL_TOML, make_temporary_folder, write_level_pack
+
+
+class TestLoadLevel(unittest.TestCase):
+    """Check reading one level.toml file, good and broken."""
+
+    def load(self, text, level_folder="1-1-hello-terminal"):
+        """Write `text` as a level pack in a new temporary folder and load it."""
+        levels_folder = make_temporary_folder(self)
+        path = write_level_pack(levels_folder, "w1", level_folder, text)
+        return load_level(path)
+
+    def broken(self, old, new):
+        """Return the valid level text with `old` replaced by `new`."""
+        self.assertIn(old, VALID_LEVEL_TOML)
+        return VALID_LEVEL_TOML.replace(old, new)
+
+    def test_reads_every_part_of_a_level(self):
+        """A valid file gives a Level with all its parts."""
+        level = self.load(VALID_LEVEL_TOML)
+        self.assertEqual(level.id, "1-1")
+        self.assertEqual(level.title, "Hello, Terminal")
+        self.assertEqual(level.world, 1)
+        self.assertEqual(level.new_concepts, ["print()", "string literals"])
+        self.assertEqual(level.power_up, "status")
+        self.assertIn('print("SYSTEM CHECK")', level.cutscene)
+        self.assertEqual(len(level.tips), 2)
+        self.assertEqual(level.folder.name, "1-1-hello-terminal")
+
+    def test_reads_waves_and_their_tests(self):
+        """Each [[wave]] becomes a Wave, with its [[wave.test]] tables."""
+        level = self.load(VALID_LEVEL_TOML)
+        build, debug = level.waves
+        self.assertEqual(build.kind, "build")
+        self.assertEqual(build.reference, 'print("OK")')
+        self.assertEqual(build.tests, [{"expected_stdout": "OK\n"}])
+        self.assertIsNone(build.mode)
+        self.assertEqual(debug.mode, "predict")
+        self.assertEqual(debug.answer, "ONE")
+        self.assertIsNone(debug.reference)
+        self.assertEqual(debug.tests, [])
+
+    def test_not_toml_is_an_error(self):
+        """A file that is not TOML is rejected, naming the file."""
+        with self.assertRaisesRegex(LevelError, "level.toml: not valid TOML"):
+            self.load("this = is = not toml")
+
+    def test_missing_level_table_is_an_error(self):
+        """Without [level] there is nothing to load."""
+        with self.assertRaisesRegex(LevelError, r"needs a \[level\] table"):
+            self.load('title = "Hello"\n')
+
+    def test_missing_part_is_an_error(self):
+        """Each required part is named when it is missing."""
+        # Each key, with the exact text that sets it in VALID_LEVEL_TOML.
+        parts = {
+            "id": 'id = "1-1"\n',
+            "title": 'title = "Hello, Terminal"\n',
+            "world": "world = 1\n",
+            "new_concepts": 'new_concepts = ["print()", "string literals"]\n',
+            "power_up": 'power_up = "status"\n',
+            "cutscene": 'cutscene = """\nprint("SYSTEM CHECK")\n"""\n',
+            "tips": 'tips = ["print(...) shows text.", "Text in quotes is a string literal."]\n',
+        }
+        for key in parts:
+            with self.subTest(key=key):
+                text = self.broken(parts[key], "")
+                with self.assertRaisesRegex(LevelError, f"{key} is missing"):
+                    self.load(text)
+
+    def test_world_must_be_a_whole_number(self):
+        """world = "one" or world = true is rejected."""
+        for value in ['"one"', "true", "1.5"]:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(LevelError, "world must be a whole number"):
+                    self.load(self.broken("world = 1", f"world = {value}"))
+
+    def test_title_must_be_text(self):
+        """title = 42 is rejected."""
+        with self.assertRaisesRegex(LevelError, "title must be text"):
+            self.load(self.broken('title = "Hello, Terminal"', "title = 42"))
+
+    def test_tips_must_be_a_list_of_text(self):
+        """tips = "one tip" or tips = [1, 2] is rejected."""
+        tips_line = 'tips = ["print(...) shows text.", "Text in quotes is a string literal."]'
+        with self.assertRaisesRegex(LevelError, "tips must be a list"):
+            self.load(self.broken(tips_line, 'tips = "one tip"'))
+        with self.assertRaisesRegex(LevelError, "every item in tips"):
+            self.load(self.broken(tips_line, "tips = [1, 2]"))
+
+    def test_too_few_or_too_many_concepts_is_an_error(self):
+        """A level has 2 to 4 new concepts."""
+        concepts_line = 'new_concepts = ["print()", "string literals"]'
+        for concepts in ['["print()"]', '["a", "b", "c", "d", "e"]']:
+            with self.subTest(concepts=concepts):
+                text = self.broken(concepts_line, f"new_concepts = {concepts}")
+                with self.assertRaisesRegex(LevelError, "2 to 4 new concepts"):
+                    self.load(text)
+
+    def test_one_tip_per_concept(self):
+        """Three tips for two concepts is an error."""
+        tips_line = 'tips = ["print(...) shows text.", "Text in quotes is a string literal."]'
+        text = self.broken(tips_line, 'tips = ["one", "two", "three"]')
+        with self.assertRaisesRegex(LevelError, "one tip per new concept"):
+            self.load(text)
+
+    def test_folder_must_start_with_the_level_id(self):
+        """Level 1-1 cannot live in a folder called 1-2-something."""
+        with self.assertRaisesRegex(LevelError, "folder name must start with the level id"):
+            self.load(VALID_LEVEL_TOML, level_folder="1-2-hello-terminal")
+
+    def test_level_without_waves_is_an_error(self):
+        """A level needs at least one wave."""
+        text = VALID_LEVEL_TOML[: VALID_LEVEL_TOML.index("[[wave]]")]
+        with self.assertRaisesRegex(LevelError, "at least one"):
+            self.load(text)
+
+    def test_unknown_wave_kind_is_an_error(self):
+        """A wave's kind must be fill-in, build or debug."""
+        text = self.broken('kind = "build"', 'kind = "boss"')
+        with self.assertRaisesRegex(LevelError, "wave 1: kind must be one of"):
+            self.load(text)
+
+    def test_wave_without_wrong_solution_is_an_error(self):
+        """Every wave needs a typical wrong solution."""
+        text = self.broken('wrong = "print(OK)"\n', "")
+        with self.assertRaisesRegex(LevelError, "wave 1: wrong is missing"):
+            self.load(text)
+
+    def test_build_wave_without_reference_is_an_error(self):
+        """A wave that is not a predict wave needs a reference solution."""
+        text = self.broken("reference = 'print(\"OK\")'\n", "")
+        with self.assertRaisesRegex(LevelError, "wave 1: reference is missing"):
+            self.load(text)
+
+    def test_predict_wave_without_answer_is_an_error(self):
+        """A predict wave needs the right answer instead of a reference."""
+        text = self.broken('answer = "ONE"\n', "")
+        with self.assertRaisesRegex(LevelError, "wave 2: answer is missing"):
+            self.load(text)
+
+
+class TestLoadLevels(unittest.TestCase):
+    """Check finding every level in a levels folder."""
+
+    def setUp(self):
+        """Make an empty levels folder for each test."""
+        self.levels_folder = make_temporary_folder(self)
+
+    def write(self, world_folder, level_folder, level_id):
+        """Write a valid level pack with the given id."""
+        text = VALID_LEVEL_TOML.replace('id = "1-1"', f'id = "{level_id}"')
+        write_level_pack(self.levels_folder, world_folder, level_folder, text)
+
+    def test_missing_folder_gives_no_levels(self):
+        """A levels folder that does not exist means there are no levels."""
+        self.assertEqual(load_levels(self.levels_folder / "nothing-here"), [])
+
+    def test_levels_come_in_map_order(self):
+        """Levels are ordered by world folder, then by level folder name."""
+        self.write("w2", "2-1-sensors", "2-1")
+        self.write("w1", "boss-1-bootloader", "boss-1")
+        self.write("w1", "1-2-memory", "1-2")
+        self.write("w1", "1-1-hello", "1-1")
+        ids = []
+        for level in load_levels(self.levels_folder):
+            ids.append(level.id)
+        self.assertEqual(ids, ["1-1", "1-2", "boss-1", "2-1"])
+
+    def test_same_id_twice_is_an_error(self):
+        """Two folders cannot hold the same level id."""
+        self.write("w1", "1-1-hello", "1-1")
+        self.write("w1", "1-1-hello-again", "1-1")
+        with self.assertRaisesRegex(LevelError, "1-1 is used twice"):
+            load_levels(self.levels_folder)
+
+    def test_folders_without_level_toml_are_skipped(self):
+        """Only folders with a level.toml file are levels."""
+        (self.levels_folder / "w1" / "notes").mkdir(parents=True)
+        self.write("w1", "1-1-hello", "1-1")
+        self.assertEqual(len(load_levels(self.levels_folder)), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
