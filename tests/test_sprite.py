@@ -107,6 +107,31 @@ class TestRobot(unittest.TestCase):
             self.assertTrue(line.endswith(RESET))
 
 
+class TestAriaOffline(unittest.TestCase):
+    """Check the ARIA reference sprite from the art style guide."""
+
+    def setUp(self):
+        """Load the game's palette and the ARIA sprite."""
+        self.palette = load_palette(ART_FOLDER / "palette.txt")
+        self.aria = load_sprite(ART_FOLDER / "aria-offline.txt", self.palette)
+
+    def test_aria_is_sixteen_by_sixteen(self):
+        """ARIA is 16 x 16 pixels, as the art style guide says."""
+        self.assertEqual(len(self.aria), 16)
+        for row in self.aria:
+            self.assertEqual(len(row), 16)
+
+    def test_aria_draws_as_eight_lines(self):
+        """Sixteen pixel rows become eight terminal lines."""
+        self.assertEqual(len(render_sprite(self.aria, self.palette)), 8)
+
+    def test_aria_file_has_no_comments(self):
+        """The art style guide says sprite files contain only pixel rows."""
+        with open(ART_FOLDER / "aria-offline.txt", encoding="utf-8") as sprite_file:
+            for line in sprite_file:
+                self.assertFalse(line.startswith("#"))
+
+
 class TestCommandLine(unittest.TestCase):
     """Check python -m render by calling its main function."""
 

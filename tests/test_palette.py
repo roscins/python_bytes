@@ -8,6 +8,29 @@ from pathlib import Path
 from render.palette import background, foreground, load_palette
 
 ART_FOLDER = Path(__file__).parent.parent / "art"
+ART_GUIDE = Path(__file__).parent.parent / "docs" / "art-style-guide.md"
+
+
+def read_guide_palette():
+    """Read the palette table in docs/art-style-guide.md.
+
+    Table rows look like:  | 3 | Steel | `#8a93a6` | Metal, ARIA's body |
+    Returns a dict from code to (red, green, blue), like load_palette does.
+    """
+    palette = {}
+    with open(ART_GUIDE, encoding="utf-8") as guide:
+        for line in guide:
+            cells = line.split("|")
+            if len(cells) < 4:
+                continue
+            code = cells[1].strip()
+            hex_colour = cells[3].strip().strip("`")
+            if len(code) == 1 and hex_colour.startswith("#") and len(hex_colour) == 7:
+                red = int(hex_colour[1:3], 16)
+                green = int(hex_colour[3:5], 16)
+                blue = int(hex_colour[5:7], 16)
+                palette[code] = (red, green, blue)
+    return palette
 
 
 def write_temporary_file(test, text):
@@ -39,12 +62,10 @@ class TestLoadPalette(unittest.TestCase):
         path = write_temporary_file(self, "# comment\n\n1 10 20 30 grey\na 0 0 255 blue\n")
         self.assertEqual(load_palette(path), {"1": (10, 20, 30), "a": (0, 0, 255)})
 
-    def test_real_palette_has_the_robot_colours(self):
-        """The game's palette file has the three placeholder colours."""
+    def test_real_palette_matches_the_art_style_guide(self):
+        """art/palette.txt has exactly the 16 colours in the guide's table."""
         palette = load_palette(ART_FOLDER / "palette.txt")
-        self.assertEqual(palette["1"], (194, 195, 199))
-        self.assertEqual(palette["2"], (29, 43, 83))
-        self.assertEqual(palette["3"], (41, 173, 255))
+        self.assertEqual(palette, read_guide_palette())
 
     def test_missing_part_is_an_error(self):
         """A line without a name is rejected, with its line number."""
