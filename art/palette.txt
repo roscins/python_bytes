@@ -1,0 +1,9 @@
+# The game's colour palette. One colour per line:
+#   code  red  green  blue  name
+# The code is a single character used in sprite files. Red, green and blue
+# go from 0 to 255. "." is reserved for transparent pixels.
+#
+# Placeholder colours until the art style guide picks all 16.
+1 194 195 199 light-grey
+2 29 43 83 dark-blue
+3 41 173 255 bright-blue
