@@ -49,6 +49,10 @@ Each `[[wave.test]]` table has exactly one of these keys:
 
 `stdin = "..."` gives fake input to the first three. Build waves are also scored on code quality: snake_case names, 4-space indents, a comment, and docstrings on functions and classes.
 
+## Boss levels
+
+A boss lives in `levels/w<world>/boss-<world>-<short-name>/level.toml` and has `boss = true` in `[level]`. It teaches nothing new, so `new_concepts`, `tips` and `power_up` are left out. It has `time_limit` (seconds, 600 if left out), `sprite` (a file in `art/`, `boss-placeholder` if left out), a cutscene, and exactly one `[[wave]]` with `kind = "boss"`, a reference and a wrong solution. Its tests are hidden: each one is a block of the boss's health bar. See `docs/design/phase-2-screens.md`.
+
 ## Tone
 
 - The narrator speaks to the player in the second person: "You patch in more power…"

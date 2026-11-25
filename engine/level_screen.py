@@ -75,3 +75,18 @@ def intro_text(level):
     lines.append("")
     lines.append("When your waves are ready, type submit. Stuck? Type hint <wave>.")
     return "\n".join(lines)
+
+
+def boss_intro_text(level):
+    """Return what is shown when a boss fight starts: the cutscene and the task."""
+    lines = []
+    lines.extend(cutscene_lines(level.cutscene))
+    lines.append("")
+    wave = level.waves[0]
+    lines.append(f"BOSS WAVE · {wave_file_name(wave, 1)}")
+    for line in wave.brief.strip().splitlines():
+        lines.append(line.strip())
+    minutes = level.time_limit // 60
+    lines.append(f"{len(wave.tests)} hidden tests, 3 lives, {minutes} minutes. "
+                 "Each failed submit costs a life.")
+    return "\n".join(lines)

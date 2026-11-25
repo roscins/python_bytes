@@ -7,10 +7,10 @@ to show). It also holds the Phase 2 gate test.
 
 ## Art (8 × 8 icons and a 16 × 16 placeholder, from the art guide's palette)
 
-- `art/star.txt` (Gold) and `art/star-empty.txt` (Slate outline, Navy
+- `art/star-full.txt` (Gold) and `art/star-empty.txt` (Slate outline, Navy
   inside)
-- `art/coin.txt` (Gold, with an Orange shadow at the bottom right)
-- `art/heart.txt` (Red, Maroon shadow) and `art/heart-empty.txt` (Slate
+- `art/coin-spin.txt` (Gold, with an Orange shadow at the bottom right)
+- `art/heart-full.txt` (Red, Maroon shadow) and `art/heart-empty.txt` (Slate
   outline, Navy inside)
 - `art/boss-placeholder.txt`: a 16 × 16 red and maroon robot head. Real
   boss sprites come in Phase 3 with the bosses themselves.

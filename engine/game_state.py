@@ -16,6 +16,8 @@ class GameState:
         coins: the coins the player can spend on hints.
         combo: how many waves in a row were passed on the first try.
         progress: a dict from level id to that level's LevelProgress.
+        boss_fight: the BossFight going on, or None. It is not saved, so
+            quitting in the middle of a fight starts it again next time.
         running: True while the game should keep asking for commands.
         workspace_root: the folder that holds the players' code, one
             folder per level (see engine/workspace.py), or None for no
@@ -34,6 +36,7 @@ class GameState:
         self.coins = STARTING_COINS
         self.combo = 0
         self.progress = {}
+        self.boss_fight = None
         self.running = True
 
     def progress_for(self, level):

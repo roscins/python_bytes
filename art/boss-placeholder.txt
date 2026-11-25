@@ -1,0 +1,16 @@
+.......22.......
+......2bb2......
+.......22.......
+..222222222222..
+.2cccccccccccc2.
+.2cddcccccddcc2.
+.2c2bb2cc2bb2c2.
+.2c2bb2cc2bb2c2.
+.2cddcccccddcd2.
+.2cccccccccccd2.
+.2cc22222222cd2.
+.2cc2d2d2d2dcd2.
+.2cc22222222cd2.
+.2ccccccccccdd2.
+..222222222222..
+................

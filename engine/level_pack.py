@@ -18,6 +18,13 @@ from grader.checks import TEST_KINDS
 # The three kinds of wave a level can have, in the order the guide lists them.
 WAVE_KINDS = ["fill-in", "build", "debug"]
 
+# A boss level has exactly one wave, of this kind.
+BOSS_WAVE_KIND = "boss"
+
+# What a boss level gets when it leaves these out.
+DEFAULT_BOSS_TIME_LIMIT = 600           # seconds
+DEFAULT_BOSS_SPRITE = "boss-placeholder"
+
 # A wave with hints has exactly this many: a nudge, an outline and a partial solution.
 HINT_COUNT = 3
 
@@ -79,10 +86,14 @@ class Level:
         tips: one-line explanations, one per new concept.
         waves: a list of Wave objects.
         folder: the folder the level was read from, or None.
+        boss: True for a boss fight.
+        time_limit: a boss fight's time limit in seconds (None for levels).
+        sprite: the name of a boss's sprite file in art/ (None for levels).
     """
 
     def __init__(self, level_id, title, world, new_concepts, power_up,
-                 cutscene, tips, waves, folder=None):
+                 cutscene, tips, waves, folder=None, boss=False, time_limit=None,
+                 sprite=None):
         """Remember every part of the level."""
         self.id = level_id
         self.title = title
@@ -93,6 +104,9 @@ class Level:
         self.tips = list(tips)
         self.waves = list(waves)
         self.folder = folder
+        self.boss = boss
+        self.time_limit = time_limit
+        self.sprite = sprite
 
 
 def load_level(path):
@@ -114,22 +128,39 @@ def load_level(path):
 
     level_id = get_text(table, "id", path)
     title = get_text(table, "title", path)
-    power_up = get_text(table, "power_up", path)
     cutscene = get_text(table, "cutscene", path)
     world = get_whole_number(table, "world", path)
-    new_concepts = get_list_of_text(table, "new_concepts", path)
-    tips = get_list_of_text(table, "tips", path)
+    boss = table.get("boss", False)
+    if not isinstance(boss, bool):
+        raise LevelError(f"{path}: boss must be true or false")
 
-    if len(new_concepts) < MIN_NEW_CONCEPTS or len(new_concepts) > MAX_NEW_CONCEPTS:
-        raise LevelError(
-            f"{path}: a level has {MIN_NEW_CONCEPTS} to {MAX_NEW_CONCEPTS} new concepts, "
-            f"this one has {len(new_concepts)}"
-        )
-    if len(tips) != len(new_concepts):
-        raise LevelError(
-            f"{path}: there must be one tip per new concept, "
-            f"but there are {len(tips)} tips and {len(new_concepts)} concepts"
-        )
+    if boss:
+        # A boss teaches nothing new, so concepts, tips and a power-up are optional.
+        power_up = ""
+        new_concepts = []
+        tips = []
+        time_limit = DEFAULT_BOSS_TIME_LIMIT
+        if "time_limit" in table:
+            time_limit = get_whole_number(table, "time_limit", path)
+        sprite = DEFAULT_BOSS_SPRITE
+        if "sprite" in table:
+            sprite = get_text(table, "sprite", path)
+    else:
+        power_up = get_text(table, "power_up", path)
+        new_concepts = get_list_of_text(table, "new_concepts", path)
+        tips = get_list_of_text(table, "tips", path)
+        time_limit = None
+        sprite = None
+        if len(new_concepts) < MIN_NEW_CONCEPTS or len(new_concepts) > MAX_NEW_CONCEPTS:
+            raise LevelError(
+                f"{path}: a level has {MIN_NEW_CONCEPTS} to {MAX_NEW_CONCEPTS} new concepts, "
+                f"this one has {len(new_concepts)}"
+            )
+        if len(tips) != len(new_concepts):
+            raise LevelError(
+                f"{path}: there must be one tip per new concept, "
+                f"but there are {len(tips)} tips and {len(new_concepts)} concepts"
+            )
     if not path.parent.name.startswith(level_id + "-"):
         raise LevelError(
             f"{path}: the folder name must start with the level id, "
@@ -140,22 +171,30 @@ def load_level(path):
         raise LevelError(f"{path}: the level needs at least one [[wave]]")
     waves = []
     wave_number = 0
+    allowed_kinds = WAVE_KINDS
+    if boss:
+        allowed_kinds = [BOSS_WAVE_KIND]
+        if len(data["wave"]) != 1:
+            raise LevelError(f"{path}: a boss level has exactly one [[wave]]")
     for wave_table in data["wave"]:
         wave_number = wave_number + 1
-        waves.append(make_wave(wave_table, f"{path}, wave {wave_number}"))
+        waves.append(make_wave(wave_table, f"{path}, wave {wave_number}", allowed_kinds))
 
     return Level(level_id, title, world, new_concepts, power_up,
-                 cutscene, tips, waves, folder=path.parent)
+                 cutscene, tips, waves, folder=path.parent, boss=boss,
+                 time_limit=time_limit, sprite=sprite)
 
 
-def make_wave(table, place):
+def make_wave(table, place, allowed_kinds=WAVE_KINDS):
     """Turn one [[wave]] table into a Wave, checking the parts it needs.
 
     `place` says which file and wave this is, for error messages.
+    `allowed_kinds` are the kinds this level may use: the normal three, or
+    only "boss" in a boss level.
     """
     kind = get_text(table, "kind", place)
-    if kind not in WAVE_KINDS:
-        raise LevelError(f"{place}: kind must be one of {WAVE_KINDS}, got {kind!r}")
+    if kind not in allowed_kinds:
+        raise LevelError(f"{place}: kind must be one of {allowed_kinds}, got {kind!r}")
     brief = get_text(table, "brief", place)
 
     mode = None

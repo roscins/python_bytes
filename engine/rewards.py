@@ -23,6 +23,7 @@ class Reward:
         best_score: the level's best score after this submit.
         old_best: the best score before it.
         stars: the stars the level has now (0 to 3).
+        old_stars: the stars it had before this submit.
         xp_gained: the XP earned by this submit.
         coins_gained: the coins earned by this submit.
         combo: the combo after this submit.
@@ -32,11 +33,12 @@ class Reward:
     """
 
     def __init__(self, best_score, old_best, stars, xp_gained, coins_gained, combo,
-                 multiplier, cleared_now, opened_level):
+                 multiplier, cleared_now, opened_level, old_stars=0):
         """Remember every part of the reward."""
         self.best_score = best_score
         self.old_best = old_best
         self.stars = stars
+        self.old_stars = old_stars
         self.xp_gained = xp_gained
         self.coins_gained = coins_gained
         self.combo = combo
@@ -99,6 +101,7 @@ def apply_submission(state, level, submissions):
     """
     progress = state.progress_for(level)
     old_best = progress.best_score
+    old_stars = progress.stars
 
     coins = 0
     for submission in submissions:
@@ -128,4 +131,4 @@ def apply_submission(state, level, submissions):
         opened_level = next_level(state, level)
 
     return Reward(progress.best_score, old_best, progress.stars, xp_gained, coins,
-                  state.combo, multiplier, cleared_now, opened_level)
+                  state.combo, multiplier, cleared_now, opened_level, old_stars)
