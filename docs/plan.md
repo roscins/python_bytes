@@ -517,9 +517,9 @@ Gate: repository exists; both style guides approved by me.
 Phase 1 – Engine and renderer prototype
 [x] Command loop with help, map, play, submit, quit
 [x] Half-block pixel renderer that draws a sprite from a text file
-[ ] World map screen with placeholder sprites and Snek slithering between level nodes
-[ ] Level-pack loader (TOML) and save/load of progress (JSON)
-[ ] Write Level 1-1 as the test level
+[x] World map screen with placeholder sprites and Snek slithering between level nodes
+[x] Level-pack loader (TOML) and save/load of progress (JSON)
+[x] Write Level 1-1 as the test level
 Gate: a player can open the map, play Level 1-1, quit and resume.
 Phase 2 – Runner, grader and scoring
 [ ] Run player code in a separate process with a time limit and fake input
