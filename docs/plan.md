@@ -6,9 +6,9 @@ Python Bytes (working title: small bites of Python, from a python that bites) is
 • Advanced tier (Worlds 5–8) covers Advanced Python Programming for Engineers: object-oriented and functional programming, choosing between them, robust design, debugging, reading other people's code and code review.
 • Audience: first-year engineering students with no prior programming, who want real understanding, not memorised patterns.
 • Format: a terminal game written in Python, drawn with coloured Unicode block characters so it looks like an 8-bit console game. The game's own source code becomes level material in World 7.
-• Story frame: the player is a new technician in an abandoned robotics lab. The lab robot ARIA is offline; each world restores part of her, and from World 5 the player rebuilds the whole automated factory around her.
+• Story frame: the player is a new technician in an abandoned robotics lab. The lab robot Snek, a forest-green robot snake, is offline; each world restores part of her, and from World 5 the player rebuilds the whole automated factory around her.
 Progression model: worlds, levels and bosses
-The game is a classic arcade map: the player walks ARIA along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
+The game is a classic arcade map: the player walks Snek along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
 Tier
 World
 Theme
@@ -33,7 +33,7 @@ Basic
 4
 The Core
 4-1 to 4-3
-Boss 4: ARIA Online (tier final)
+Boss 4: Snek Online (tier final)
 Advanced
 5
 Robot Foundry
@@ -64,15 +64,15 @@ Inside a level. Every level runs the same short loop, like stages in a shoot-'em
 Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 lives (one lost per failed submission). Losing all lives restarts the fight, not the world.
 What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
 Example cutscene from Level 1-2, where variables are new and print() is already known:
-# >> ARIA's memory banks flicker. Two empty cells light up.
-name = "ARIA"
+# >> Snek's memory banks flicker. Two empty cells light up.
+name = "Snek"
 battery = 12
-print(name)      # screen: ARIA
+print(name)      # screen: Snek
 print(battery)   # screen: 12
 # >> You patch in more power...
 battery = 13
 print(battery)   # screen: 13
-# >> ARIA: "MEMORY CELL UPDATED. THANK YOU, TECHNICIAN."
+# >> Snek: "MEMORY CELL UPDATED. THANK YOU, TECHNICIAN."
 Learning outcomes mapped to levels
 Every learning outcome in the two course descriptions is taught in at least one level and tested in at least one wave or boss. The tables are the coverage contract: a level may not be removed without moving its outcome elsewhere.
 Basic tier – Introduction to Python Programming
@@ -158,7 +158,7 @@ How it is earned
 What it does
 XP
 Points from every wave
-Fills the XP bar; level-ups change ARIA's sprite and colours
+Fills the XP bar; level-ups change Snek's sprite and colours
 Stars (1–3 per level)
 1 star ≥ 70 %, 2 stars ≥ 85 %, 3 stars = 100 % with no hints
 A boss door opens only when the world's levels hold enough stars (proposal: 2 of 3 on average)
@@ -202,16 +202,16 @@ Tier grade. Levels count 50 %, Bosses 1–3 (or 5–7) 20 % and the tier's final
 Look and feel: pixel art in the terminal
 The game runs in an ordinary terminal but looks like an 8-bit console game. The trick is the Unicode half-block character ▀: with a different foreground and background colour, each character cell shows two stacked pixels, so an 80 × 24 terminal becomes an 80 × 48 pixel screen.
 • Palette: one fixed 16-colour palette of my own, used for every sprite, so the game looks consistent.
-• Sprites: ARIA (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
+• Sprites: Snek (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
 • Screens: title screen, world map, level intro card, code-wave screen, boss fight screen, level-clear screen, Codex, shop, stats.
-• Animation: a few frames only (ARIA walking on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
+• Animation: a few frames only (Snek walking on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
 • Fallbacks: a plain-ASCII mode for terminals without colour, and an accessible mode with no flashing and screen-reader-friendly text.
 Rough mock-up of the world map and a boss fight (pixel art shown as text):
  WORLD 1 · BOOT SECTOR            XP 1240   ★ 7/12   COINS 35
 
    [1-1]★★★ ══ [1-2]★★☆ ══ [1-3]★☆☆ ══ [1-4] ··· ══ [BOSS 1]
                                ▲
-                              ARIA
+                              Snek
 
  > play 1-3    > codex    > shop    > stats
 
@@ -219,7 +219,7 @@ Rough mock-up of the world map and a boss fight (pixel art shown as text):
  BOSS HP [██████████░░░░░░░░░░]  5 of 10 hidden tests still failing
  TIME 07:42
 Basic tier: Worlds 1–4
-The Basic tier restores ARIA one subsystem at a time, from her voice in Level 1-1 to a full log-analysis routine in Boss 4. Each row lists only what is new; everything earlier is assumed and keeps coming back.
+The Basic tier restores Snek one subsystem at a time, from her voice in Level 1-1 to a full log-analysis routine in Boss 4. Each row lists only what is new; everything earlier is assumed and keeps coming back.
 Level
 Title (story beat)
 New concepts
@@ -231,14 +231,14 @@ Boot Sector
 
 
 1-1
-Hello, Terminal (ARIA's voice)
+Hello, Terminal (Snek's voice)
 print(), string literals, comments
-Make ARIA print a three-line start-up message
+Make Snek print a three-line start-up message
 status
 1-2
 Memory Cells (short-term memory)
 Variables, assignment, int, float, str, bool, type(), snake_case naming
-Store and print ARIA's serial number, battery level and online state
+Store and print Snek's serial number, battery level and online state
 memory
 1-3
 Power Calculations (the battery)
@@ -301,7 +301,7 @@ def, parameters, return, calling, docstrings, local vs global scope
 Write celsius_to_kelvin() and distance() with docstrings
 define
 3-3
-Subroutines II (refactoring ARIA)
+Subroutines II (refactoring Snek)
 Default and keyword arguments, returning several values, decomposition, min, max, sum, sorted, enumerate, zip
 Split an earlier 40-line script into four well-named functions
 refactor
@@ -336,7 +336,7 @@ open(), with, reading lines, writing and appending, parsing comma-separated data
 Read a sensor log file and write a summary report file
 save
 Boss 4
-ARIA Online (tier final)
+Snek Online (tier final)
 Phase 1: timed mixed waves. Phase 2: a small project plus peer review
 Analyse a week of warehouse-robot logs from files, then review a classmate's code
 Advanced tier
@@ -344,7 +344,7 @@ Two threads run through every level rather than belonging to one:
 • Code quality is scored from Level 1-2 onwards: naming, indentation and comments, then docstrings from Level 3-2.
 • Algorithmic thinking starts in Level 2-2: from there on, harder missions ask for a short plan in comments before the code is accepted.
 Advanced tier: Worlds 5–8
-In the Advanced tier ARIA asks the player to bring the whole lab back online: a simulated factory with robots, conveyors, sensors and a scheduler. Missions grow from single files into small multi-file projects with test suites, and from writing code to reading, reviewing and redesigning it.
+In the Advanced tier Snek asks the player to bring the whole lab back online: a simulated factory with robots, conveyors, sensors and a scheduler. Missions grow from single files into small multi-file projects with test suites, and from writing code to reading, reviewing and redesigning it.
 Level
 Title (story beat)
 New concepts
@@ -512,12 +512,12 @@ Phase 0 – Foundations
 [ ] Create the Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
 [ ] Choose Python 3.12 and the standard library only
 [ ] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
-[ ] Write the art style guide: the 16-colour palette, sprite sizes, a sample ARIA sprite
+[ ] Write the art style guide: the 16-colour palette, sprite sizes, a sample Snek sprite
 Gate: repository exists; both style guides approved by me.
 Phase 1 – Engine and renderer prototype
 [ ] Command loop with help, map, play, submit, quit
 [ ] Half-block pixel renderer that draws a sprite from a text file
-[ ] World map screen with placeholder sprites and ARIA walking between level nodes
+[ ] World map screen with placeholder sprites and Snek walking between level nodes
 [ ] Level-pack loader (TOML) and save/load of progress (JSON)
 [ ] Write Level 1-1 as the test level
 Gate: a player can open the map, play Level 1-1, quit and resume.
@@ -530,7 +530,7 @@ Gate: Level 1-1 is fully graded; each wave's reference solution passes and a kno
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-4 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2
-[ ] Draw ARIA's states and the first two boss sprites
+[ ] Draw Snek's states and the first two boss sprites
 [ ] Build the progression checker; review every level against the level style guide before merging
 Gate: Worlds 1–2 playable end to end.
 Phase 4 – Playtest round 1
@@ -581,6 +581,5 @@ Open questions
 • How should the game treat AI-generated or copied answers, given that it is self-study?
 • Is the grade scale in Game design acceptable, or should it be removed so the game is not confused with official OsloMet grading?
 • Which licence should the code and content use if the game is shared beyond the class?
-• Do I keep the ARIA robotics-lab story, or look at alternatives before drawing more sprites?
 • Do I stay with pixel art in the terminal (standard library only), or move to a real graphics window with the third-party pygame package for true pixels and sound? (Proposal: terminal first; it keeps the game text-based and easy to install.)
 • Should a class-wide leaderboard exist at all, or only personal bests?
