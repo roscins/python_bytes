@@ -5,7 +5,7 @@ import unittest
 import json
 
 from engine.game_state import GameState
-from engine.loop import WELCOME, run, welcome_text
+from engine.loop import FRAME_SECONDS, WELCOME, move_cursor_up, run, show_frames, welcome_text
 from tests.helpers import make_levels, make_temporary_folder
 
 
@@ -34,11 +34,17 @@ class TestRun(unittest.TestCase):
     """Check the command loop from start to finish."""
 
     def play(self, lines, end_with=EOFError, save_path=None):
-        """Run a game with scripted lines; return the state and the output."""
+        """Run a game with scripted lines; return the state and the output.
+
+        The pause between animation frames is recorded in self.pauses
+        instead of waiting, so the tests run fast.
+        """
         state = GameState(make_levels("1-1", "1-2"))
         player = ScriptedPlayer(lines, end_with)
         output = []
-        run(state, read_line=player.read_line, write=output.append, save_path=save_path)
+        self.pauses = []
+        run(state, read_line=player.read_line, write=output.append,
+            save_path=save_path, pause=self.pauses.append)
         return state, output
 
     def test_welcome_is_shown_first(self):
@@ -56,7 +62,7 @@ class TestRun(unittest.TestCase):
         """Each line is run as a command, and its answer is written out."""
         state, output = self.play(["play 1-2", "map", "quit"])
         self.assertIn("LEVEL 1-2 · LEVEL 1-2", "\n".join(output))
-        self.assertIn("[1-2] Level 1-2  <- you are here", "\n".join(output))
+        self.assertIn("You are at [1-2] Level 1-2.", "\n".join(output))
         self.assertEqual(state.current_level, "1-2")
 
     def test_blank_line_writes_nothing(self):
@@ -100,6 +106,39 @@ class TestRun(unittest.TestCase):
             if text.startswith("Could not save your progress"):
                 messages.append(text)
         self.assertEqual(len(messages), 2)
+
+
+    def test_walk_is_drawn_as_an_animation(self):
+        """Playing 1-2 after 1-1 draws frames over each other, with pauses."""
+        state, output = self.play(["play 1-1", "play 1-2", "quit"])
+        self.assertGreater(len(self.pauses), 0)
+        # Normal answers start with a letter; a redrawn frame starts with
+        # the escape code that moves the cursor up.
+        moved_up = []
+        for text in output:
+            if text.startswith("\x1b["):
+                moved_up.append(text)
+        self.assertEqual(len(moved_up), len(self.pauses))
+
+
+class TestShowFrames(unittest.TestCase):
+    """Check drawing an animation, frame by frame."""
+
+    def test_each_frame_is_drawn_over_the_one_before(self):
+        """The first frame is written as it is; later ones move up first."""
+        output = []
+        pauses = []
+        show_frames(["a\nb", "c\nd", "e\nf\nmore"], output.append, pauses.append)
+        self.assertEqual(output, [
+            "a\nb",
+            move_cursor_up(2) + "c\nd",
+            move_cursor_up(2) + "e\nf\nmore",
+        ])
+        self.assertEqual(pauses, [FRAME_SECONDS, FRAME_SECONDS])
+
+    def test_move_cursor_up_code(self):
+        """Moving up 3 lines is ESC [ 3 F."""
+        self.assertEqual(move_cursor_up(3), "\x1b[3F")
 
 
 class TestWelcomeText(unittest.TestCase):

@@ -29,6 +29,26 @@ class TestGameState(unittest.TestCase):
         state.levels.append("anything")
         self.assertEqual(len(levels), 1)
 
+    def test_current_world_follows_the_current_level(self):
+        """The current world is the first level's world until a level is played."""
+        levels = make_levels("1-1", "2-1")
+        levels[1].world = 2
+        state = GameState(levels)
+        self.assertEqual(state.current_world(), 1)
+        state.current_level = "2-1"
+        self.assertEqual(state.current_world(), 2)
+        self.assertIsNone(GameState().current_world())
+
+    def test_levels_in_world(self):
+        """levels_in_world keeps only that world's levels, in order."""
+        levels = make_levels("1-1", "2-1", "1-2")
+        levels[1].world = 2
+        state = GameState(levels)
+        ids = []
+        for level in state.levels_in_world(1):
+            ids.append(level.id)
+        self.assertEqual(ids, ["1-1", "1-2"])
+
     def test_find_level_by_id(self):
         """find_level returns the level with that id, or None."""
         state = GameState(make_levels("1-1", "1-2"))
@@ -83,8 +103,10 @@ class TestMap(unittest.TestCase):
     def test_map_lists_every_level(self):
         """Every level id appears on the map."""
         text = handle_line(GameState(make_levels("1-1", "1-2")), "map")
-        self.assertIn("[1-1] Level 1-1", text)
-        self.assertIn("[1-2] Level 1-2", text)
+        self.assertIn("WORLD 1 · BOOT SECTOR", text)
+        self.assertIn("[1-1]", text)
+        self.assertIn("[1-2]", text)
+        self.assertIn("Type play <level> to start, for example: play 1-1", text)
 
     def test_map_without_levels_says_so(self):
         """With no level packs, the map explains where they go."""
@@ -101,8 +123,7 @@ class TestMap(unittest.TestCase):
         state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-2"
         text = handle_line(state, "map")
-        self.assertIn("[1-2] Level 1-2  <- you are here", text)
-        self.assertNotIn("[1-1] Level 1-1  <- you are here", text)
+        self.assertIn("You are at [1-2] Level 1-2.", text)
 
 
 class TestPlay(unittest.TestCase):
@@ -135,6 +156,42 @@ class TestPlay(unittest.TestCase):
         text = handle_line(state, "play 1-1 extra")
         self.assertIn("Usage", text)
         self.assertIsNone(state.current_level)
+
+
+class TestWalking(unittest.TestCase):
+    """Check when play makes ARIA walk across the map."""
+
+    def test_first_play_shows_only_the_intro(self):
+        """With no level before, there is nowhere to walk from."""
+        state = GameState(make_levels("1-1", "1-2"))
+        answer = handle_line(state, "play 1-2")
+        self.assertIsInstance(answer, str)
+
+    def test_play_from_another_level_walks(self):
+        """From 1-1 to 1-2, the answer is frames ending with the intro."""
+        state = GameState(make_levels("1-1", "1-2"))
+        state.current_level = "1-1"
+        answer = handle_line(state, "play 1-2")
+        self.assertIsInstance(answer, list)
+        self.assertGreater(len(answer), 1)
+        self.assertIn("WORLD 1", answer[0])
+        self.assertIn("LEVEL 1-2 · LEVEL 1-2", answer[-1])
+        self.assertNotIn("LEVEL 1-2 · LEVEL 1-2", answer[0])
+        self.assertEqual(state.current_level, "1-2")
+
+    def test_play_same_level_again_does_not_walk(self):
+        """Playing the level ARIA is already at shows only the intro."""
+        state = GameState(make_levels("1-1", "1-2"))
+        state.current_level = "1-1"
+        self.assertIsInstance(handle_line(state, "play 1-1"), str)
+
+    def test_play_in_another_world_does_not_walk(self):
+        """ARIA only walks within one world's map."""
+        levels = make_levels("1-1", "2-1")
+        levels[1].world = 2
+        state = GameState(levels)
+        state.current_level = "1-1"
+        self.assertIsInstance(handle_line(state, "play 2-1"), str)
 
 
 class TestSubmit(unittest.TestCase):
