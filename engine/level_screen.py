@@ -1,11 +1,9 @@
 """The text the player sees when a level starts.
 
-intro_text(level) builds the title card, the cutscene, the tips and the
-waves into one piece of text. Like the commands, it returns text and never
+intro_text(level) builds the title card, the cutscene and the tips into one
+piece of text; wave_screen_text shows one wave with the code typed so far. Like the commands, it returns text and never
 prints, so it is easy to test.
 """
-
-from engine.workspace import wave_file_name
 
 # Story lines in a cutscene start with this; every other line is code.
 STORY_MARKER = "# >>"
@@ -45,18 +43,52 @@ def code_lines(code):
     return lines
 
 
-def wave_lines(wave, number):
-    """Return the lines that introduce one wave: its number, kind, file, brief and code."""
-    lines = [f"WAVE {number} · {wave.kind.upper()} · {wave_file_name(wave, number)}"]
+def separator(plain):
+    """Return the character between a line number and its code."""
+    if plain:
+        return "|"
+    return "│"
+
+
+def numbered_code(text, plain=False):
+    """Return a code text as numbered lines, for example "  1 │ print(1)"."""
+    lines = []
+    number = 0
+    for line in text.splitlines():
+        number = number + 1
+        lines.append(f"{number:>3} {separator(plain)} {line}")
+    return lines
+
+
+HELP_LINE = ":submit  :show  :undo  :clear  :edit n text  :ins n text  :del n  :hint  :map  :help"
+
+
+def wave_screen_text(level, number, buffer_text, plain=False):
+    """Return the screen of one wave: its task and the numbered code typed so far."""
+    wave = level.waves[number - 1]
+    label = f"WAVE {number} of {len(level.waves)} · {wave.kind.upper()}"
+    if level.boss:
+        label = "BOSS WAVE"
+    lines = [label]
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
-    # A fill-in wave shows the code with blanks; a predict wave shows the
-    # code to read. A build wave has no code: the player writes it all.
-    if wave.starter is not None:
-        lines.extend(code_lines(wave.starter))
-    elif wave.code is not None:
+    # A predict wave shows the code to read; the player types its output.
+    if wave.mode == "predict" and wave.code is not None:
+        lines.append("")
+        lines.append("Read this code:")
         lines.extend(code_lines(wave.code))
-    return lines
+        lines.append("")
+        lines.append("YOUR ANSWER (what it prints):")
+    else:
+        lines.append("")
+        lines.append("YOUR CODE:")
+    if buffer_text.strip() == "":
+        lines.append("    (nothing yet: type your first line)")
+    else:
+        lines.extend(numbered_code(buffer_text, plain))
+    lines.append("")
+    lines.append(HELP_LINE)
+    return "\n".join(lines)
 
 
 def intro_text(level):
@@ -67,13 +99,12 @@ def intro_text(level):
     lines.append("TIPS")
     for tip in level.tips:
         lines.append(f"  • {tip}")
-    number = 0
-    for wave in level.waves:
-        number = number + 1
-        lines.append("")
-        lines.extend(wave_lines(wave, number))
     lines.append("")
-    lines.append("When your waves are ready, type submit. Stuck? Type hint <wave>.")
+    count = len(level.waves)
+    waves = f"{count} waves"
+    if count == 1:
+        waves = "1 wave"
+    lines.append(f"{waves}. Type your code one line at a time; commands start with a colon (:help).")
     return "\n".join(lines)
 
 
@@ -83,10 +114,10 @@ def boss_intro_text(level):
     lines.extend(cutscene_lines(level.cutscene))
     lines.append("")
     wave = level.waves[0]
-    lines.append(f"BOSS WAVE · {wave_file_name(wave, 1)}")
+    lines.append("BOSS WAVE")
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
     minutes = level.time_limit // 60
     lines.append(f"{len(wave.tests)} hidden tests, 3 lives, {minutes} minutes. "
-                 "Each failed submit costs a life.")
+                 "Each failed :submit costs a life.")
     return "\n".join(lines)

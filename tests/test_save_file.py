@@ -34,8 +34,9 @@ class TestSaveAndLoad(unittest.TestCase):
         save_progress(state, self.save_path)
         with open(self.save_path, encoding="utf-8") as save_file:
             data = json.load(save_file)
-        self.assertEqual(data, {"version": SAVE_VERSION, "current_level": "1-1", "cleared": [],
-                                "xp": 0, "coins": STARTING_COINS, "combo": 0, "levels": {}})
+        self.assertEqual(data, {"version": SAVE_VERSION, "current_level": "1-1", "current_wave": 1,
+                                "coding": False, "cleared": [], "xp": 0, "coins": STARTING_COINS,
+                                "combo": 0, "levels": {}, "buffers": {}})
 
     def test_scores_load_back(self):
         """XP, coins, combo and each level's progress survive a save and load."""
@@ -139,7 +140,7 @@ class TestBrokenSaves(unittest.TestCase):
 
     def test_wrong_version_is_an_error(self):
         """A save from another version of the game is rejected."""
-        self.check_broken('{"version": 99}', "expected version 2")
+        self.check_broken('{"version": 99}', "expected version 3")
 
     def test_current_level_must_be_text_or_null(self):
         """current_level = 5 is rejected."""

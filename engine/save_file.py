@@ -2,27 +2,38 @@
 
 A save file looks like this:
 
-    {"version": 2, "current_level": "1-1", "cleared": ["1-1"],
-     "xp": 1000, "coins": 20, "combo": 3,
-     "levels": {"1-1": {"wave_best": [1.0, 1.0, 1.0], ...}}}
+    {"version": 3, "current_level": "1-1", "current_wave": 2, "coding": true,
+     "cleared": ["1-1"], "xp": 1000, "coins": 20, "combo": 3,
+     "levels": {"1-1": {"wave_best": [1.0, 1.0, 1.0], ...}},
+     "buffers": {"1-1": {"2": "print(\"SYSTEM CHECK\")"}}}
 
 "version" lets later versions of the game change what is saved and still
 read old saves. Version 1 saves (from before scoring) had only
 current_level and cleared; they still load, with no XP and the starting
-coins.
+coins. Version 2 saves have no "coding", "current_wave" or "buffers"; they
+load with the player at the map and no unfinished code.
+
+"buffers" holds the code the player has typed for each wave, so a game that
+is killed at any moment comes back with the unfinished answer.
 """
 
 import json
 import os
+import time
 from pathlib import Path
 
 from engine.progress import is_number, progress_from_dict
 from engine.scoring import STARTING_COINS
 
-SAVE_VERSION = 2
+SAVE_VERSION = 3
 
 # The versions this game can still read.
-READABLE_VERSIONS = [1, 2]
+READABLE_VERSIONS = [1, 2, 3]
+
+# On Windows another program (a virus scanner, the indexer) can hold the save
+# file for a moment. Replacing it is tried this many times, this long apart.
+REPLACE_TRIES = 5
+REPLACE_WAIT_SECONDS = 0.02
 
 # The save lives in the player's home folder, not in the game's folder, so
 # it survives updating the game and is never committed to Git by mistake.
@@ -33,31 +44,91 @@ class SaveError(ValueError):
     """A save file that cannot be used, for example because it is not JSON."""
 
 
-def save_progress(state, path):
-    """Write the player's progress in `state` to the save file at `path`.
+def replace_with_retry(source, target, replace, sleep):
+    """Replace `target` by `source`, trying again if the target is locked for a moment."""
+    for attempt in range(REPLACE_TRIES):
+        try:
+            replace(source, target)
+            return
+        except PermissionError:
+            if attempt == REPLACE_TRIES - 1:
+                raise
+            sleep(REPLACE_WAIT_SECONDS)
 
-    The folder is made if it does not exist yet. The save is first written
-    to a temporary file, which then replaces the old save in one step. So if
-    the game crashes halfway through saving, the old save is still whole.
+
+def sync_folder(folder):
+    """Ask the system to write the folder's entries to disk (not possible on Windows)."""
+    if os.name == "nt":
+        return
+    try:
+        descriptor = os.open(folder, os.O_RDONLY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    except OSError:
+        pass
+
+
+def write_atomically(path, text, replace=os.replace, fsync=os.fsync, sleep=time.sleep):
+    """Write `text` to `path` so that a crash at any moment leaves a whole file.
+
+    The text goes to a temporary file in the same folder and is forced to
+    disk (fsync). Only then does the temporary file replace the real one, in
+    one step. So `path` always holds either the old text or the new text,
+    never half of it. The temporary name has the process id, so two running
+    games do not share one. `replace`, `fsync` and `sleep` are parameters so
+    that tests can break the write halfway.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        with open(temporary_path, "w", encoding="utf-8") as temporary_file:
+            temporary_file.write(text)
+            temporary_file.flush()
+            fsync(temporary_file.fileno())
+        replace_with_retry(temporary_path, path, replace, sleep)
+    except BaseException:
+        if temporary_path.exists():
+            temporary_path.unlink()
+        raise
+    sync_folder(path.parent)
+
+
+def buffers_to_dict(buffers):
+    """Return the code buffers in the form the save file stores: wave numbers as text keys."""
+    data = {}
+    for level_id in buffers:
+        data[level_id] = {}
+        for number in buffers[level_id]:
+            data[level_id][str(number)] = buffers[level_id][number]
+    return data
+
+
+def save_progress(state, path):
+    """Write the player's progress in `state` to the save file at `path`.
+
+    The folder is made if it does not exist yet. The write is atomic (see
+    write_atomically), so the save is whole even if the game is killed in
+    the middle of saving.
+    """
     levels = {}
     for level_id in state.progress:
         levels[level_id] = state.progress[level_id].to_dict()
     data = {
         "version": SAVE_VERSION,
         "current_level": state.current_level,
+        "current_wave": state.current_wave,
+        "coding": state.coding,
         "cleared": state.cleared,
         "xp": state.xp,
         "coins": state.coins,
         "combo": state.combo,
         "levels": levels,
+        "buffers": buffers_to_dict(state.buffers),
     }
-    temporary_path = path.with_name(path.name + ".tmp")
-    with open(temporary_path, "w", encoding="utf-8") as save_file:
-        json.dump(data, save_file, indent=2)
-    os.replace(temporary_path, path)
+    write_atomically(path, json.dumps(data, indent=2))
 
 
 def load_progress(state, path):
@@ -104,9 +175,30 @@ def load_progress(state, path):
         combo = whole_number(data, "combo", path)
         progress = read_level_progress(state, data.get("levels"), path)
 
+    current_wave = 1
+    coding = False
+    buffers = {}
+    if version >= 3:
+        current_wave = data.get("current_wave", 1)
+        if isinstance(current_wave, bool) or not isinstance(current_wave, int):
+            raise SaveError(f"{path}: current_wave must be a whole number")
+        coding = data.get("coding", False)
+        if not isinstance(coding, bool):
+            raise SaveError(f"{path}: coding must be true or false")
+        buffers = read_buffers(state, data.get("buffers", {}), path)
+
     if current_level is not None and state.find_level(current_level) is None:
         current_level = None
+    if current_level is None:
+        coding = False
+    else:
+        wave_count = len(state.find_level(current_level).waves)
+        if current_wave < 1 or current_wave > wave_count:
+            current_wave = 1
     state.current_level = current_level
+    state.current_wave = current_wave
+    state.coding = coding
+    state.buffers = buffers
     state.cleared = []
     for level_id in cleared:
         if state.find_level(level_id) is not None:
@@ -116,6 +208,33 @@ def load_progress(state, path):
     state.combo = combo
     state.progress = progress
     return True
+
+
+def read_buffers(state, buffers, path):
+    """Return the code buffers of a save: {level id: {wave number: text}}.
+
+    Buffers of levels that no longer exist, or of waves a level no longer
+    has, are dropped. Raises SaveError if a buffer is not text.
+    """
+    if not isinstance(buffers, dict):
+        raise SaveError(f"{path}: buffers must be a JSON object")
+    result = {}
+    for level_id in buffers:
+        level = state.find_level(level_id)
+        if level is None:
+            continue
+        waves = buffers[level_id]
+        if not isinstance(waves, dict):
+            raise SaveError(f"{path}: buffers of level {level_id} must be a JSON object")
+        result[level_id] = {}
+        for key in waves:
+            text = waves[key]
+            if not key.isdigit() or not isinstance(text, str):
+                raise SaveError(f"{path}: level {level_id}: a wave's code must be text")
+            number = int(key)
+            if 1 <= number <= len(level.waves):
+                result[level_id][number] = text
+    return result
 
 
 def whole_number(data, key, path):

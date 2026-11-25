@@ -3,3 +3,18 @@ name = "python_bytes"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = []
+
+# python-bytes starts the game after `pip install -e .` (an editable install,
+# so the game finds levels/ and art/ in this folder). Without installing,
+# `python play.py` does the same.
+[project.scripts]
+python-bytes = "engine.__main__:main"
+
+# The build backend is only needed to install; the game itself has no
+# dependencies.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["engine", "render", "grader", "runner"]

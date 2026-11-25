@@ -1,4 +1,4 @@
-"""Grade a whole level: read each wave's file from the workspace and grade it.
+"""Grade waves: the code typed in the game, or (older way) the files in the workspace.
 
 This is what submit does before it shows the results. It joins the
 workspace (where the files are) and the grader (which checks them).
@@ -25,6 +25,17 @@ class WaveSubmission:
         self.wave = wave
         self.file_name = file_name
         self.result = result
+
+
+def grade_text(wave, number, text):
+    """Grade the code typed for one wave and return a WaveSubmission.
+
+    Code that is empty or only blank lines is not graded: the result is None.
+    """
+    result = None
+    if text is not None and text.strip() != "":
+        result = grade_wave(wave, text)
+    return WaveSubmission(number, wave, "your code", result)
 
 
 def grade_submission(level, root, wave_numbers=None):

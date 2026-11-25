@@ -583,6 +583,11 @@ Phase 2 – Runner, grader and scoring
 [x] XP, stars, coins, hints and the 70 % unlock rule
 [x] Level-clear screen and boss fight screen with health bar and lives
 Gate: Level 1-1 is fully graded; each wave's reference solution passes and a known-wrong solution fails.
+Phase 2.5 – Breakthrough: it must feel like a real game (design: docs/design/breakthrough.md)
+[ ] A: one command (python play.py), title screen, autosave after every line, signals, code buffers saved
+[ ] B: code inside the game (code mode, REPL, highlighting, friendly errors); no external folders
+[ ] C: full-screen look: HUD, framed panels, typed cutscenes, Snek reactions, level-clear animation
+Gate: a new player starts with one command, types a level's code in the game, and closing the window never loses work.
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2

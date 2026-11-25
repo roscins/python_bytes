@@ -10,7 +10,7 @@ unlocking work the same.
 from engine.boss import RESTART, WON, BossFight
 from engine.results_screen import reward_lines
 from engine.rewards import apply_submission
-from engine.submission import grade_submission
+from engine.submission import grade_text
 from render.boss_screen import boss_screen, hp_drain_frames, load_boss_art
 
 # Messages that explain a crash or unreadable code. They say nothing about
@@ -61,10 +61,10 @@ def submit_to_boss(state, level):
         return (current_screen(fight)
                 + "\n\nTIME'S UP. The fight starts again: 3 lives, full health and a new timer.")
 
-    submissions = grade_submission(level, state.workspace_root)
-    submission = submissions[0]
+    submission = grade_text(level.waves[0], 1, state.wave_text(level, 1))
+    submissions = [submission]
     if submission.result is None:
-        return f"Write your code in {submission.file_name} first, then type submit."
+        return "Type your code first, then :submit."
 
     hp_before = fight.hp_left
     lives_before = fight.lives

@@ -8,14 +8,22 @@ This keeps them easy to test.
 """
 
 from engine.boss_turns import start_boss_fight, submit_to_boss
+from engine.code_mode import (
+    CODE_COMMANDS,
+    NOT_PLAYING,
+    add_code_line,
+    current_context,
+    show_wave,
+    start_coding,
+)
 from engine.hints import ask_for_hint
 from engine.hud import map_status
-from engine.level_screen import boss_intro_text, intro_text
+from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
 from engine.scoring import PASS_MARK, is_unlocked
-from engine.submission import grade_submission
-from engine.workspace import level_folder, prepare_workspace
+from engine.submission import grade_text
+from engine.workspace import level_folder, wave_file_name
 from render.level_clear import level_clear_frames, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames
 
@@ -49,7 +57,7 @@ def do_help(state, arguments):
     """Return a list of all commands with a short description of each."""
     if arguments:
         return extra_words_message("help")
-    lines = ["Commands:"]
+    lines = ["Commands (while you are coding, type a colon first, for example :submit):"]
     # COMMANDS is defined further down in this file. That is fine: Python
     # only looks the name up when do_help runs, and by then the whole file
     # has been read.
@@ -59,6 +67,10 @@ def do_help(state, arguments):
         # for "a value that is not used".
         _, description = COMMANDS[name]
         lines.append(f"  {name:<8} {description}")
+    lines.append("While you code (always with a colon in front):")
+    for name in CODE_COMMANDS:
+        _, description = CODE_COMMANDS[name]
+        lines.append(f"  :{name:<7} {description}")
     return "\n".join(lines)
 
 
@@ -82,6 +94,7 @@ def do_map(state, arguments):
     """Return the map of the current world, with Snek at the current level."""
     if arguments:
         return extra_words_message("map")
+    state.coding = False
     if not state.slots():
         return "No levels found. Level packs go in the levels/ folder."
     world = state.current_world()
@@ -101,9 +114,9 @@ def do_play(state, arguments):
 
     A locked level cannot be played: the level before it must be cleared
     first. The answer is the level's intro: title, cutscene, tips and waves.
-    The level's workspace folder is made, with a file for each wave, and
-    the intro ends with where it is. A boss level starts a boss fight and
-    shows the boss screen.
+    The player is then in code mode on the first wave that is not done yet,
+    and the intro ends with that wave and the code typed so far. A boss
+    level starts a boss fight and shows the boss screen.
     If the player was already on another level in the same world, Snek
     slithers there first: the answer is then a list of map frames, and the
     last frame has the intro below the map.
@@ -121,14 +134,11 @@ def do_play(state, arguments):
         before = slots[slot_index(slots, level.id) - 1]
         return f"Level {level.id} is locked. Clear {before.id} with at least {PASS_MARK} % first."
     previous = state.find_level(state.current_level)
-    state.current_level = level.id
+    start_coding(state, level)
     if level.boss:
-        intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level)
+        intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level) + "\n\n" + HELP_LINE
     else:
-        intro = intro_text(level)
-    if state.workspace_root is not None:
-        folder = prepare_workspace(level, state.workspace_root)
-        intro = intro + f"\nYour files are in {folder.resolve()}"
+        intro = intro_text(level) + "\n\n" + show_wave(state)
     if previous is None or previous.world != level.world or previous.id == level.id:
         return intro
     world_slots = state.slots_in_world(level.world)
@@ -139,37 +149,42 @@ def do_play(state, arguments):
     return frames
 
 
-NOT_PLAYING = "You are not playing a level. Type play <level> first."
+def advance_after_submit(state, level, number, result):
+    """Move to the next wave if wave `number` passed; return what to show under the results."""
+    if not result.all_passed():
+        return "Not yet. Change your code and :submit again, or buy a :hint."
+    if number < len(level.waves):
+        state.current_wave = number + 1
+        return f"Wave {number} passed! Next:\n\n" + show_wave(state)
+    state.coding = False
+    return f"Wave {number} passed, and that was the last wave. Type map to see where to go next."
 
 
 def do_submit(state, arguments):
-    """Grade the player's files for the current level and show the results and score.
+    """Grade the code of the current wave and show the results and score.
 
-    Waves that already have full marks are not graded again, so a replay
-    only checks the waves that still need work. Clearing a level, or
+    A wave with full marks is not graded again. When every test of a wave
+    passes, the player moves on to the next wave. Clearing a level, or
     earning more stars, shows the level-clear animation above the results.
     In a boss level, submit is a hit on the boss instead.
     """
     if arguments:
         return extra_words_message("submit")
-    level = state.find_level(state.current_level)
+    level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    if state.workspace_root is None:
-        return f"There is no workspace folder, so level {level.id} cannot be graded."
     if level.boss:
         return submit_to_boss(state, level)
+    wave = level.waves[number - 1]
     progress = state.progress_for(level)
-    perfect_numbers = []
-    numbers_to_grade = []
-    for number in range(1, len(level.waves) + 1):
-        if progress.wave_is_perfect(number, level.waves[number - 1]):
-            perfect_numbers.append(number)
-        else:
-            numbers_to_grade.append(number)
-    submissions = grade_submission(level, state.workspace_root, numbers_to_grade)
-    reward = apply_submission(state, level, submissions)
-    results = results_text(level, submissions, perfect_numbers, reward)
+    if progress.wave_is_perfect(number, wave):
+        return f"Wave {number} already passed \u2713. Type :wave <n> to go to another wave."
+    submission = grade_text(wave, number, state.wave_text(level, number))
+    if submission.result is None:
+        return "Your code is empty. Type your first line, then :submit."
+    reward = apply_submission(state, level, [submission])
+    results = results_text(level, [submission], [], reward)
+    results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)
     if not reward.cleared_now and reward.stars <= reward.old_stars:
         return results
     frames = level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
@@ -181,12 +196,14 @@ def do_submit(state, arguments):
 
 def do_hint(state, arguments):
     """Show the hints bought for a wave, and buy the next one, for example "hint 2"."""
-    usage = "Usage: hint <wave>, for example: hint 2"
-    if len(arguments) != 1:
+    usage = "Usage: hint <wave>, for example: hint 2 (or just :hint for the wave you are on)"
+    if len(arguments) > 1:
         return usage
     level = state.find_level(state.current_level)
     if level is None:
         return NOT_PLAYING
+    if not arguments:
+        return ask_for_hint(state, level, state.current_wave)
     if not arguments[0].isdigit():
         return usage
     number = int(arguments[0])
@@ -196,15 +213,19 @@ def do_hint(state, arguments):
 
 
 def do_where(state, arguments):
-    """Return the full path of the current level's workspace folder."""
+    """Save the code of the current wave to a file you can open in an editor; return its path."""
     if arguments:
         return extra_words_message("where")
-    level = state.find_level(state.current_level)
+    level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
     if state.workspace_root is None:
         return "There is no workspace folder."
-    return str(level_folder(level, state.workspace_root).resolve())
+    folder = level_folder(level, state.workspace_root)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / wave_file_name(level.waves[number - 1], number)
+    path.write_text(state.wave_text(level, number), encoding="utf-8")
+    return f"Saved the code of wave {number} to {path.resolve()}"
 
 
 def do_quit(state, arguments):
@@ -221,24 +242,44 @@ COMMANDS = {
     "help": (do_help, "show this list of commands"),
     "map": (do_map, "show the world map"),
     "play": (do_play, "start a level, for example: play 1-1"),
-    "submit": (do_submit, "hand in your code for the current level"),
-    "hint": (do_hint, "buy a hint for a wave with coins, for example: hint 2"),
-    "where": (do_where, "show the folder where your code for this level goes"),
+    "submit": (do_submit, "hand in the code of the wave you are on"),
+    "hint": (do_hint, "buy a hint with coins, for example: hint 2 (or :hint)"),
+    "where": (do_where, "save this wave's code in a file to open in an editor"),
     "quit": (do_quit, "leave the game"),
 }
 
 
-def handle_line(state, line):
-    """Run the command typed on one line and return the text to show.
+def run_command(state, text, colon):
+    """Run the command at the start of `text`. `colon` is True if it was typed with a colon.
 
-    A blank line returns an empty string. An unknown command returns a hint
-    to type help.
+    The commands of code mode (:edit, :undo ...) only exist with a colon.
     """
-    name, arguments = parse_command(line)
+    name, arguments = parse_command(text)
     if name == "":
         return ""
+    if colon and name in CODE_COMMANDS:
+        function, _ = CODE_COMMANDS[name]
+        # They want the text after the command name exactly as typed, because
+        # the spaces in ":edit 2     print(x)" are the code's indentation.
+        return function(state, text.lstrip()[len(name):])
     if name not in COMMANDS:
+        if colon:
+            return f"Unknown command: :{name}. Type :help to see the commands."
         return f"Unknown command: {name}. Type help to see the commands."
     # Each entry is (function, description); only the function is needed here.
     function, _ = COMMANDS[name]
     return function(state, arguments)
+
+
+def handle_line(state, line):
+    """Run the line the player typed and return the text to show.
+
+    A line that starts with ":" is a command. Any other line is a line of
+    code while the player is in code mode, and a command otherwise. A blank
+    line outside code mode returns an empty string.
+    """
+    if line.startswith(":"):
+        return run_command(state, line[1:], colon=True)
+    if state.coding:
+        return add_code_line(state, line)
+    return run_command(state, line, colon=False)
