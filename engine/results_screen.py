@@ -24,7 +24,7 @@ def wave_result_lines(submission):
     title = f"WAVE {submission.number} · {submission.wave.kind.upper()}"
     result = submission.result
     if result is None:
-        return [f"{title}  not started: write it in {submission.file_name}"]
+        return [f"{title}  not started: type your code first"]
 
     mark = CROSS
     if result.all_passed():

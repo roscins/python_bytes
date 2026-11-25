@@ -90,6 +90,15 @@ def make_curriculum_of(*level_ids):
     return parse_curriculum(tomllib.loads(concepts_toml_text(*level_ids)))
 
 
+def type_code(state, code):
+    """Replace the code of the current wave by `code`, typed line by line as a player would."""
+    from engine.commands import handle_line
+
+    handle_line(state, ":clear")
+    for line in code.splitlines():
+        handle_line(state, line)
+
+
 def make_levels(*level_ids):
     """Return a list of small Levels, one for each id given."""
     levels = []

@@ -4,7 +4,7 @@ import unittest
 
 from engine.commands import COMMANDS, handle_line, parse_command
 from engine.game_state import GameState
-from tests.helpers import make_levels, make_temporary_folder
+from tests.helpers import make_levels, make_temporary_folder, type_code
 
 
 class TestGameState(unittest.TestCase):
@@ -212,50 +212,46 @@ class TestSubmit(unittest.TestCase):
         text = handle_line(GameState(), "submit")
         self.assertIn("play", text)
 
-    def test_submit_without_workspace_names_the_level(self):
-        """Without a workspace folder there is nothing to grade."""
+    def test_submit_with_no_code_asks_for_code(self):
+        """An empty wave is not graded."""
         state = GameState(make_levels("1-1"))
-        state.current_level = "1-1"
-        text = handle_line(state, "submit")
-        self.assertIn("no workspace folder", text)
-        self.assertIn("1-1", text)
+        handle_line(state, "play 1-1")
+        self.assertIn("Your code is empty", handle_line(state, ":submit"))
 
-    def test_submit_grades_the_workspace_files(self):
-        """After play, submit grades the files in the level's folder."""
-        root = make_temporary_folder(self)
+    def test_submit_grades_the_code_typed_in_the_game(self):
+        """After play, :submit grades the lines the player typed for the current wave."""
         levels = make_levels("1-1")
         levels[0].waves[0].tests = [{"expected_stdout": "OK\n"}]
-        state = GameState(levels, workspace_root=root)
+        state = GameState(levels)
         handle_line(state, "play 1-1")
-        (root / "1-1" / "wave1.py").write_text('print("OK")', encoding="utf-8")
-        text = final_text(handle_line(state, "submit"))
+        type_code(state, 'print("OK")')
+        text = final_text(handle_line(state, ":submit"))
         self.assertIn("LEVEL 1-1 · RESULTS", text)
         self.assertIn("WAVE 1 · BUILD  1/1 test passed", text)
 
 
 class TestWorkspaceCommands(unittest.TestCase):
-    """Check that play makes the workspace and where shows it."""
+    """Check that play writes no files, and where saves the code of the wave to a file."""
 
-    def test_play_makes_the_workspace_and_says_where(self):
-        """play writes the wave files and ends with the folder's path."""
+    def test_play_writes_no_files(self):
+        """The code lives in the game, so play makes no workspace folder."""
         root = make_temporary_folder(self)
         state = GameState(make_levels("1-1"), workspace_root=root)
         text = handle_line(state, "play 1-1")
-        folder = (root / "1-1").resolve()
-        self.assertTrue((folder / "wave1.py").exists())
-        self.assertIn(f"Your files are in {folder}", text)
-
-    def test_play_without_workspace_writes_nothing(self):
-        """With no workspace folder, play only shows the intro."""
-        text = handle_line(GameState(make_levels("1-1")), "play 1-1")
+        self.assertFalse((root / "1-1").exists())
         self.assertNotIn("Your files are in", text)
+        self.assertTrue(state.coding)
 
-    def test_where_shows_the_full_path(self):
-        """where prints the absolute path of the current level's folder."""
+    def test_where_saves_the_code_and_shows_the_path(self):
+        """where writes the current wave's code to a file and prints its path."""
         root = make_temporary_folder(self)
         state = GameState(make_levels("1-1"), workspace_root=root)
-        state.current_level = "1-1"
-        self.assertEqual(handle_line(state, "where"), str((root / "1-1").resolve()))
+        handle_line(state, "play 1-1")
+        type_code(state, 'print("OK")')
+        text = handle_line(state, ":where")
+        path = (root / "1-1" / "wave1.py").resolve()
+        self.assertIn(str(path), text)
+        self.assertEqual(path.read_text(encoding="utf-8"), 'print("OK")\n')
 
     def test_where_before_play(self):
         """where without a level asks the player to start one."""
@@ -264,13 +260,8 @@ class TestWorkspaceCommands(unittest.TestCase):
     def test_where_without_workspace(self):
         """where with no workspace folder says so."""
         state = GameState(make_levels("1-1"))
-        state.current_level = "1-1"
-        self.assertEqual(handle_line(state, "where"), "There is no workspace folder.")
-
-
-def write_wave(root, level_id, name, text):
-    """Write one wave file in a level's workspace folder."""
-    (root / level_id / name).write_text(text, encoding="utf-8")
+        handle_line(state, "play 1-1")
+        self.assertEqual(handle_line(state, ":where"), "There is no workspace folder.")
 
 
 class TestLocks(unittest.TestCase):
@@ -298,18 +289,17 @@ class TestScoredSubmit(unittest.TestCase):
     """Check that submit scores the level and unlocks the next one."""
 
     def setUp(self):
-        """Two one-wave levels, a workspace, and level 1-1 started."""
-        self.root = make_temporary_folder(self)
+        """Two one-wave levels, and level 1-1 started."""
         levels = make_levels("1-1", "1-2")
         for level in levels:
             level.waves[0].tests = [{"expected_stdout": "OK\n"}]
-        self.state = GameState(levels, workspace_root=self.root)
+        self.state = GameState(levels)
         handle_line(self.state, "play 1-1")
 
     def test_full_marks_clear_the_level(self):
         """A perfect build wave gives 100 %, 3 stars, XP, coins and opens 1-2."""
-        write_wave(self.root, "1-1", "wave1.py", '# Say OK\nprint("OK")\n')
-        answer = handle_line(self.state, "submit")
+        type_code(self.state, '# Say OK\nprint("OK")\n')
+        answer = handle_line(self.state, ":submit")
         self.assertIsInstance(answer, list)
         self.assertIn("LEVEL 1-1 CLEARED · LEVEL 1-1", answer[0])
         text = answer[-1]
@@ -317,24 +307,27 @@ class TestScoredSubmit(unittest.TestCase):
         self.assertIn("+1000 XP · +10 coins · combo 1", text)
         self.assertIn("LEVEL 1-1 CLEARED. Level 1-2 is open.", text)
         self.assertEqual(self.state.cleared, ["1-1"])
+        self.assertFalse(self.state.coding)
         self.assertIsInstance(handle_line(self.state, "play 1-2"), list)
 
     def test_low_score_does_not_clear(self):
         """Failing the only test leaves the level locked behind, with no clear screen."""
-        write_wave(self.root, "1-1", "wave1.py", 'print("NO")\n')
-        text = handle_line(self.state, "submit")
+        type_code(self.state, 'print("NO")\n')
+        text = handle_line(self.state, ":submit")
         self.assertIsInstance(text, str)
         self.assertIn("You need 70 % to clear this level.", text)
         self.assertEqual(self.state.cleared, [])
+        self.assertTrue(self.state.coding)
 
     def test_perfect_waves_are_not_graded_again(self):
         """After full marks, submit says the wave already passed and gives no XP."""
-        write_wave(self.root, "1-1", "wave1.py", '# Say OK\nprint("OK")\n')
-        handle_line(self.state, "submit")
-        write_wave(self.root, "1-1", "wave1.py", "broken(")
-        text = handle_line(self.state, "submit")
-        self.assertIn("WAVE 1 · BUILD  already passed ✓", text)
-        self.assertIn("+0 XP", text)
+        type_code(self.state, '# Say OK\nprint("OK")\n')
+        handle_line(self.state, ":submit")
+        handle_line(self.state, "play 1-1")
+        type_code(self.state, "broken(")
+        text = handle_line(self.state, ":submit")
+        self.assertIn("already passed", text)
+        self.assertEqual(self.state.cleared, ["1-1"])
 
 
 class TestHint(unittest.TestCase):
@@ -377,8 +370,8 @@ class TestHint(unittest.TestCase):
 
     def test_bad_wave_numbers(self):
         """hint needs one wave number that the level has."""
-        self.assertIn("Usage", handle_line(self.state, "hint"))
         self.assertIn("Usage", handle_line(self.state, "hint two"))
+        self.assertIn("Usage", handle_line(self.state, "hint 1 2"))
         self.assertEqual(handle_line(self.state, "hint 4"), "Level 1-1 has waves 1 to 1.")
 
     def test_hint_before_play(self):

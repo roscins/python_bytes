@@ -3,6 +3,10 @@
 from engine.progress import LevelProgress
 from engine.roadmap import build_slots
 from engine.scoring import STARTING_COINS
+from engine.workspace import starting_text
+
+# How many earlier versions of a wave's code :undo can go back to.
+UNDO_LIMIT = 20
 
 
 class GameState:
@@ -14,6 +18,14 @@ class GameState:
             levels exist on the map, or None to show only the levels above.
         current_level: the id of the level being played, for example "1-1",
             or None if the player has not started a level yet.
+        current_wave: the wave the player is on in the current level (from 1).
+        coding: True while the player is typing the code of a wave. Then
+            every line that does not start with ":" is code.
+        buffers: the code typed so far, {level id: {wave number: text}}.
+            It is saved with the progress, so unfinished code is never lost.
+        undo_stack: earlier versions of a wave's code, newest last, as
+            (level id, wave number, text). Not saved.
+        plain: True for the ASCII look (no box characters).
         cleared: the ids of the levels the player has cleared (70 % or more).
         xp: the player's experience points.
         coins: the coins the player can spend on hints.
@@ -35,6 +47,11 @@ class GameState:
         self.curriculum = curriculum
         self.workspace_root = workspace_root
         self.current_level = None
+        self.current_wave = 1
+        self.coding = False
+        self.buffers = {}
+        self.undo_stack = []
+        self.plain = False
         self.cleared = []
         self.xp = 0
         self.coins = STARTING_COINS
@@ -99,3 +116,32 @@ class GameState:
             if level.world == world:
                 levels.append(level)
         return levels
+
+    def wave_text(self, level, number):
+        """Return the code typed so far for wave `number` of `level`.
+
+        The first time, the buffer is made from the wave's starter code
+        (fill-in and fix-the-bug waves) or is empty. A buffer that exists is
+        never replaced, so going back to a wave never loses the player's work.
+        """
+        waves = self.buffers.setdefault(level.id, {})
+        if number not in waves:
+            waves[number] = starting_text(level.waves[number - 1])
+        return waves[number]
+
+    def set_wave_text(self, level, number, text):
+        """Replace the code of wave `number` of `level`, remembering the old code for :undo."""
+        old_text = self.wave_text(level, number)
+        self.undo_stack.append((level.id, number, old_text))
+        del self.undo_stack[:-UNDO_LIMIT]
+        self.buffers[level.id][number] = text
+
+    def undo_wave_text(self, level, number):
+        """Go back to the code before the last change; return False if there is nothing to undo."""
+        for index in range(len(self.undo_stack) - 1, -1, -1):
+            level_id, wave_number, text = self.undo_stack[index]
+            if level_id == level.id and wave_number == number:
+                del self.undo_stack[index]
+                self.buffers[level.id][number] = text
+                return True
+        return False

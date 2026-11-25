@@ -75,7 +75,7 @@ class TestSubmission(unittest.TestCase):
         self.assertIsNone(submissions[1].result)
         self.assertIsNone(submissions[2].result)
         text = results_text(self.level, submissions)
-        self.assertIn("WAVE 2 · BUILD  not started: write it in wave2.py", text)
+        self.assertIn("WAVE 2 · BUILD  not started: type your code first", text)
 
     def test_only_some_waves(self):
         """wave_numbers picks which waves are graded."""
