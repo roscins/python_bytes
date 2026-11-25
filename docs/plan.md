@@ -60,8 +60,8 @@ Inside a level. Every level runs the same short loop, like stages in a shoot-'em
 3.  Wave 1 – Fill-in: complete missing parts of given code.
 4.  Wave 2 – Build: write a program or function from a short mission brief.
 5.  Wave 3 – Debug: predict the output of code, or find and fix the bug.
-6.  Level clear – stars, XP, and a power-up command.
-Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 lives (one lost per failed submission). Losing all lives restarts the fight, not the world.
+6.  Level clear – stars, coins, and a power-up command.
+Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 tries (one used up by each failed submission). Using up all tries restarts the fight, not the world.
 What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture). What each level teaches is decided in docs/curriculum.md and levels/concepts.toml; the tables in this plan are a summary of them.
 Example cutscene from Level 1-2, where variables are new and print() is already known:
 # >> Snek's memory banks flicker. Two empty cells light up.
@@ -156,9 +156,6 @@ Arcade rewards
 Reward
 How it is earned
 What it does
-XP
-Points from every wave
-Fills the XP bar; level-ups change Snek's sprite and colours
 Stars (1–3 per level)
 1 star ≥ 70 %, 2 stars ≥ 85 %, 3 stars = 100 % with no hints
 A boss door opens only when the world's levels hold enough stars (proposal: 2 of 3 on average)
@@ -168,12 +165,12 @@ Buy hints in the shop
 Power-ups
 Clearing a level
 A new terminal command built on the concept just learned (calc after 1-3, inventory after 3-1)
-Lives
+Tries
 3 per boss fight
-Lost on each failed boss submission; at 0 the fight restarts
+Used up by each failed boss submission; with none left the fight restarts
 Combo
 Clearing waves first try in a row
-XP multiplier: ×1.5 after 3, ×2 after 5
+A streak counter in the HUD that flashes when it goes up
 Badges
 Special feats, for example "No Hints in World 1" or "Clean Coder" (full quality score on 10 levels)
 Shown on the player's profile screen
@@ -207,7 +204,7 @@ The game runs in an ordinary terminal but looks like an 8-bit console game. The 
 • Animation: a few frames only (Snek slithering on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
 • Fallbacks: a plain-ASCII mode for terminals without colour, and an accessible mode with no flashing and screen-reader-friendly text.
 Rough mock-up of the world map and a boss fight (pixel art shown as text):
- WORLD 1 · BOOT SECTOR            XP 1240   ★ 7/12   COINS 35
+ WORLD 1 · BOOT SECTOR                       ★ 7/12   COINS 35
 
    [1-1]★★★ ══ [1-2]★★☆ ══ [1-3]★☆☆ ══ [1-4] ··· ══ [1-5] ··· ══ [BOSS 1]
                                ▲
@@ -540,7 +537,7 @@ Grader
 Output tests, function tests, unittest suites (World 7+), AST rules, style rules
 ast, unittest, importlib
 Save file
-Progress, XP, stars, coins, badges
+Progress, stars, coins, badges
 json, pathlib
 Progression checker (developer tool)
 Fails the build if a level uses a construct not taught yet. Reads levels/concepts.toml; the rules are in docs/curriculum.md
@@ -581,12 +578,12 @@ Phase 2 – Runner, grader and scoring
 [x] Run player code in a separate process with a time limit and fake input
 [x] Output tests, function tests, AST rules ("must use a for loop") and style rules
 [x] XP, stars, coins, hints and the 70 % unlock rule
-[x] Level-clear screen and boss fight screen with health bar and lives
+[x] Level-clear screen and boss fight screen with health bar and tries
 Gate: Level 1-1 is fully graded; each wave's reference solution passes and a known-wrong solution fails.
 Phase 2.5 – Breakthrough: it must feel like a real game (design: docs/design/breakthrough.md)
 [ ] A: one command (python play.py), title screen, autosave after every line, signals, code buffers saved
 [ ] B: code inside the game (quick console, :run, highlighting, friendly errors, a level clears only when every wave is passed); no external folders
-[ ] C: full-screen look: HUD, framed panels, typed cutscenes, Snek reactions, level-clear animation
+[ ] C: full-screen look: alternate screen, HUD, framed panels, typed story, Snek reactions, level-clear animation, title with logo (--plain keeps the old look)
 Gate: a new player starts with one command, types a level's code in the game, and closing the window never loses work.
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
@@ -621,7 +618,7 @@ Phase 7 – Worlds 5–8 (content and art)
 Gate: Advanced tier playable end to end.
 Phase 8 – Playtest round 2 and balancing
 [ ] Full playthrough by student playtesters from both tiers
-[ ] Tune XP, coin prices, star thresholds, boss timers and pass marks from the data
+[ ] Tune coin prices, star thresholds, boss timers and pass marks from the data
 [ ] Fix all bugs in the issue tracker
 Gate: no open critical bugs; pass rates per level reviewed.
 Phase 9 – Release 1.0

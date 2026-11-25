@@ -275,13 +275,14 @@ class TestLocks(unittest.TestCase):
         self.assertIsNone(state.current_level)
 
     def test_map_shows_the_hud_and_stars(self):
-        """The map header has XP, stars and coins; open levels show their stars."""
+        """The map header has stars and coins (no XP); open levels show their stars."""
         levels = make_levels("1-1", "1-2")
         state = GameState(levels)
         state.xp = 1240
         state.progress_for(levels[0]).stars = 2
         text = handle_line(state, "map")
-        self.assertIn("XP 1240   ★ 2/6   COINS 10", text)
+        self.assertIn("★ 2/6   COINS 10", text)
+        self.assertNotIn("XP", text)
         self.assertIn("★★☆", text)
 
 
@@ -304,7 +305,8 @@ class TestScoredSubmit(unittest.TestCase):
         self.assertIn("LEVEL 1-1 CLEARED · LEVEL 1-1", answer[0])
         text = answer[-1]
         self.assertIn("LEVEL SCORE 100 %  ★★★", text)
-        self.assertIn("+1000 XP · +10 coins · combo 1", text)
+        self.assertIn("+10 coins · combo 1", text)
+        self.assertNotIn("XP", text)
         self.assertIn("LEVEL 1-1 CLEARED. Level 1-2 is open.", text)
         self.assertEqual(self.state.cleared, ["1-1"])
         self.assertFalse(self.state.coding)

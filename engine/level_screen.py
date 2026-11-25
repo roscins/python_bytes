@@ -126,6 +126,6 @@ def boss_intro_text(level):
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
     minutes = level.time_limit // 60
-    lines.append(f"{len(wave.tests)} hidden tests, 3 lives, {minutes} minutes. "
-                 "Each failed :submit costs a life.")
+    lines.append(f"{len(wave.tests)} hidden tests, 3 tries, {minutes} minutes. "
+                 "Each failed :submit uses up a try.")
     return "\n".join(lines)

@@ -7,11 +7,15 @@ You need Python 3.12 or newer and a terminal. From this folder:
 
     python play.py
 
-That is all: the title screen asks CONTINUE, NEW GAME or QUIT. The game saves
-after every line you type, so closing the window never loses your work.
+That is all: the game opens full screen with a title (press Enter), then CONTINUE,
+NEW GAME or QUIT. It saves after every line you type, so closing the window never
+loses your work, and your terminal comes back as it was when you leave.
 
+Needs a window of at least 80 x 24. `python play.py --plain` is the plain look (no
+colour, no animation, no full screen, ASCII boxes): use it with a screen reader, in a
+log, or when something looks wrong. It is also used when the output is not a
+terminal, and when the `NO_COLOR` variable is set.
 Optional: `pip install -e .` adds a `python-bytes` command that does the same.
-`python play.py --plain` uses plain text without box characters.
 Your save is `~/.python-bytes/save.json` (`--save PATH` changes it).
 
 Inside a level you type your code line by line; commands start with a colon

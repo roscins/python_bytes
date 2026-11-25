@@ -68,8 +68,20 @@ def show_answer(answer, write, pause):
         write(answer)
 
 
+def read_one_line(read_line, guard, display, prompt):
+    """Read the player's next line: at the typing row of the full-screen display, and guarded against signals."""
+    reader = read_line
+    if display is not None:
+        def reader(text):
+            """Read through the display, which puts the cursor on the typing row."""
+            return display.read(read_line, text)
+    if guard is not None:
+        return guard.read_input(reader, prompt)
+    return reader(prompt)
+
+
 def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
-        guard=None, autosaver=None):
+        guard=None, autosaver=None, display=None):
     """Keep asking for lines until the player quits.
 
     read_line and write default to input and print. Tests pass in their own
@@ -88,6 +100,9 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
     when the system asks the game to stop, and lets a stop signal end the
     waiting for the player's typing. Ctrl-D (end of input) and Ctrl-C quit
     the same way as :quit.
+
+    With a `display` (the full-screen mode) every answer is drawn as a screen
+    by the display instead of being written as text.
     """
     if autosaver is None and save_path is not None:
         autosaver = AutoSaver(state, save_path)
@@ -95,17 +110,19 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
     while state.running:
         prompt = prompt_for(state)
         try:
-            if guard is not None:
-                line = guard.read_input(read_line, prompt)
-            else:
-                line = read_line(prompt)
+            line = read_one_line(read_line, guard, display, prompt)
         except (EOFError, KeyboardInterrupt):
             # Start on a fresh line, because the terminal is still on the prompt.
             write("")
             line = ":quit"
+        combo_before = state.combo
         answer = handle_line(state, line)
         try:
-            show_answer(answer, write, pause)
+            if display is not None:
+                display.show(answer)
+                display.after_command(combo_before)
+            else:
+                show_answer(answer, write, pause)
         except OSError:
             # The terminal is gone (the window was closed). Save and stop.
             state.running = False

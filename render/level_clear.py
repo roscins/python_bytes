@@ -1,9 +1,9 @@
 """Draw the level-clear screen: a flashing bar, the stars filling in, and the rewards.
 
-The screen is a short animation. In each frame one more star fills in and
-the bar at the top switches between White and Green; the last frame has a
-Green bar and every star the player earned. All frames have the same
-height, so the loop can draw each one over the one before.
+The screen is a short animation: the stars fill in one by one while the bar
+at the top flashes, the coins earned count up, and the new power-up is
+revealed letter by letter. The last frame has a Green bar, every star the
+player earned, the coins and the power-up. All frames have the same height.
 """
 
 from pathlib import Path
@@ -82,23 +82,50 @@ def clear_frame(banner, filled_stars, bar_colour, reward_lines, art):
     return "\n".join(lines)
 
 
-def level_clear_frames(level_id, title, score, stars, xp_gained, coins_gained, power_up, art):
+# The coin counter counts up in at most this many steps.
+COIN_FRAMES = 6
+
+NEW_COMMAND = "NEW COMMAND: "
+
+
+def coin_steps(coins):
+    """Return the values the coin counter shows on its way up to `coins` (empty if no coins)."""
+    if coins <= 0:
+        return []
+    steps = min(coins, COIN_FRAMES)
+    values = []
+    for index in range(steps):
+        values.append(round(coins * (index + 1) / steps))
+    return values
+
+
+def reward_block(score, coins_shown, power_up_text):
+    """Return the lines under the picture: the score, the coins so far, the power-up so far."""
+    return [f"SCORE {score} %", f"COINS +{coins_shown}", power_up_text]
+
+
+def level_clear_frames(level_id, title, score, stars, coins_gained, power_up, art):
     """Return the frames of the level-clear animation.
 
-    The first frame has no stars filled in; each frame after it fills one
-    more, up to `stars`, while the bar flashes. `power_up` is the power-up
-    the level gives, or "" for none.
+    First the stars fill in one by one while the bar flashes. Then the coins
+    earned count up. Last, the new power-up is revealed letter by letter.
+    `power_up` is the power-up the level gives, or "" for none. Every frame
+    has the same height, so the loop can draw each one over the one before.
     """
     banner = f"LEVEL {level_id} CLEARED · {title.upper()}"
-    reward_lines = ["", f"SCORE {score} %", f"+{xp_gained} XP   +{coins_gained} COINS"]
-    if power_up:
-        reward_lines.append(f"POWER-UP: {power_up}")
     frames = []
     for filled in range(stars + 1):
         bar_colour = WHITE
         if filled % 2 == 1:
             bar_colour = GREEN
-        frames.append(clear_frame(banner, filled, bar_colour, reward_lines, art))
-    # The last frame always has a green bar, whatever the number of stars.
-    frames.append(clear_frame(banner, stars, GREEN, reward_lines, art))
+        frames.append(clear_frame(banner, filled, bar_colour, reward_block(score, 0, ""), art))
+    # From here on the bar is green, whatever the number of stars.
+    frames.append(clear_frame(banner, stars, GREEN, reward_block(score, 0, ""), art))
+    shown = 0
+    for shown in coin_steps(coins_gained):
+        frames.append(clear_frame(banner, stars, GREEN, reward_block(score, shown, ""), art))
+    if power_up:
+        for letters in range(1, len(power_up) + 1):
+            text = NEW_COMMAND + power_up[:letters]
+            frames.append(clear_frame(banner, stars, GREEN, reward_block(score, coins_gained, text), art))
     return frames

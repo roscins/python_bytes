@@ -191,6 +191,14 @@ class TestCommandLine(unittest.TestCase):
         self.assertFalse(arguments.plain)
         self.assertEqual(arguments.save, str(DEFAULT_SAVE_PATH))
 
+    def test_when_the_plain_look_is_used(self):
+        """--plain, output that is not a terminal, or NO_COLOR."""
+        fancy = engine_main.parse_arguments([])
+        self.assertFalse(engine_main.wants_plain(fancy, environment={}, is_terminal=True))
+        self.assertTrue(engine_main.wants_plain(engine_main.parse_arguments(["--plain"]), {}, True))
+        self.assertTrue(engine_main.wants_plain(fancy, {}, False))
+        self.assertTrue(engine_main.wants_plain(fancy, {"NO_COLOR": "1"}, True))
+
     def test_main_runs_the_game_with_those_arguments(self):
         """main(argv) starts the real game: QUIT at the title returns 0."""
         folder = make_temporary_folder(self)
