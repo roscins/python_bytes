@@ -94,7 +94,8 @@ class TestPhaseOneGate(unittest.TestCase):
             exit_code = engine_main.main(save_path=save_path)
         self.assertEqual(exit_code, 0)
         first_game = output.getvalue()
-        self.assertIn("[1-1] Hello, Terminal", first_game)
+        self.assertIn("WORLD 1 · BOOT SECTOR", first_game)
+        self.assertIn("[1-1]", first_game)
         self.assertIn("LEVEL 1-1 · HELLO, TERMINAL", first_game)
 
         output = io.StringIO()
@@ -103,7 +104,7 @@ class TestPhaseOneGate(unittest.TestCase):
             engine_main.main(save_path=save_path)
         second_game = output.getvalue()
         self.assertIn("Welcome back. You were on level 1-1.", second_game)
-        self.assertIn("[1-1] Hello, Terminal  <- you are here", second_game)
+        self.assertIn("You are at [1-1] Hello, Terminal.", second_game)
 
 
 class TestDefaultSavePath(unittest.TestCase):

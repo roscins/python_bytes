@@ -1,12 +1,14 @@
 """The commands a player can type, and the code that runs them.
 
 Every command is a function named do_<command>. It takes the game state and
-a list of arguments, and returns the text to show the player. The functions
+a list of arguments, and returns the text to show the player, or a list of
+frames for an animation (see show_frames in loop.py). The functions
 never print anything themselves; that is the job of the loop in loop.py.
 This keeps them easy to test.
 """
 
 from engine.level_screen import intro_text
+from render.world_map import load_map_art, map_screen, walk_frames
 
 
 def parse_command(line):
@@ -51,25 +53,37 @@ def do_help(state, arguments):
     return "\n".join(lines)
 
 
+def level_ids(levels):
+    """Return the ids of a list of levels, for example ["1-1", "1-2"]."""
+    ids = []
+    for level in levels:
+        ids.append(level.id)
+    return ids
+
+
 def do_map(state, arguments):
-    """Return the list of levels, marking the one being played."""
+    """Return the map of the current world, with ARIA at the current level."""
     if arguments:
         return extra_words_message("map")
     if not state.levels:
         return "No levels found. Level packs go in the levels/ folder."
-    lines = ["Levels:"]
-    for level in state.levels:
-        if level.id == state.current_level:
-            lines.append(f"  [{level.id}] {level.title}  <- you are here")
-        else:
-            lines.append(f"  [{level.id}] {level.title}")
-    return "\n".join(lines)
+    world = state.current_world()
+    ids = level_ids(state.levels_in_world(world))
+    current = state.find_level(state.current_level)
+    if current is None:
+        picture = map_screen(world, ids, None, load_map_art())
+        return picture + "\n\nType play <level> to start, for example: play " + ids[0]
+    picture = map_screen(world, ids, ids.index(current.id), load_map_art())
+    return picture + f"\n\nYou are at [{current.id}] {current.title}."
 
 
 def do_play(state, arguments):
     """Start the level whose id is given, for example "play 1-1".
 
     The answer is the level's intro: title, cutscene, tips and waves.
+    If the player was already on another level in the same world, ARIA
+    walks there first: the answer is then a list of map frames, and the
+    last frame has the intro below the map.
     """
     if len(arguments) != 1:
         return "Usage: play <level>, for example: play 1-1"
@@ -77,8 +91,16 @@ def do_play(state, arguments):
     level = state.find_level(level_id)
     if level is None:
         return f"There is no level {level_id}. Type map to see the levels."
+    previous = state.find_level(state.current_level)
     state.current_level = level.id
-    return intro_text(level)
+    intro = intro_text(level)
+    if previous is None or previous.world != level.world or previous.id == level.id:
+        return intro
+    ids = level_ids(state.levels_in_world(level.world))
+    frames = walk_frames(level.world, ids, ids.index(previous.id), ids.index(level.id),
+                         load_map_art())
+    frames[-1] = frames[-1] + "\n\n" + intro
+    return frames
 
 
 def do_submit(state, arguments):
@@ -106,7 +128,7 @@ def do_quit(state, arguments):
 # runs it and a short description used by the help command.
 COMMANDS = {
     "help": (do_help, "show this list of commands"),
-    "map": (do_map, "show the levels"),
+    "map": (do_map, "show the world map"),
     "play": (do_play, "start a level, for example: play 1-1"),
     "submit": (do_submit, "hand in your code for the current level"),
     "quit": (do_quit, "leave the game"),

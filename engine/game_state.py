@@ -28,3 +28,24 @@ class GameState:
             if level.id == level_id:
                 return level
         return None
+
+    def current_world(self):
+        """Return the world of the current level, or of the first level.
+
+        Before any level is started, the player is in the first world.
+        Returns None if there are no levels at all.
+        """
+        level = self.find_level(self.current_level)
+        if level is not None:
+            return level.world
+        if self.levels:
+            return self.levels[0].world
+        return None
+
+    def levels_in_world(self, world):
+        """Return the levels of one world, in map order."""
+        levels = []
+        for level in self.levels:
+            if level.world == world:
+                levels.append(level)
+        return levels
