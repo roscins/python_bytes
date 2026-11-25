@@ -95,7 +95,8 @@ class TestPhaseTwoGate(unittest.TestCase):
         self.assertIn("Code quality 4/4", text)
         self.assertIn("WAVE 3 · DEBUG  1/1 test passed ✓", text)
         self.assertIn("LEVEL SCORE 100 %  ★★★", text)
-        self.assertIn("★ 3/3", text)
+        # World 1 has six nodes on the map (five levels and the boss), 3 stars each.
+        self.assertIn("★ 3/18", text)
 
     def test_wrong_solutions_score_under_70_and_open_nothing(self):
         """Writing every wrong solution scores under 70 %, and the next level stays locked."""

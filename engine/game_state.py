@@ -1,6 +1,7 @@
 """The state of one running game: which levels exist and where the player is."""
 
 from engine.progress import LevelProgress
+from engine.roadmap import build_slots
 from engine.scoring import STARTING_COINS
 
 
@@ -9,6 +10,8 @@ class GameState:
 
     Attributes:
         levels: the Level objects the player can choose from, in map order.
+        curriculum: the Curriculum (levels/concepts.toml) that says which
+            levels exist on the map, or None to show only the levels above.
         current_level: the id of the level being played, for example "1-1",
             or None if the player has not started a level yet.
         cleared: the ids of the levels the player has cleared (70 % or more).
@@ -24,11 +27,12 @@ class GameState:
             workspace. Tests leave it as None, so they never write files.
     """
 
-    def __init__(self, levels=None, workspace_root=None):
-        """Start a new game with the given levels (or none) and workspace folder."""
+    def __init__(self, levels=None, workspace_root=None, curriculum=None):
+        """Start a new game with the given levels (or none), workspace folder and curriculum."""
         if levels is None:
             levels = []
         self.levels = list(levels)
+        self.curriculum = curriculum
         self.workspace_root = workspace_root
         self.current_level = None
         self.cleared = []
@@ -52,17 +56,40 @@ class GameState:
                 return level
         return None
 
+    def slots(self):
+        """Return what the map shows, in map order: the levels, plus the ones not written yet.
+
+        See engine/roadmap.py. Without a curriculum these are the levels.
+        """
+        return build_slots(self.levels, self.curriculum)
+
+    def find_slot(self, level_id):
+        """Return the slot with this id (a Level or a MissingLevel), or None."""
+        for slot in self.slots():
+            if slot.id == level_id:
+                return slot
+        return None
+
+    def slots_in_world(self, world):
+        """Return the slots of one world, in map order."""
+        slots = []
+        for slot in self.slots():
+            if slot.world == world:
+                slots.append(slot)
+        return slots
+
     def current_world(self):
-        """Return the world of the current level, or of the first level.
+        """Return the world of the current level, or of the first slot on the map.
 
         Before any level is started, the player is in the first world.
-        Returns None if there are no levels at all.
+        Returns None if there is nothing on the map at all.
         """
         level = self.find_level(self.current_level)
         if level is not None:
             return level.world
-        if self.levels:
-            return self.levels[0].world
+        slots = self.slots()
+        if slots:
+            return slots[0].world
         return None
 
     def levels_in_world(self, world):

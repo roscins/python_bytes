@@ -4,6 +4,7 @@ The renderer does not know about the game state, so this module turns the
 state into a MapStatus that render/world_map.py can draw.
 """
 
+from engine.roadmap import is_written
 from engine.scoring import MAX_STARS, is_unlocked
 from render.world_map import MapStatus
 
@@ -28,10 +29,16 @@ def hud_text(state, world_levels):
 
 
 def map_status(state, world_levels):
-    """Return the MapStatus for the levels of one world."""
+    """Return the MapStatus for the slots of one world.
+
+    A slot is locked if its level is not written yet, or the slot before
+    it (anywhere in the game) is not cleared.
+    """
     locked = []
     stars = []
+    all_slots = state.slots()
     for level in world_levels:
-        locked.append(not is_unlocked(state.levels, state.cleared, level))
+        open_to_play = is_written(level) and is_unlocked(all_slots, state.cleared, level)
+        locked.append(not open_to_play)
         stars.append(level_stars(state, level))
     return MapStatus(hud_text(state, world_levels), locked, stars)

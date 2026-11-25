@@ -62,6 +62,14 @@ def do_help(state, arguments):
     return "\n".join(lines)
 
 
+def slot_index(slots, level_id):
+    """Return the position of the slot with this id in a list of slots."""
+    for index in range(len(slots)):
+        if slots[index].id == level_id:
+            return index
+    return -1
+
+
 def level_ids(levels):
     """Return the ids of a list of levels, for example ["1-1", "1-2"]."""
     ids = []
@@ -74,12 +82,12 @@ def do_map(state, arguments):
     """Return the map of the current world, with Snek at the current level."""
     if arguments:
         return extra_words_message("map")
-    if not state.levels:
+    if not state.slots():
         return "No levels found. Level packs go in the levels/ folder."
     world = state.current_world()
-    world_levels = state.levels_in_world(world)
-    ids = level_ids(world_levels)
-    status = map_status(state, world_levels)
+    world_slots = state.slots_in_world(world)
+    ids = level_ids(world_slots)
+    status = map_status(state, world_slots)
     current = state.find_level(state.current_level)
     if current is None:
         picture = map_screen(world, ids, None, load_map_art(), status)
@@ -105,9 +113,12 @@ def do_play(state, arguments):
     level_id = arguments[0]
     level = state.find_level(level_id)
     if level is None:
+        if state.find_slot(level_id) is not None:
+            return f"Level {level_id} is not written yet. Type map to see the levels."
         return f"There is no level {level_id}. Type map to see the levels."
-    if not is_unlocked(state.levels, state.cleared, level):
-        before = state.levels[state.levels.index(level) - 1]
+    slots = state.slots()
+    if not is_unlocked(slots, state.cleared, level):
+        before = slots[slot_index(slots, level.id) - 1]
         return f"Level {level.id} is locked. Clear {before.id} with at least {PASS_MARK} % first."
     previous = state.find_level(state.current_level)
     state.current_level = level.id
@@ -120,10 +131,10 @@ def do_play(state, arguments):
         intro = intro + f"\nYour files are in {folder.resolve()}"
     if previous is None or previous.world != level.world or previous.id == level.id:
         return intro
-    world_levels = state.levels_in_world(level.world)
-    ids = level_ids(world_levels)
+    world_slots = state.slots_in_world(level.world)
+    ids = level_ids(world_slots)
     frames = slither_frames(level.world, ids, ids.index(previous.id), ids.index(level.id),
-                            load_map_art(), map_status(state, world_levels))
+                            load_map_art(), map_status(state, world_slots))
     frames[-1] = frames[-1] + "\n\n" + intro
     return frames
 

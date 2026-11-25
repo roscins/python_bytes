@@ -52,10 +52,13 @@ class Wave:
         tests: a list of dicts, one per [[wave.test]] in the file.
         hints: the wave's three hints (nudge, outline, partial solution),
             or an empty list if it has none.
+        time_limit: how many seconds the player's program may run in this
+            wave, or None for the runner's default.
     """
 
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
-                 reference=None, wrong=None, answer=None, tests=None, hints=None):
+                 reference=None, wrong=None, answer=None, tests=None, hints=None,
+                 time_limit=None):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -71,6 +74,7 @@ class Wave:
         if hints is None:
             hints = []
         self.hints = list(hints)
+        self.time_limit = time_limit
 
 
 class Level:
@@ -226,6 +230,12 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
             raise LevelError(f"{place}: a wave has {HINT_COUNT} hints (nudge, outline, "
                              f"partial solution), this one has {len(hints)}")
 
+    time_limit = None
+    if "time_limit" in table:
+        time_limit = get_whole_number(table, "time_limit", place)
+        if time_limit < 1:
+            raise LevelError(f"{place}: time_limit must be at least 1 second")
+
     return Wave(
         kind,
         brief,
@@ -237,6 +247,7 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         answer=table.get("answer"),
         tests=tests,
         hints=hints,
+        time_limit=time_limit,
     )
 
 
