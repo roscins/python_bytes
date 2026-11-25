@@ -6,6 +6,8 @@ never print anything themselves; that is the job of the loop in loop.py.
 This keeps them easy to test.
 """
 
+from engine.level_screen import intro_text
+
 
 def parse_command(line):
     """Split a typed line into a command name and a list of arguments.
@@ -65,7 +67,10 @@ def do_map(state, arguments):
 
 
 def do_play(state, arguments):
-    """Start the level whose id is given, for example "play 1-1"."""
+    """Start the level whose id is given, for example "play 1-1".
+
+    The answer is the level's intro: title, cutscene, tips and waves.
+    """
     if len(arguments) != 1:
         return "Usage: play <level>, for example: play 1-1"
     level_id = arguments[0]
@@ -73,7 +78,7 @@ def do_play(state, arguments):
     if level is None:
         return f"There is no level {level_id}. Type map to see the levels."
     state.current_level = level.id
-    return f"Starting level {level.id}: {level.title}."
+    return intro_text(level)
 
 
 def do_submit(state, arguments):

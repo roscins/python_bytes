@@ -1,7 +1,8 @@
 """Tests for engine/__main__.py, the file that starts the game.
 
-Every test passes its own temporary levels folder and save path, so the
-real levels/ folder and the player's real save file are never touched.
+Every test passes its own temporary save path, so the player's real save
+file is never touched. The gate test reads the real levels/ folder; the
+others use temporary level packs.
 """
 
 import io
@@ -76,6 +77,33 @@ class TestMain(unittest.TestCase):
         self.assertIn("Cannot load the levels", text)
         self.assertIn("title is missing", text)
         self.assertFalse(self.save_path.exists())
+
+
+class TestPhaseOneGate(unittest.TestCase):
+    """The Phase 1 gate: open the map, play Level 1-1, quit and resume."""
+
+    def test_open_map_play_1_1_quit_and_resume(self):
+        """With the real levels, a player is welcomed back to 1-1 after quitting."""
+        save_path = make_temporary_folder(self) / "save.json"
+        output = io.StringIO()
+        real_stdin = sys.stdin
+        self.addCleanup(setattr, sys, "stdin", real_stdin)
+
+        sys.stdin = io.StringIO("map\nplay 1-1\nquit\n")
+        with redirect_stdout(output):
+            exit_code = engine_main.main(save_path=save_path)
+        self.assertEqual(exit_code, 0)
+        first_game = output.getvalue()
+        self.assertIn("[1-1] Hello, Terminal", first_game)
+        self.assertIn("LEVEL 1-1 · HELLO, TERMINAL", first_game)
+
+        output = io.StringIO()
+        sys.stdin = io.StringIO("map\nquit\n")
+        with redirect_stdout(output):
+            engine_main.main(save_path=save_path)
+        second_game = output.getvalue()
+        self.assertIn("Welcome back. You were on level 1-1.", second_game)
+        self.assertIn("[1-1] Hello, Terminal  <- you are here", second_game)
 
 
 class TestDefaultSavePath(unittest.TestCase):

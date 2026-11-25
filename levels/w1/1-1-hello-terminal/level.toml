@@ -1,0 +1,68 @@
+[level]
+id = "1-1"
+title = "Hello, Terminal"
+world = 1
+new_concepts = ["print()", "string literals", "comments"]
+power_up = "status"
+
+cutscene = '''
+# >> The lab is dark. One terminal blinks. ARIA's voice module is offline.
+# >> A note taped to the screen says: "Type this to wake her."
+print("SYSTEM CHECK")
+print("VOICE MODULE OK")
+# >> A speaker crackles.
+# >> ARIA: "HELLO... TECHNICIAN?"
+'''
+
+tips = [
+  "print(...) shows whatever is inside the brackets on the screen.",
+  "Text inside quotes is a string literal: \"HELLO\" or 'HELLO'.",
+  "A line starting with # is a comment. Python ignores it; humans read it.",
+]
+
+[[wave]]
+kind = "fill-in"
+brief = "Fill in the blank so ARIA says ARIA ONLINE."
+starter = '''print(___)'''
+reference = '''print("ARIA ONLINE")'''
+wrong = '''print(ARIA ONLINE)'''
+
+[[wave.test]]
+expected_stdout = "ARIA ONLINE\n"
+
+[[wave.test]]
+require = ["Call"]
+
+[[wave]]
+kind = "build"
+brief = """
+Make ARIA print exactly three lines: SYSTEM CHECK, VOICE MODULE OK, and
+HELLO, TECHNICIAN. Add a comment above the code saying what it does.
+"""
+reference = '''
+# ARIA's start-up message
+print("SYSTEM CHECK")
+print("VOICE MODULE OK")
+print("HELLO, TECHNICIAN")
+'''
+wrong = '''
+print("SYSTEM CHECK", "VOICE MODULE OK", "HELLO, TECHNICIAN")
+'''
+
+[[wave.test]]
+expected_stdout = "SYSTEM CHECK\nVOICE MODULE OK\nHELLO, TECHNICIAN\n"
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+mode = "predict"
+brief = "What does this program print? Type the output exactly."
+code = '''
+print("ONE")
+# print("TWO")
+print("THREE")
+'''
+answer = "ONE\nTHREE"
+wrong = "ONE\nTWO\nTHREE"
