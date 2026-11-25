@@ -1,6 +1,6 @@
 """Draw a sprite file in the terminal.
 
-Run it with:  python -m render art/aria-offline.txt
+Run it with:  python -m render art/snek-offline.txt
 """
 
 import os
@@ -17,7 +17,7 @@ PALETTE_PATH = Path(__file__).parent.parent / "art" / "palette.txt"
 def main(arguments):
     """Draw the sprite file named in `arguments` and return an exit code."""
     if len(arguments) != 1:
-        print("Usage: python -m render <sprite file>, for example art/aria-offline.txt")
+        print("Usage: python -m render <sprite file>, for example art/snek-offline.txt")
         return 2
     if os.name == "nt":
         os.system("")  # switches on ANSI colours in older Windows consoles

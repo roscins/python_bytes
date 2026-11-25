@@ -197,7 +197,7 @@ class TestHelpers(unittest.TestCase):
     def test_is_valid_python(self):
         """Code that compiles is valid; a missing quote is not."""
         self.assertTrue(is_valid_python('print("OK")'))
-        self.assertFalse(is_valid_python("print(ARIA ONLINE)"))
+        self.assertFalse(is_valid_python("print(SNEK ONLINE)"))
 
 
 if __name__ == "__main__":

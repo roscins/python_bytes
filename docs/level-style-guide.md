@@ -36,7 +36,7 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
 ## Tone
 
 - The narrator speaks to the player in the second person: "You patch in more power…"
-- ARIA speaks in short UPPER-CASE lines: `ARIA: "VOICE MODULE ONLINE."`
+- Snek speaks in short UPPER-CASE lines: `Snek: "VOICE MODULE ONLINE."`
 - Comments in cutscene code start with `# >>` for story lines and plain `#` for explanations.
 - Friendly and a little dry. No jokes at the player's expense, and no "easy" or "simple" (it may not be for the player).
 
@@ -51,12 +51,12 @@ new_concepts = ["print()", "string literals", "comments"]
 power_up = "status"
 
 cutscene = '''
-# >> The lab is dark. One terminal blinks. ARIA's voice module is offline.
+# >> The lab is dark. One terminal blinks. Snek's voice module is offline.
 # >> A note taped to the screen says: "Type this to wake her."
 print("SYSTEM CHECK")
 print("VOICE MODULE OK")
 # >> A speaker crackles.
-# >> ARIA: "HELLO... TECHNICIAN?"
+# >> Snek: "HELLO... TECHNICIAN?"
 '''
 
 tips = [
@@ -67,13 +67,13 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
-brief = "Fill in the blank so ARIA says ARIA ONLINE."
+brief = "Fill in the blank so Snek says SNEK ONLINE."
 starter = '''print(___)'''
-reference = '''print("ARIA ONLINE")'''
-wrong = '''print(ARIA ONLINE)'''
+reference = '''print("SNEK ONLINE")'''
+wrong = '''print(SNEK ONLINE)'''
 
 [[wave.test]]
-expected_stdout = "ARIA ONLINE\n"
+expected_stdout = "SNEK ONLINE\n"
 
 [[wave.test]]
 require = ["Call"]
@@ -81,11 +81,11 @@ require = ["Call"]
 [[wave]]
 kind = "build"
 brief = """
-Make ARIA print exactly three lines: SYSTEM CHECK, VOICE MODULE OK, and
+Make Snek print exactly three lines: SYSTEM CHECK, VOICE MODULE OK, and
 HELLO, TECHNICIAN. Add a comment above the code saying what it does.
 """
 reference = '''
-# ARIA's start-up message
+# Snek's start-up message
 print("SYSTEM CHECK")
 print("VOICE MODULE OK")
 print("HELLO, TECHNICIAN")

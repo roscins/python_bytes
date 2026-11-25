@@ -62,7 +62,7 @@ def level_ids(levels):
 
 
 def do_map(state, arguments):
-    """Return the map of the current world, with ARIA at the current level."""
+    """Return the map of the current world, with Snek at the current level."""
     if arguments:
         return extra_words_message("map")
     if not state.levels:
@@ -81,7 +81,7 @@ def do_play(state, arguments):
     """Start the level whose id is given, for example "play 1-1".
 
     The answer is the level's intro: title, cutscene, tips and waves.
-    If the player was already on another level in the same world, ARIA
+    If the player was already on another level in the same world, Snek
     walks there first: the answer is then a list of map frames, and the
     last frame has the intro below the map.
     """

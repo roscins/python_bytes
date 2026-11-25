@@ -159,7 +159,7 @@ class TestPlay(unittest.TestCase):
 
 
 class TestWalking(unittest.TestCase):
-    """Check when play makes ARIA walk across the map."""
+    """Check when play makes Snek walk across the map."""
 
     def test_first_play_shows_only_the_intro(self):
         """With no level before, there is nowhere to walk from."""
@@ -180,13 +180,13 @@ class TestWalking(unittest.TestCase):
         self.assertEqual(state.current_level, "1-2")
 
     def test_play_same_level_again_does_not_walk(self):
-        """Playing the level ARIA is already at shows only the intro."""
+        """Playing the level Snek is already at shows only the intro."""
         state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-1"
         self.assertIsInstance(handle_line(state, "play 1-1"), str)
 
     def test_play_in_another_world_does_not_walk(self):
-        """ARIA only walks within one world's map."""
+        """Snek only walks within one world's map."""
         levels = make_levels("1-1", "2-1")
         levels[1].world = 2
         state = GameState(levels)
