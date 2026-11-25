@@ -177,7 +177,7 @@ XP multiplier: ×1.5 after 3, ×2 after 5
 Badges
 Special feats, for example "No Hints in World 1" or "Clean Coder" (full quality score on 10 levels)
 Shown on the player's profile screen
-Power-ups are the main reward: the player can actually use what they just learned as a tool in the game. Commands available from the start: help, map, play, submit, hint, codex, stats, quit.
+Power-ups are the main reward: the player can actually use what they just learned as a tool in the game. Commands available from the start (with a colon in front while coding): help, map, play, submit, hint, codex, stats, quit.
 Level score
 Component
 Share of level score
@@ -519,7 +519,7 @@ Ending + credits
 From Level 7-4 onward, Wave 2 is graded by hidden unittest suites, and some missions are partly graded by a written note checked against a rubric (see Game design).
 Technical architecture
 Python Bytes is a single Python program built on the standard library only, so it installs with nothing but Python 3.12. The game engine is the hub: it reads level packs, draws through the renderer, sends player code to the runner and turns the grader's results into XP, stars and unlocks.
-The player writes code in their own editor, in a workspace/ folder the game watches; the game then runs and grades it.
+The player types code inside the game, line by line, in code mode (decided in docs/design/breakthrough.md); the game saves it after every line, then runs and grades it. :where copies a wave's code to a file for players who want an editor.
 Components and the standard-library modules they use
 Component
 Job
@@ -585,7 +585,7 @@ Phase 2 – Runner, grader and scoring
 Gate: Level 1-1 is fully graded; each wave's reference solution passes and a known-wrong solution fails.
 Phase 2.5 – Breakthrough: it must feel like a real game (design: docs/design/breakthrough.md)
 [ ] A: one command (python play.py), title screen, autosave after every line, signals, code buffers saved
-[ ] B: code inside the game (code mode, REPL, highlighting, friendly errors); no external folders
+[ ] B: code inside the game (quick console, :run, highlighting, friendly errors, a level clears only when every wave is passed); no external folders
 [ ] C: full-screen look: HUD, framed panels, typed cutscenes, Snek reactions, level-clear animation
 Gate: a new player starts with one command, types a level's code in the game, and closing the window never loses work.
 Phase 3 – Worlds 1–2 (content and art)
@@ -640,7 +640,7 @@ Quality checks
 • Progression checker run on all content, so no level uses a construct before it is taught.
 • Playtest data from the student playtesters (time, hints, failure points) reviewed after each round.
 Open questions
-• How should players write code: in the terminal itself, or in their own editor with the game watching a workspace/ folder? (Proposal: own editor, because that is how real work is done.)
+• Decided: players write code inside the game (code mode), not in an external editor. Code is saved after every typed line.
 • Should the style checker use my own ast-based rules only, or the third-party pycodestyle package as an optional extra?
 • How should the game treat AI-generated or copied answers, given that it is self-study?
 • Is the grade scale in Game design acceptable, or should it be removed so the game is not confused with official OsloMet grading?

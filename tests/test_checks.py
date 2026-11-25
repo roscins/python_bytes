@@ -51,7 +51,7 @@ class TestExpectedStdout(unittest.TestCase):
         """A program that crashes fails with the error line."""
         result = run_check({"expected_stdout": "X"}, "print(X)")
         self.assertFalse(result.passed)
-        self.assertIn("stopped with an error: NameError", result.message)
+        self.assertIn("stopped with an error on line 1: NameError", result.message)
 
     def test_syntax_error_is_explained(self):
         """Code Python cannot read fails with a SyntaxError message."""

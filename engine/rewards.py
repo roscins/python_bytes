@@ -8,7 +8,6 @@ engine/scoring.py.
 from engine.roadmap import is_written
 from engine.scoring import (
     FIRST_TRY_COINS,
-    PASS_MARK,
     QUALITY_COINS,
     combo_multiplier,
     level_score,
@@ -30,11 +29,12 @@ class Reward:
         combo: the combo after this submit.
         multiplier: the XP multiplier that combo gives.
         cleared_now: True if this submit cleared the level for the first time.
+        is_cleared: True if the level is cleared now (this time or earlier).
         opened_level: the Level that opened because of it, or None.
     """
 
     def __init__(self, best_score, old_best, stars, xp_gained, coins_gained, combo,
-                 multiplier, cleared_now, opened_level, old_stars=0):
+                 multiplier, cleared_now, opened_level, old_stars=0, is_cleared=False):
         """Remember every part of the reward."""
         self.best_score = best_score
         self.old_best = old_best
@@ -46,6 +46,7 @@ class Reward:
         self.multiplier = multiplier
         self.cleared_now = cleared_now
         self.opened_level = opened_level
+        self.is_cleared = is_cleared
 
 
 def has_build_wave(level):
@@ -70,6 +71,17 @@ def next_level(state, level):
                 return following
             return None
     return None
+
+
+def all_waves_passed(progress):
+    """Return True if every wave of the level has had all of its tests passed at least once.
+
+    This is what clears a level. The score only decides the stars.
+    """
+    for best in progress.wave_best:
+        if best < 1.0:
+            return False
+    return True
 
 
 def update_wave(state, progress, submission):
@@ -133,11 +145,12 @@ def apply_submission(state, level, submissions):
     state.xp = state.xp + xp_gained
     state.coins = state.coins + coins
 
-    cleared_now = progress.best_score >= PASS_MARK and level.id not in state.cleared
+    cleared_now = all_waves_passed(progress) and level.id not in state.cleared
     opened_level = None
     if cleared_now:
         state.cleared.append(level.id)
         opened_level = next_level(state, level)
 
     return Reward(progress.best_score, old_best, progress.stars, xp_gained, coins,
-                  state.combo, multiplier, cleared_now, opened_level, old_stars)
+                  state.combo, multiplier, cleared_now, opened_level, old_stars,
+                  level.id in state.cleared)

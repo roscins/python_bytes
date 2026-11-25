@@ -16,14 +16,15 @@ from engine.code_mode import (
     show_wave,
     start_coding,
 )
+from engine.console import continue_pending, do_cancel, do_run, run_python_line
 from engine.hints import ask_for_hint
 from engine.hud import map_status
 from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
-from engine.scoring import PASS_MARK, is_unlocked
+from engine.scoring import is_unlocked
 from engine.submission import grade_text
-from engine.workspace import level_folder, wave_file_name
+from engine.workspace import export_wave
 from render.level_clear import level_clear_frames, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames
 
@@ -68,8 +69,8 @@ def do_help(state, arguments):
         _, description = COMMANDS[name]
         lines.append(f"  {name:<8} {description}")
     lines.append("While you code (always with a colon in front):")
-    for name in CODE_COMMANDS:
-        _, description = CODE_COMMANDS[name]
+    for name in ALL_CODE_COMMANDS:
+        _, description = ALL_CODE_COMMANDS[name]
         lines.append(f"  :{name:<7} {description}")
     return "\n".join(lines)
 
@@ -132,7 +133,7 @@ def do_play(state, arguments):
     slots = state.slots()
     if not is_unlocked(slots, state.cleared, level):
         before = slots[slot_index(slots, level.id) - 1]
-        return f"Level {level.id} is locked. Clear {before.id} with at least {PASS_MARK} % first."
+        return f"Level {level.id} is locked. Pass every wave of {before.id} first."
     previous = state.find_level(state.current_level)
     start_coding(state, level)
     if level.boss:
@@ -221,10 +222,7 @@ def do_where(state, arguments):
         return NOT_PLAYING
     if state.workspace_root is None:
         return "There is no workspace folder."
-    folder = level_folder(level, state.workspace_root)
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / wave_file_name(level.waves[number - 1], number)
-    path.write_text(state.wave_text(level, number), encoding="utf-8")
+    path = export_wave(level, number, state.wave_text(level, number), state.workspace_root)
     return f"Saved the code of wave {number} to {path.resolve()}"
 
 
@@ -249,23 +247,31 @@ COMMANDS = {
 }
 
 
+# The commands typed with a colon: the ones for code mode, plus :run and :cancel.
+ALL_CODE_COMMANDS = dict(CODE_COMMANDS)
+ALL_CODE_COMMANDS["run"] = (do_run, "try your code without handing it in (not graded)")
+ALL_CODE_COMMANDS["cancel"] = (do_cancel, "stop what you were typing (a block, an edit, input)")
+
+
 def run_command(state, text, colon):
     """Run the command at the start of `text`. `colon` is True if it was typed with a colon.
 
     The commands of code mode (:edit, :undo ...) only exist with a colon.
+    A word without a colon that is not a command is Python: it goes to the
+    quick console.
     """
     name, arguments = parse_command(text)
     if name == "":
         return ""
-    if colon and name in CODE_COMMANDS:
-        function, _ = CODE_COMMANDS[name]
+    if colon and name in ALL_CODE_COMMANDS:
+        function, _ = ALL_CODE_COMMANDS[name]
         # They want the text after the command name exactly as typed, because
         # the spaces in ":edit 2     print(x)" are the code's indentation.
         return function(state, text.lstrip()[len(name):])
     if name not in COMMANDS:
         if colon:
             return f"Unknown command: :{name}. Type :help to see the commands."
-        return f"Unknown command: {name}. Type help to see the commands."
+        return run_python_line(state, text)
     # Each entry is (function, description); only the function is needed here.
     function, _ = COMMANDS[name]
     return function(state, arguments)
@@ -274,10 +280,20 @@ def run_command(state, text, colon):
 def handle_line(state, line):
     """Run the line the player typed and return the text to show.
 
-    A line that starts with ":" is a command. Any other line is a line of
-    code while the player is in code mode, and a command otherwise. A blank
-    line outside code mode returns an empty string.
+    - While the game waits for more (the rest of a block, the new text of
+      :edit, the input of :run), the line goes there.
+    - A line that starts with ":" is a command. It also ends anything the
+      game was waiting for (":cancel" does only that).
+    - Any other line is a line of code while the player is in code mode.
+    - Otherwise it is a command, or Python for the quick console.
+    A blank line outside code mode returns an empty string.
     """
+    if state.pending is not None:
+        if not line.startswith(":"):
+            return continue_pending(state, line)
+        state.pending = None
+        if line.strip().lower() == ":cancel":
+            return "Cancelled."
     if line.startswith(":"):
         return run_command(state, line[1:], colon=True)
     if state.coding:

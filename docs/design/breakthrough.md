@@ -1,7 +1,9 @@
 # Breakthrough: making Python Bytes feel like a real game
 
 Status: **approved**, with one change: no lives and no XP (decision 7 below). PR A is built
-and stacked on #19 because #18 and #19 were still open. Next: B, then C.
+and was merged into #19's branch (#20); PR #21 lands #19 and #20 on `main`. PR B is built on that.
+B also contains the decision "a level clears only when all waves are passed", and A's "a half-typed line is lost" is accepted.
+Next: C.
 Three PRs, in this order: **A** (start, title, save), **B** (code inside the game),
 **C** (full-screen look and feel). Each PR is fully tested and gets its own design
 tick in `docs/plan.md` (a new "Phase 2.5 – Breakthrough" with three checkboxes).

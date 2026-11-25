@@ -5,7 +5,8 @@ earned, and whether the level was cleared. Like the other screens, this
 module returns text and never prints.
 """
 
-from engine.scoring import PASS_MARK, star_text
+from engine.friendly import friendly_message
+from engine.scoring import star_text
 
 TICK = "✓"
 CROSS = "✗"
@@ -14,7 +15,7 @@ CROSS = "✗"
 def check_lines(check):
     """Return the lines for one failed check: a cross, its name and its message."""
     lines = [f"  {CROSS} {check.name}"]
-    for line in check.message.splitlines():
+    for line in friendly_message(check.message).splitlines():
         lines.append("      " + line)
     return lines
 
@@ -68,9 +69,8 @@ def reward_lines(level, reward):
         if reward.opened_level is not None:
             cleared = cleared + f" Level {reward.opened_level.id} is open."
         lines.append(cleared)
-    elif reward.best_score < PASS_MARK:
-        lines.append(f"You need {PASS_MARK} % to clear this level. Fix the waves marked ✗ "
-                     "and submit again.")
+    elif not reward.is_cleared:
+        lines.append("Pass every wave to clear this level.")
     return lines
 
 

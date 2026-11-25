@@ -1,11 +1,11 @@
-"""Tests for engine/workspace.py, engine/submission.py and engine/results_screen.py."""
+"""Tests for engine/workspace.py (names, starting text, the :where export), engine/submission.py and engine/results_screen.py."""
 
 import unittest
 
 from engine.level_pack import Level, Wave
 from engine.results_screen import results_text
-from engine.submission import grade_submission
-from engine.workspace import prepare_workspace, read_wave_file, wave_file_name
+from engine.submission import grade_text
+from engine.workspace import export_wave, level_folder, starting_text, wave_file_name
 from tests.helpers import make_temporary_folder
 
 
@@ -22,10 +22,10 @@ def make_three_wave_level():
 
 
 class TestWorkspace(unittest.TestCase):
-    """Check the files made in a level's workspace."""
+    """Check the file names, the starting text and the export."""
 
     def setUp(self):
-        """Make a temporary workspace and a level."""
+        """Make a temporary folder and a level."""
         self.root = make_temporary_folder(self)
         self.level = make_three_wave_level()
 
@@ -34,67 +34,77 @@ class TestWorkspace(unittest.TestCase):
         self.assertEqual(wave_file_name(self.level.waves[0], 1), "wave1.py")
         self.assertEqual(wave_file_name(self.level.waves[2], 3), "wave3.txt")
 
-    def test_prepare_makes_the_files(self):
-        """The fill-in file starts from the starter; the others start empty."""
-        folder = prepare_workspace(self.level, self.root)
-        self.assertEqual(folder, self.root / "1-1")
-        self.assertEqual((folder / "wave1.py").read_text(encoding="utf-8"), "print(___)\n")
-        self.assertEqual((folder / "wave2.py").read_text(encoding="utf-8"), "")
-        self.assertEqual((folder / "wave3.txt").read_text(encoding="utf-8"), "")
+    def test_starting_text(self):
+        """A fill-in wave starts from its starter; the others start empty."""
+        self.assertEqual(starting_text(self.level.waves[0]), "print(___)\n")
+        self.assertEqual(starting_text(self.level.waves[1]), "")
+        self.assertEqual(starting_text(self.level.waves[2]), "")
 
-    def test_prepare_never_overwrites(self):
-        """Playing again keeps the player's work."""
-        folder = prepare_workspace(self.level, self.root)
-        (folder / "wave1.py").write_text('print("OK")', encoding="utf-8")
-        prepare_workspace(self.level, self.root)
-        self.assertEqual(read_wave_file(self.level, 1, self.root), 'print("OK")')
+    def test_export_writes_the_file_in_the_level_folder(self):
+        """The copy is where :where says."""
+        path = export_wave(self.level, 2, 'print("HI")\n', self.root)
+        self.assertEqual(path, level_folder(self.level, self.root) / "wave2.py")
+        self.assertEqual(path.read_text(encoding="utf-8"), 'print("HI")\n')
 
-    def test_read_missing_file(self):
-        """A file that is not there reads as None."""
-        self.assertIsNone(read_wave_file(self.level, 2, self.root))
+    def test_export_of_a_predict_wave_is_a_text_file(self):
+        """wave3.txt."""
+        path = export_wave(self.level, 3, "ONE\n", self.root)
+        self.assertEqual(path.name, "wave3.txt")
+
+    def test_export_overwrites_with_the_current_code(self):
+        """It is a copy of what the game holds now."""
+        export_wave(self.level, 2, "old\n", self.root)
+        path = export_wave(self.level, 2, "new\n", self.root)
+        self.assertEqual(path.read_text(encoding="utf-8"), "new\n")
+
+    def test_nothing_in_the_game_reads_the_files_back(self):
+        """grade_submission and prepare_workspace are gone: the code lives in the game."""
+        import engine.submission
+        import engine.workspace
+
+        self.assertFalse(hasattr(engine.submission, "grade_submission"))
+        self.assertFalse(hasattr(engine.workspace, "prepare_workspace"))
+        self.assertFalse(hasattr(engine.workspace, "read_wave_file"))
 
 
-class TestSubmission(unittest.TestCase):
-    """Check grading a whole level from its workspace, and the results text."""
+class TestGradingTypedCode(unittest.TestCase):
+    """Check grading typed code, and the results text."""
 
     def setUp(self):
-        """Make a workspace for the three-wave level."""
-        self.root = make_temporary_folder(self)
+        """The three-wave level."""
         self.level = make_three_wave_level()
-        self.folder = prepare_workspace(self.level, self.root)
 
-    def write(self, name, text):
-        """Write one wave file in the level's workspace."""
-        (self.folder / name).write_text(text, encoding="utf-8")
+    def submission(self, number, text):
+        """Grade `text` as wave `number`."""
+        return grade_text(self.level.waves[number - 1], number, text)
 
-    def test_empty_files_are_not_graded(self):
-        """A wave whose file is empty has no result yet."""
-        submissions = grade_submission(self.level, self.root)
-        self.assertEqual(len(submissions), 3)
-        self.assertIsNotNone(submissions[0].result)
-        self.assertIsNone(submissions[1].result)
-        self.assertIsNone(submissions[2].result)
-        text = results_text(self.level, submissions)
+    def test_empty_code_is_not_graded(self):
+        """A wave with no code has no result yet."""
+        for text in ["", "   \n\n"]:
+            self.assertIsNone(self.submission(2, text).result)
+        text = results_text(self.level, [self.submission(2, "")])
         self.assertIn("WAVE 2 · BUILD  not started: type your code first", text)
-
-    def test_only_some_waves(self):
-        """wave_numbers picks which waves are graded."""
-        submissions = grade_submission(self.level, self.root, wave_numbers=[3])
-        self.assertEqual(len(submissions), 1)
-        self.assertEqual(submissions[0].number, 3)
 
     def test_results_text_reports_each_wave(self):
         """Passed waves get a tick; failed checks and quality rules are explained."""
-        self.write("wave1.py", 'print("OK")')
-        self.write("wave2.py", 'print("HI")')
-        self.write("wave3.txt", "ONE")
-        text = results_text(self.level, grade_submission(self.level, self.root))
+        submissions = [
+            self.submission(1, 'print("OK")'),
+            self.submission(2, 'print("HI")'),
+            self.submission(3, "ONE"),
+        ]
+        text = results_text(self.level, submissions)
         self.assertIn("LEVEL 1-1 · RESULTS", text)
         self.assertIn("WAVE 1 · FILL-IN  2/2 tests passed ✓", text)
         self.assertIn("WAVE 2 · BUILD  1/2 tests passed ✗", text)
         self.assertIn("  ✗ has a comment", text)
         self.assertIn("  Code quality 3/4", text)
         self.assertIn("WAVE 3 · DEBUG  1/1 test passed ✓", text)
+
+    def test_only_the_graded_waves_are_in_the_results(self):
+        """A submit grades one wave; the others are not mentioned."""
+        text = results_text(self.level, [self.submission(3, "ONE")])
+        self.assertIn("WAVE 3", text)
+        self.assertNotIn("WAVE 1", text)
 
 
 if __name__ == "__main__":

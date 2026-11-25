@@ -15,4 +15,6 @@ Optional: `pip install -e .` adds a `python-bytes` command that does the same.
 Your save is `~/.python-bytes/save.json` (`--save PATH` changes it).
 
 Inside a level you type your code line by line; commands start with a colon
-(`:submit`, `:show`, `:undo`, `:help` ...).
+(`:submit`, `:run`, `:show`, `:undo`, `:edit`, `:help` ...). Outside a level, any
+line of Python you type just runs (`print("hi")`, `x = 5`, a `for` loop), like in
+the Python console. A level is cleared when every wave is passed.

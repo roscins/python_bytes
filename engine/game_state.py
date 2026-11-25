@@ -25,8 +25,13 @@ class GameState:
             It is saved with the progress, so unfinished code is never lost.
         undo_stack: earlier versions of a wave's code, newest last, as
             (level id, wave number, text). Not saved.
+        pending: what the game is waiting for after an answer that needs more
+            typing (a dict with a "kind"), or None. Not saved.
+        repl: the quick console (runner/repl.py), started when first needed.
+        repl_timeout: seconds one line of the quick console may run.
         plain: True for the ASCII look (no box characters).
-        cleared: the ids of the levels the player has cleared (70 % or more).
+        color: True to colour code with ANSI colours (off for tests, pipes and NO_COLOR).
+        cleared: the ids of the levels the player has cleared (every wave passed).
         xp: the player's experience points.
         coins: the coins the player can spend on hints.
         combo: how many waves in a row were passed on the first try.
@@ -34,9 +39,9 @@ class GameState:
         boss_fight: the BossFight going on, or None. It is not saved, so
             quitting in the middle of a fight starts it again next time.
         running: True while the game should keep asking for commands.
-        workspace_root: the folder that holds the players' code, one
-            folder per level (see engine/workspace.py), or None for no
-            workspace. Tests leave it as None, so they never write files.
+        workspace_root: the folder where :where saves a copy of the code of a
+            wave (see engine/workspace.py), or None for no folder. Tests leave
+            it as None, so they never write files.
     """
 
     def __init__(self, levels=None, workspace_root=None, curriculum=None):
@@ -51,7 +56,11 @@ class GameState:
         self.coding = False
         self.buffers = {}
         self.undo_stack = []
+        self.pending = None
+        self.repl = None
+        self.repl_timeout = 2.0
         self.plain = False
+        self.color = False
         self.cleared = []
         self.xp = 0
         self.coins = STARTING_COINS
@@ -145,3 +154,9 @@ class GameState:
                 self.buffers[level.id][number] = text
                 return True
         return False
+
+    def close(self):
+        """End what the game started: the quick console's worker process."""
+        if self.repl is not None:
+            self.repl.close()
+            self.repl = None

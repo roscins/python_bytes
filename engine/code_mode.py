@@ -47,6 +47,13 @@ def current_context(state):
 
 def prompt_for(state):
     """Return what to show before the player types: "> ", or the next line number in code mode."""
+    pending = state.pending
+    if pending is not None:
+        if pending["kind"] == "repl":
+            return "... "
+        if pending["kind"] == "run_input":
+            return f"input {len(pending['lines']) + 1} > "
+        return f"{pending['line']:>3} {bar(state)} "
     level, number = current_context(state)
     if not state.coding or level is None:
         return "> "
@@ -79,7 +86,7 @@ def show_wave(state):
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    return wave_screen_text(level, number, state.wave_text(level, number), state.plain)
+    return wave_screen_text(level, number, state.wave_text(level, number), state.plain, state.color)
 
 
 def split_number(text):
@@ -128,14 +135,11 @@ def do_clear(state, text):
     return "Cleared. Type :undo to bring your code back.\n" + show_wave(state)
 
 
-def do_edit(state, text):
-    """:edit <n> <new text> - replace line n."""
+def apply_edit(state, line_number, new_text):
+    """Replace line `line_number` of the current wave's code; return the wave screen or a message."""
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    line_number, new_text = split_number(text)
-    if line_number is None:
-        return "Usage: :edit <line> <new text>, for example: :edit 2     print(x)"
     lines = buffer_lines(state.wave_text(level, number))
     problem = check_line_number(lines, line_number)
     if problem:
@@ -145,14 +149,11 @@ def do_edit(state, text):
     return show_wave(state)
 
 
-def do_ins(state, text):
-    """:ins <n> <text> - put a new line before line n (n = last line + 1 adds at the end)."""
+def apply_insert(state, line_number, new_text):
+    """Put a new line before line `line_number` (the last line + 1 adds at the end)."""
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    line_number, new_text = split_number(text)
-    if line_number is None:
-        return "Usage: :ins <line> <text>, for example: :ins 1 import math"
     lines = buffer_lines(state.wave_text(level, number))
     problem = check_line_number(lines, line_number, allow_end=True)
     if problem:
@@ -160,6 +161,43 @@ def do_ins(state, text):
     lines.insert(line_number - 1, new_text.replace("\t", " " * TAB_WIDTH))
     state.set_wave_text(level, number, lines_to_text(lines))
     return show_wave(state)
+
+
+def do_edit(state, text):
+    """:edit <n> [new text] - replace line n. Without the text, the game asks for it."""
+    level, number = current_context(state)
+    if level is None:
+        return NOT_PLAYING
+    line_number, new_text = split_number(text)
+    if line_number is None:
+        return "Usage: :edit <line> [new text], for example: :edit 2     print(x)"
+    lines = buffer_lines(state.wave_text(level, number))
+    problem = check_line_number(lines, line_number)
+    if problem:
+        return problem
+    if new_text.strip() == "":
+        state.pending = {"kind": "edit", "line": line_number}
+        return (f"Line {line_number} now: {lines[line_number - 1]}\n"
+                "Type the new line (Enter on an empty line keeps the old one).")
+    return apply_edit(state, line_number, new_text)
+
+
+def do_ins(state, text):
+    """:ins <n> [text] - put a new line before line n. Without the text, the game asks for it."""
+    level, number = current_context(state)
+    if level is None:
+        return NOT_PLAYING
+    line_number, new_text = split_number(text)
+    if line_number is None:
+        return "Usage: :ins <line> [text], for example: :ins 1 import math"
+    lines = buffer_lines(state.wave_text(level, number))
+    problem = check_line_number(lines, line_number, allow_end=True)
+    if problem:
+        return problem
+    if new_text.strip() == "":
+        state.pending = {"kind": "ins", "line": line_number}
+        return f"Type the new line {line_number} (Enter on an empty line adds nothing)."
+    return apply_insert(state, line_number, new_text)
 
 
 def do_del(state, text):
