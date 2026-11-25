@@ -2,7 +2,8 @@
 
 The loader only checks that a level has the right structure. These tests
 check the guide's content rules, so a level that breaks one cannot be
-merged.
+merged. The limits themselves live in grader/level_limits.py, so that
+tools/check_level.py checks the same ones.
 """
 
 import re
@@ -10,47 +11,24 @@ import unittest
 from pathlib import Path
 
 from engine.level_pack import load_levels
-from grader.wave_grader import grade_wave
+from grader.level_limits import (
+    FORBIDDEN_WORDS,
+    MAX_BLANKS,
+    MAX_BRIEF_SENTENCES,
+    MAX_CUTSCENE_LINES,
+    MIN_BLANKS,
+    MIN_TESTS_PER_WAVE,
+    WAVE_ORDER,
+    count_lines,
+    count_sentences,
+    is_valid_python,
+    max_debug_lines,
+)
+from grader.wave_grader import BLANK, grade_wave
 
 PROJECT_FOLDER = Path(__file__).parent.parent
 LEVELS_FOLDER = PROJECT_FOLDER / "levels"
 LEVEL_GUIDE = PROJECT_FOLDER / "docs" / "level-style-guide.md"
-
-# The waves every level has, in this order (bosses get their own format later).
-WAVE_ORDER = ["fill-in", "build", "debug"]
-MAX_CUTSCENE_LINES = 25
-MIN_BLANKS = 1
-MAX_BLANKS = 3
-MAX_BRIEF_SENTENCES = 5
-MAX_DEBUG_CODE_LINES = 10
-MIN_TESTS_PER_WAVE = 2
-BLANK = "___"
-
-# Words the guide says never to use, because a task may not feel easy.
-FORBIDDEN_WORDS = ["easy", "simple"]
-
-
-def count_lines(text):
-    """Return how many lines `text` has, not counting blank lines at its ends."""
-    return len(text.strip().splitlines())
-
-
-def count_sentences(text):
-    """Return roughly how many sentences `text` has.
-
-    A sentence ends with ".", "!" or "?" followed by a space or the end of
-    the text. Good enough for briefs, which are plain English.
-    """
-    return len(re.findall(r"[.!?](\s|$)", text.strip()))
-
-
-def is_valid_python(code):
-    """Return True if `code` is Python that compiles, False otherwise."""
-    try:
-        compile(code, "<level>", "exec")
-    except SyntaxError:
-        return False
-    return True
 
 
 def player_texts(level):
@@ -141,7 +119,7 @@ class TestRealLevels(unittest.TestCase):
                 else:
                     code = wave.starter
                 self.assertIsNotNone(code)
-                self.assertLessEqual(count_lines(code), MAX_DEBUG_CODE_LINES)
+                self.assertLessEqual(count_lines(code), max_debug_lines(level.world))
 
     def test_every_wave_has_enough_tests(self):
         """At least 2 tests per wave; a predict wave has a right and a wrong answer."""
@@ -169,6 +147,28 @@ class TestRealLevels(unittest.TestCase):
                 for word in FORBIDDEN_WORDS:
                     with self.subTest(level=level.id, word=word):
                         self.assertIsNone(re.search(rf"\b{word}\b", text, re.IGNORECASE))
+
+
+class TestRealLevelsKeepEveryLimit(unittest.TestCase):
+    """The same limits, through check_limits, and the progression rules."""
+
+    def test_real_levels_have_no_limit_problems(self):
+        """check_limits finds nothing in any real level, bosses included."""
+        from grader.level_limits import check_limits
+
+        for level in load_levels(LEVELS_FOLDER):
+            with self.subTest(level=level.id):
+                self.assertEqual(check_limits(level), [])
+
+    def test_real_levels_follow_the_progression_rules(self):
+        """Rule 1 and the match with concepts.toml hold in every real level."""
+        from grader.progression import check_level_code, check_level_matches, load_curriculum
+
+        curriculum = load_curriculum()
+        for level in load_levels(LEVELS_FOLDER):
+            with self.subTest(level=level.id):
+                self.assertEqual(check_level_matches(curriculum, level), [])
+                self.assertEqual(check_level_code(curriculum, level), [])
 
 
 class TestPhaseTwoGate(unittest.TestCase):

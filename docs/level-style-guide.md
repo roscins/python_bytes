@@ -43,6 +43,13 @@ From World 3, a debug wave may hold up to 3 bugs and 30 lines (3-4 asks the play
 
 `global` is never taught, and level code never uses it. A function that changes a variable outside itself cannot be read, tested or reused on its own, and first-year students then learn to fix a bug by adding another global. The player passes values in and returns values out; where a count must survive several calls (the call counter in 4-5), a mutable object such as a list is passed in.
 
+## Checking a level
+
+Two scripts in `tools/` help while writing a level:
+
+- `python tools/level_brief.py 3-2` prints a short brief of one level: story, mission, outcomes, recycled levels and every construct the level may use, with the new ones starred. Paste it into a model's context before writing the level.
+- `python tools/check_level.py levels/w1/1-2-memory-cells` checks a level (or several, or all of `levels/` with no argument). It prints `PASS <id>`, or `FAIL <id>` with one line for each problem: the progression rules, the limits in this guide, and the reference and wrong solutions of every wave. A level is not done until it prints `PASS`.
+
 ## Kinds of test
 
 Each `[[wave.test]]` table has exactly one of these keys:
