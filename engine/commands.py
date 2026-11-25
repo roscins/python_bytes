@@ -7,8 +7,12 @@ never print anything themselves; that is the job of the loop in loop.py.
 This keeps them easy to test.
 """
 
+from engine.hints import ask_for_hint
+from engine.hud import map_status
 from engine.level_screen import intro_text
 from engine.results_screen import results_text
+from engine.rewards import apply_submission
+from engine.scoring import PASS_MARK, is_unlocked
 from engine.submission import grade_submission
 from engine.workspace import level_folder, prepare_workspace
 from render.world_map import load_map_art, map_screen, slither_frames
@@ -71,19 +75,22 @@ def do_map(state, arguments):
     if not state.levels:
         return "No levels found. Level packs go in the levels/ folder."
     world = state.current_world()
-    ids = level_ids(state.levels_in_world(world))
+    world_levels = state.levels_in_world(world)
+    ids = level_ids(world_levels)
+    status = map_status(state, world_levels)
     current = state.find_level(state.current_level)
     if current is None:
-        picture = map_screen(world, ids, None, load_map_art())
+        picture = map_screen(world, ids, None, load_map_art(), status)
         return picture + "\n\nType play <level> to start, for example: play " + ids[0]
-    picture = map_screen(world, ids, ids.index(current.id), load_map_art())
+    picture = map_screen(world, ids, ids.index(current.id), load_map_art(), status)
     return picture + f"\n\nYou are at [{current.id}] {current.title}."
 
 
 def do_play(state, arguments):
     """Start the level whose id is given, for example "play 1-1".
 
-    The answer is the level's intro: title, cutscene, tips and waves.
+    A locked level cannot be played: the level before it must be cleared
+    first. The answer is the level's intro: title, cutscene, tips and waves.
     The level's workspace folder is made, with a file for each wave, and
     the intro ends with where it is.
     If the player was already on another level in the same world, Snek
@@ -96,6 +103,9 @@ def do_play(state, arguments):
     level = state.find_level(level_id)
     if level is None:
         return f"There is no level {level_id}. Type map to see the levels."
+    if not is_unlocked(state.levels, state.cleared, level):
+        before = state.levels[state.levels.index(level) - 1]
+        return f"Level {level.id} is locked. Clear {before.id} with at least {PASS_MARK} % first."
     previous = state.find_level(state.current_level)
     state.current_level = level.id
     intro = intro_text(level)
@@ -104,9 +114,10 @@ def do_play(state, arguments):
         intro = intro + f"\nYour files are in {folder.resolve()}"
     if previous is None or previous.world != level.world or previous.id == level.id:
         return intro
-    ids = level_ids(state.levels_in_world(level.world))
+    world_levels = state.levels_in_world(level.world)
+    ids = level_ids(world_levels)
     frames = slither_frames(level.world, ids, ids.index(previous.id), ids.index(level.id),
-                         load_map_art())
+                            load_map_art(), map_status(state, world_levels))
     frames[-1] = frames[-1] + "\n\n" + intro
     return frames
 
@@ -115,7 +126,11 @@ NOT_PLAYING = "You are not playing a level. Type play <level> first."
 
 
 def do_submit(state, arguments):
-    """Grade the player's files for the current level and show the results."""
+    """Grade the player's files for the current level and show the results and score.
+
+    Waves that already have full marks are not graded again, so a replay
+    only checks the waves that still need work.
+    """
     if arguments:
         return extra_words_message("submit")
     level = state.find_level(state.current_level)
@@ -123,8 +138,33 @@ def do_submit(state, arguments):
         return NOT_PLAYING
     if state.workspace_root is None:
         return f"There is no workspace folder, so level {level.id} cannot be graded."
-    submissions = grade_submission(level, state.workspace_root)
-    return results_text(level, submissions)
+    progress = state.progress_for(level)
+    perfect_numbers = []
+    numbers_to_grade = []
+    for number in range(1, len(level.waves) + 1):
+        if progress.wave_is_perfect(number, level.waves[number - 1]):
+            perfect_numbers.append(number)
+        else:
+            numbers_to_grade.append(number)
+    submissions = grade_submission(level, state.workspace_root, numbers_to_grade)
+    reward = apply_submission(state, level, submissions)
+    return results_text(level, submissions, perfect_numbers, reward)
+
+
+def do_hint(state, arguments):
+    """Show the hints bought for a wave, and buy the next one, for example "hint 2"."""
+    usage = "Usage: hint <wave>, for example: hint 2"
+    if len(arguments) != 1:
+        return usage
+    level = state.find_level(state.current_level)
+    if level is None:
+        return NOT_PLAYING
+    if not arguments[0].isdigit():
+        return usage
+    number = int(arguments[0])
+    if number < 1 or number > len(level.waves):
+        return f"Level {level.id} has waves 1 to {len(level.waves)}."
+    return ask_for_hint(state, level, number)
 
 
 def do_where(state, arguments):
@@ -154,6 +194,7 @@ COMMANDS = {
     "map": (do_map, "show the world map"),
     "play": (do_play, "start a level, for example: play 1-1"),
     "submit": (do_submit, "hand in your code for the current level"),
+    "hint": (do_hint, "buy a hint for a wave with coins, for example: hint 2"),
     "where": (do_where, "show the folder where your code for this level goes"),
     "quit": (do_quit, "leave the game"),
 }

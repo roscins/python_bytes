@@ -59,6 +59,7 @@ def player_texts(level):
     texts.extend(level.tips)
     for wave in level.waves:
         texts.append(wave.brief)
+        texts.extend(wave.hints)
     return texts
 
 

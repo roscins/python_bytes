@@ -164,13 +164,16 @@ class TestSlithering(unittest.TestCase):
     def test_first_play_shows_only_the_intro(self):
         """With no level before, there is nowhere to slither from."""
         state = GameState(make_levels("1-1", "1-2"))
+        state.cleared = ["1-1"]
         answer = handle_line(state, "play 1-2")
         self.assertIsInstance(answer, str)
+        self.assertIn("LEVEL 1-2", answer)
 
     def test_play_from_another_level_slithers(self):
         """From 1-1 to 1-2, the answer is frames ending with the intro."""
         state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-1"
+        state.cleared = ["1-1"]
         answer = handle_line(state, "play 1-2")
         self.assertIsInstance(answer, list)
         self.assertGreater(len(answer), 1)
@@ -256,6 +259,120 @@ class TestWorkspaceCommands(unittest.TestCase):
         state = GameState(make_levels("1-1"))
         state.current_level = "1-1"
         self.assertEqual(handle_line(state, "where"), "There is no workspace folder.")
+
+
+def write_wave(root, level_id, name, text):
+    """Write one wave file in a level's workspace folder."""
+    (root / level_id / name).write_text(text, encoding="utf-8")
+
+
+class TestLocks(unittest.TestCase):
+    """Check the 70 % unlock rule in play and map."""
+
+    def test_locked_level_cannot_be_played(self):
+        """1-2 is locked until 1-1 is cleared."""
+        state = GameState(make_levels("1-1", "1-2"))
+        text = handle_line(state, "play 1-2")
+        self.assertEqual(text, "Level 1-2 is locked. Clear 1-1 with at least 70 % first.")
+        self.assertIsNone(state.current_level)
+
+    def test_map_shows_the_hud_and_stars(self):
+        """The map header has XP, stars and coins; open levels show their stars."""
+        levels = make_levels("1-1", "1-2")
+        state = GameState(levels)
+        state.xp = 1240
+        state.progress_for(levels[0]).stars = 2
+        text = handle_line(state, "map")
+        self.assertIn("XP 1240   ★ 2/6   COINS 10", text)
+        self.assertIn("★★☆", text)
+
+
+class TestScoredSubmit(unittest.TestCase):
+    """Check that submit scores the level and unlocks the next one."""
+
+    def setUp(self):
+        """Two one-wave levels, a workspace, and level 1-1 started."""
+        self.root = make_temporary_folder(self)
+        levels = make_levels("1-1", "1-2")
+        for level in levels:
+            level.waves[0].tests = [{"expected_stdout": "OK\n"}]
+        self.state = GameState(levels, workspace_root=self.root)
+        handle_line(self.state, "play 1-1")
+
+    def test_full_marks_clear_the_level(self):
+        """A perfect build wave gives 100 %, 3 stars, XP, coins and opens 1-2."""
+        write_wave(self.root, "1-1", "wave1.py", '# Say OK\nprint("OK")\n')
+        text = handle_line(self.state, "submit")
+        self.assertIn("LEVEL SCORE 100 %  ★★★", text)
+        self.assertIn("+1000 XP · +10 coins · combo 1", text)
+        self.assertIn("LEVEL 1-1 CLEARED. Level 1-2 is open.", text)
+        self.assertEqual(self.state.cleared, ["1-1"])
+        self.assertIsInstance(handle_line(self.state, "play 1-2"), list)
+
+    def test_low_score_does_not_clear(self):
+        """Failing the only test leaves the level locked behind."""
+        write_wave(self.root, "1-1", "wave1.py", 'print("NO")\n')
+        text = handle_line(self.state, "submit")
+        self.assertIn("You need 70 % to clear this level.", text)
+        self.assertEqual(self.state.cleared, [])
+
+    def test_perfect_waves_are_not_graded_again(self):
+        """After full marks, submit says the wave already passed and gives no XP."""
+        write_wave(self.root, "1-1", "wave1.py", '# Say OK\nprint("OK")\n')
+        handle_line(self.state, "submit")
+        write_wave(self.root, "1-1", "wave1.py", "broken(")
+        text = handle_line(self.state, "submit")
+        self.assertIn("WAVE 1 · BUILD  already passed ✓", text)
+        self.assertIn("+0 XP", text)
+
+
+class TestHint(unittest.TestCase):
+    """Check the hint command."""
+
+    def setUp(self):
+        """A level whose one wave has three hints, being played."""
+        levels = make_levels("1-1")
+        levels[0].waves[0].hints = ["Nudge.", "Outline.", "Partial."]
+        self.state = GameState(levels)
+        self.state.current_level = "1-1"
+
+    def test_buying_hints_in_order(self):
+        """Each hint costs coins; bought hints are shown again for free."""
+        self.state.coins = 50
+        first = handle_line(self.state, "hint 1")
+        self.assertIn("WAVE 1 · HINT 1 of 3 (nudge)\n  Nudge.", first)
+        self.assertIn("You paid 5 coins and have 45 left", first)
+        self.assertIn("Type hint 1 again for the outline (15 coins)", first)
+        second = handle_line(self.state, "hint 1")
+        self.assertIn("Nudge.", second)
+        self.assertIn("Outline.", second)
+        self.assertEqual(self.state.coins, 30)
+        handle_line(self.state, "hint 1")
+        last = handle_line(self.state, "hint 1")
+        self.assertIn("That was the last hint", last)
+        self.assertEqual(self.state.coins, 0)
+
+    def test_not_enough_coins(self):
+        """Without enough coins, nothing is bought and the price is shown."""
+        self.state.coins = 3
+        text = handle_line(self.state, "hint 1")
+        self.assertIn("costs 5 coins, and you have 3", text)
+        self.assertEqual(self.state.progress_for(self.state.levels[0]).hints_bought, [0])
+
+    def test_wave_without_hints(self):
+        """A wave with no hints says so."""
+        self.state.levels[0].waves[0].hints = []
+        self.assertEqual(handle_line(self.state, "hint 1"), "Wave 1 has no hints.")
+
+    def test_bad_wave_numbers(self):
+        """hint needs one wave number that the level has."""
+        self.assertIn("Usage", handle_line(self.state, "hint"))
+        self.assertIn("Usage", handle_line(self.state, "hint two"))
+        self.assertEqual(handle_line(self.state, "hint 4"), "Level 1-1 has waves 1 to 1.")
+
+    def test_hint_before_play(self):
+        """hint without a level asks the player to start one."""
+        self.assertIn("play <level>", handle_line(GameState(), "hint 1"))
 
 
 class TestExtraWords(unittest.TestCase):

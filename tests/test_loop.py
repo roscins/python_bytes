@@ -37,9 +37,11 @@ class TestRun(unittest.TestCase):
         """Run a game with scripted lines; return the state and the output.
 
         The pause between animation frames is recorded in self.pauses
-        instead of waiting, so the tests run fast.
+        instead of waiting, so the tests run fast. Level 1-1 starts out
+        cleared, so 1-2 is open.
         """
         state = GameState(make_levels("1-1", "1-2"))
+        state.cleared = ["1-1"]
         player = ScriptedPlayer(lines, end_with)
         output = []
         self.pauses = []
