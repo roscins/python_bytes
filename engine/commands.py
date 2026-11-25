@@ -7,14 +7,16 @@ never print anything themselves; that is the job of the loop in loop.py.
 This keeps them easy to test.
 """
 
+from engine.boss_turns import start_boss_fight, submit_to_boss
 from engine.hints import ask_for_hint
 from engine.hud import map_status
-from engine.level_screen import intro_text
+from engine.level_screen import boss_intro_text, intro_text
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
 from engine.scoring import PASS_MARK, is_unlocked
 from engine.submission import grade_submission
 from engine.workspace import level_folder, prepare_workspace
+from render.level_clear import level_clear_frames, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames
 
 
@@ -92,7 +94,8 @@ def do_play(state, arguments):
     A locked level cannot be played: the level before it must be cleared
     first. The answer is the level's intro: title, cutscene, tips and waves.
     The level's workspace folder is made, with a file for each wave, and
-    the intro ends with where it is.
+    the intro ends with where it is. A boss level starts a boss fight and
+    shows the boss screen.
     If the player was already on another level in the same world, Snek
     slithers there first: the answer is then a list of map frames, and the
     last frame has the intro below the map.
@@ -108,7 +111,10 @@ def do_play(state, arguments):
         return f"Level {level.id} is locked. Clear {before.id} with at least {PASS_MARK} % first."
     previous = state.find_level(state.current_level)
     state.current_level = level.id
-    intro = intro_text(level)
+    if level.boss:
+        intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level)
+    else:
+        intro = intro_text(level)
     if state.workspace_root is not None:
         folder = prepare_workspace(level, state.workspace_root)
         intro = intro + f"\nYour files are in {folder.resolve()}"
@@ -129,7 +135,9 @@ def do_submit(state, arguments):
     """Grade the player's files for the current level and show the results and score.
 
     Waves that already have full marks are not graded again, so a replay
-    only checks the waves that still need work.
+    only checks the waves that still need work. Clearing a level, or
+    earning more stars, shows the level-clear animation above the results.
+    In a boss level, submit is a hit on the boss instead.
     """
     if arguments:
         return extra_words_message("submit")
@@ -138,6 +146,8 @@ def do_submit(state, arguments):
         return NOT_PLAYING
     if state.workspace_root is None:
         return f"There is no workspace folder, so level {level.id} cannot be graded."
+    if level.boss:
+        return submit_to_boss(state, level)
     progress = state.progress_for(level)
     perfect_numbers = []
     numbers_to_grade = []
@@ -148,7 +158,14 @@ def do_submit(state, arguments):
             numbers_to_grade.append(number)
     submissions = grade_submission(level, state.workspace_root, numbers_to_grade)
     reward = apply_submission(state, level, submissions)
-    return results_text(level, submissions, perfect_numbers, reward)
+    results = results_text(level, submissions, perfect_numbers, reward)
+    if not reward.cleared_now and reward.stars <= reward.old_stars:
+        return results
+    frames = level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
+                                reward.xp_gained, reward.coins_gained, level.power_up,
+                                load_clear_art())
+    frames[-1] = frames[-1] + "\n\n" + results
+    return frames
 
 
 def do_hint(state, arguments):

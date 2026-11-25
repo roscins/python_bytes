@@ -88,3 +88,58 @@ def write_level_pack(levels_folder, world_folder, level_folder, text=VALID_LEVEL
     path = folder / "level.toml"
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def make_boss_level(level_id="boss-1", time_limit=600):
+    """Return a small boss Level whose one wave has three hidden tests.
+
+    The task: write add(a, b) that returns a + b. The reference passes all
+    three tests; the wrong solution (a - b) passes only add(2, 0).
+    """
+    from engine.level_pack import Level, Wave
+
+    tests = [
+        {"call": "add", "args": [2, 0], "expected": 2},
+        {"call": "add", "args": [2, 3], "expected": 5},
+        {"call": "add", "args": [1, 1], "expected": 2},
+    ]
+    reference = 'def add(a, b):\n    """Add."""\n    return a + b\n'
+    wrong = 'def add(a, b):\n    """Add."""\n    return a - b\n'
+    wave = Wave("boss", "Write add(a, b).", reference=reference, wrong=wrong, tests=tests)
+    return Level(level_id, "The Test Boss", 1, [], "", "# >> The boss wakes.", [], [wave],
+                 boss=True, time_limit=time_limit, sprite="boss-placeholder")
+
+
+class FakeClock:
+    """A clock for tests: it says the time is `now`, which a test moves by hand."""
+
+    def __init__(self):
+        """Start the clock at 0 seconds."""
+        self.now = 0.0
+
+    def __call__(self):
+        """Return the current pretend time, like time.monotonic() would."""
+        return self.now
+
+
+# A small boss level.toml, as the loader reads it.
+VALID_BOSS_TOML = '''
+[level]
+id = "boss-1"
+title = "The Test Boss"
+world = 1
+boss = true
+time_limit = 300
+cutscene = """
+# >> The screen flickers red.
+"""
+
+[[wave]]
+kind = "boss"
+brief = "Print OK."
+reference = 'print("OK")'
+wrong = "print(OK)"
+
+[[wave.test]]
+expected_stdout = "OK\\n"
+'''

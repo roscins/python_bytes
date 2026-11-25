@@ -197,6 +197,13 @@ class TestSlithering(unittest.TestCase):
         self.assertIsInstance(handle_line(state, "play 2-1"), str)
 
 
+def final_text(answer):
+    """Return the text of an answer: the last frame of an animation, or the text itself."""
+    if isinstance(answer, list):
+        return answer[-1]
+    return answer
+
+
 class TestSubmit(unittest.TestCase):
     """Check the submit command."""
 
@@ -221,7 +228,7 @@ class TestSubmit(unittest.TestCase):
         state = GameState(levels, workspace_root=root)
         handle_line(state, "play 1-1")
         (root / "1-1" / "wave1.py").write_text('print("OK")', encoding="utf-8")
-        text = handle_line(state, "submit")
+        text = final_text(handle_line(state, "submit"))
         self.assertIn("LEVEL 1-1 · RESULTS", text)
         self.assertIn("WAVE 1 · BUILD  1/1 test passed", text)
 
@@ -302,7 +309,10 @@ class TestScoredSubmit(unittest.TestCase):
     def test_full_marks_clear_the_level(self):
         """A perfect build wave gives 100 %, 3 stars, XP, coins and opens 1-2."""
         write_wave(self.root, "1-1", "wave1.py", '# Say OK\nprint("OK")\n')
-        text = handle_line(self.state, "submit")
+        answer = handle_line(self.state, "submit")
+        self.assertIsInstance(answer, list)
+        self.assertIn("LEVEL 1-1 CLEARED · LEVEL 1-1", answer[0])
+        text = answer[-1]
         self.assertIn("LEVEL SCORE 100 %  ★★★", text)
         self.assertIn("+1000 XP · +10 coins · combo 1", text)
         self.assertIn("LEVEL 1-1 CLEARED. Level 1-2 is open.", text)
@@ -310,9 +320,10 @@ class TestScoredSubmit(unittest.TestCase):
         self.assertIsInstance(handle_line(self.state, "play 1-2"), list)
 
     def test_low_score_does_not_clear(self):
-        """Failing the only test leaves the level locked behind."""
+        """Failing the only test leaves the level locked behind, with no clear screen."""
         write_wave(self.root, "1-1", "wave1.py", 'print("NO")\n')
         text = handle_line(self.state, "submit")
+        self.assertIsInstance(text, str)
         self.assertIn("You need 70 % to clear this level.", text)
         self.assertEqual(self.state.cleared, [])
 
