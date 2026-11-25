@@ -7,7 +7,7 @@ from render.world_map import (
     SNEK_SIZE,
     MAP_HEIGHT,
     MAP_WIDTH,
-    WALK_STEP,
+    SLITHER_STEP,
     WORLD_NAMES,
     snek_left,
     header_line,
@@ -16,7 +16,7 @@ from render.world_map import (
     map_frame,
     map_screen,
     node_centre,
-    walk_frames,
+    slither_frames,
 )
 
 WORLD_1_IDS = ["1-1", "1-2", "1-3", "1-4", "boss-1"]
@@ -91,26 +91,26 @@ class TestFrames(unittest.TestCase):
         without_snek = map_screen(1, WORLD_1_IDS, None, self.art)
         self.assertNotEqual(with_snek, without_snek)
 
-    def test_walk_starts_and_ends_under_the_nodes(self):
+    def test_slither_starts_and_ends_under_the_nodes(self):
         """The first and last frames match Snek standing at each node."""
-        frames = walk_frames(1, WORLD_1_IDS, 1, 3, self.art)
+        frames = slither_frames(1, WORLD_1_IDS, 1, 3, self.art)
         self.assertEqual(frames[0], map_screen(1, WORLD_1_IDS, 1, self.art))
         self.assertEqual(frames[-1], map_screen(1, WORLD_1_IDS, 3, self.art))
 
-    def test_walk_moves_a_few_pixels_per_frame(self):
+    def test_slither_moves_a_few_pixels_per_frame(self):
         """From node 1 to node 3 is 32 pixels: 8 steps of 4, so 9 frames."""
         distance = snek_left(3, 5) - snek_left(1, 5)
-        frames = walk_frames(1, WORLD_1_IDS, 1, 3, self.art)
-        self.assertEqual(len(frames), distance // WALK_STEP + 1)
+        frames = slither_frames(1, WORLD_1_IDS, 1, 3, self.art)
+        self.assertEqual(len(frames), distance // SLITHER_STEP + 1)
 
-    def test_walk_can_go_left(self):
-        """Walking back to an earlier node also works."""
-        frames = walk_frames(1, WORLD_1_IDS, 3, 0, self.art)
+    def test_slither_can_go_left(self):
+        """Slithering back to an earlier node also works."""
+        frames = slither_frames(1, WORLD_1_IDS, 3, 0, self.art)
         self.assertEqual(frames[-1], map_screen(1, WORLD_1_IDS, 0, self.art))
 
     def test_all_frames_have_the_same_height(self):
         """Frames are drawn over each other, so they must be the same size."""
-        for frame in walk_frames(1, WORLD_1_IDS, 0, 4, self.art):
+        for frame in slither_frames(1, WORLD_1_IDS, 0, 4, self.art):
             self.assertEqual(len(frame.split("\n")), FRAME_LINES)
 
 

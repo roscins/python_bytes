@@ -27,7 +27,7 @@ PATH_CODE = "7"         # teal: the art guide's colour for map paths
 PATH_THICKNESS = 2
 PATH_TOP = NODE_TOP + (NODE_SIZE - PATH_THICKNESS) // 2
 
-WALK_STEP = 4           # Snek moves this many pixels per frame
+SLITHER_STEP = 4           # Snek moves this many pixels per frame
 
 # The worlds' names, from docs/plan.md.
 WORLD_NAMES = {
@@ -138,18 +138,18 @@ def map_screen(world, level_ids, snek_index, art):
     return map_frame(world, level_ids, snek_left(snek_index, len(level_ids)), art)
 
 
-def walk_frames(world, level_ids, from_index, to_index, art):
-    """Return the frames of Snek walking from one node to another.
+def slither_frames(world, level_ids, from_index, to_index, art):
+    """Return the frames of Snek slithering from one node to another.
 
     The first frame has Snek under node `from_index` and the last under
-    node `to_index`. In between, she moves WALK_STEP pixels per frame.
+    node `to_index`. In between, she moves SLITHER_STEP pixels per frame.
     """
     start = snek_left(from_index, len(level_ids))
     end = snek_left(to_index, len(level_ids))
     if end >= start:
-        step = WALK_STEP
+        step = SLITHER_STEP
     else:
-        step = -WALK_STEP
+        step = -SLITHER_STEP
     columns = list(range(start, end, step))
     columns.append(end)
     frames = []

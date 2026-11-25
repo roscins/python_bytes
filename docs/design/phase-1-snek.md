@@ -14,10 +14,11 @@ rename is in the solo-plan PR, which already changes `docs/plan.md`.
 - **Moss (code 9) becomes forest green, `#228b22`** (34, 139, 34), in
   both the art guide and `art/palette.txt`. It is used for Snek's body,
   plants and green shadows.
-- **The sprite is `art/snek-offline.txt`** (16 × 16): a coiled snake with a
-  forest-green body (9), a silver shine at the top left (4), dark eyes
-  (1) and a pink forked tongue (f), with a Slate outline (2). When online,
-  the eyes turn cyan (6). It replaces `art/aria-offline.txt`.
+- **The sprite is `art/snek-offline.txt`** (16 × 16): an S-shaped snake,
+  head and forked tongue at the top right and tail at the bottom left, with
+  a forest-green body (9), a silver shine along the top (4), a dark eye
+  (1) and a pink tongue (f), with a Slate outline (2). When online,
+  the eye turns cyan (6). It replaces `art/aria-offline.txt`.
 
 ## Files
 
@@ -27,6 +28,8 @@ rename is in the solo-plan PR, which already changes `docs/plan.md`.
 - `docs/level-style-guide.md` and `levels/w1/1-1-hello-terminal/level.toml`:
   the tone rule and the Level 1-1 example (`print("SNEK ONLINE")`)
 - `render/world_map.py`, `render/__main__.py`, `engine/commands.py`:
-  `aria` names become `snek`, for example `SNEK_SIZE` and `art.snek`
+  `aria` names become `snek`, for example `SNEK_SIZE` and `art.snek`, and
+  Snek slithers instead of walking (`slither_frames`, `SLITHER_STEP`), to
+  match the roadmap
 - Tests: the same renames, and the sprite tests use `snek-offline.txt`
 - Earlier design notes: ARIA becomes Snek where they describe current code

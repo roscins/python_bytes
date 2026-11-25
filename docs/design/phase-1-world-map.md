@@ -1,7 +1,7 @@
-# Phase 1 design: world map screen with Snek walking
+# Phase 1 design: world map screen with Snek slithering
 
 Roadmap checkbox (docs/plan.md, Phase 1): "World map screen with placeholder
-sprites and Snek walking between level nodes". Approved before coding, on
+sprites and Snek slithering between level nodes". Approved before coding, on
 branch `phase-1/world-map` (built on `phase-1/level-1-1`).
 
 ## Files
@@ -27,8 +27,8 @@ branch `phase-1/world-map` (built on `phase-1/level-1-1`).
     below them, 24 pixels = 12 lines)
   - `map_screen(world, level_ids, snek_index, art)`: the map with Snek
     under level number `snek_index`, or with no Snek if it is `None`
-  - `walk_frames(world, level_ids, from_index, to_index, art)`: the frames
-    of Snek walking from one node to another, 4 pixels per frame
+  - `slither_frames(world, level_ids, from_index, to_index, art)`: the frames
+    of Snek slithering from one node to another, 4 pixels per frame
   - `load_map_art()` reads the palette, the node tile and Snek from `art/`
   - this module knows nothing about `Level` objects: the engine passes
     level ids and numbers, so `render/` does not depend on `engine/`
@@ -36,8 +36,8 @@ branch `phase-1/world-map` (built on `phase-1/level-1-1`).
   - `map` shows the map of the current level's world (World 1 before any
     level is played), then "You are at [1-1] Hello, Terminal." or "Type
     play <level> to start."
-  - `play` walks Snek to the new level when the player was already on a
-    level in the same world: it returns the walk frames, and the last
+  - `play` slithers Snek to the new level when the player was already on a
+    level in the same world: it returns the slither frames, and the last
     frame has the level's intro below the map. Otherwise it returns the
     intro alone, as now.
 - `engine/loop.py`: `run(..., pause=time.sleep)`. A command may now return
@@ -56,6 +56,6 @@ branch `phase-1/world-map` (built on `phase-1/level-1-1`).
   one leaves nothing behind.
 - **No stars, XP or coins on the map yet**: scoring comes in Phase 2.
 - **No locked levels yet**: the 70 % unlock rule comes in Phase 2.
-- **Only Level 1-1 exists**, so in the real game Snek has nowhere to walk
-  until Level 1-2 (Phase 3). The walk is tested with made-up levels.
+- **Only Level 1-1 exists**, so in the real game Snek has nowhere to slither
+  until Level 1-2 (Phase 3). The slithering is tested with made-up levels.
 - **The plain-ASCII and accessible modes (no animation) are later work.**

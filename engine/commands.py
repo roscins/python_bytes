@@ -8,7 +8,7 @@ This keeps them easy to test.
 """
 
 from engine.level_screen import intro_text
-from render.world_map import load_map_art, map_screen, walk_frames
+from render.world_map import load_map_art, map_screen, slither_frames
 
 
 def parse_command(line):
@@ -82,7 +82,7 @@ def do_play(state, arguments):
 
     The answer is the level's intro: title, cutscene, tips and waves.
     If the player was already on another level in the same world, Snek
-    walks there first: the answer is then a list of map frames, and the
+    slithers there first: the answer is then a list of map frames, and the
     last frame has the intro below the map.
     """
     if len(arguments) != 1:
@@ -97,7 +97,7 @@ def do_play(state, arguments):
     if previous is None or previous.world != level.world or previous.id == level.id:
         return intro
     ids = level_ids(state.levels_in_world(level.world))
-    frames = walk_frames(level.world, ids, ids.index(previous.id), ids.index(level.id),
+    frames = slither_frames(level.world, ids, ids.index(previous.id), ids.index(level.id),
                          load_map_art())
     frames[-1] = frames[-1] + "\n\n" + intro
     return frames

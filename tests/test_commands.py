@@ -158,16 +158,16 @@ class TestPlay(unittest.TestCase):
         self.assertIsNone(state.current_level)
 
 
-class TestWalking(unittest.TestCase):
-    """Check when play makes Snek walk across the map."""
+class TestSlithering(unittest.TestCase):
+    """Check when play makes Snek slither across the map."""
 
     def test_first_play_shows_only_the_intro(self):
-        """With no level before, there is nowhere to walk from."""
+        """With no level before, there is nowhere to slither from."""
         state = GameState(make_levels("1-1", "1-2"))
         answer = handle_line(state, "play 1-2")
         self.assertIsInstance(answer, str)
 
-    def test_play_from_another_level_walks(self):
+    def test_play_from_another_level_slithers(self):
         """From 1-1 to 1-2, the answer is frames ending with the intro."""
         state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-1"
@@ -179,14 +179,14 @@ class TestWalking(unittest.TestCase):
         self.assertNotIn("LEVEL 1-2 · LEVEL 1-2", answer[0])
         self.assertEqual(state.current_level, "1-2")
 
-    def test_play_same_level_again_does_not_walk(self):
+    def test_play_same_level_again_does_not_slither(self):
         """Playing the level Snek is already at shows only the intro."""
         state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-1"
         self.assertIsInstance(handle_line(state, "play 1-1"), str)
 
-    def test_play_in_another_world_does_not_walk(self):
-        """Snek only walks within one world's map."""
+    def test_play_in_another_world_does_not_slither(self):
+        """Snek only slithers within one world's map."""
         levels = make_levels("1-1", "2-1")
         levels[1].world = 2
         state = GameState(levels)

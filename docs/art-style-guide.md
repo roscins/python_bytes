@@ -55,25 +55,25 @@ Colour meanings are fixed: gold is always a reward, red is always danger, cyan i
 
 ## Reference sprite: Snek, offline (16 × 16)
 
-Snek is a forest-green robot snake: a Moss body (`9`), a Silver shine at the top left (`4`), a Pink forked tongue (`f`) and a Slate outline (`2`). Offline, the eyes are dark Navy (`1`); in the "online" state they turn cyan (`6`).
+Snek is a forest-green robot snake, curved like an S: a Moss body (`9`), a Silver shine along the top (`4`), a Pink forked tongue (`f`) and a Slate outline (`2`). Offline, the eye is dark Navy (`1`); in the "online" state it turns cyan (`6`).
 
 ```
-....222222......
-...29449992.....
-..2941991992....
-..2999999992ff..
-...299999922..f.
-....2299992.....
-......29992.....
-......29992.....
-...22229992.....
-..299999992222..
-.29999999999992.
-.29922222229992.
-.2992......2992.
-.29992222229992.
+..........2222..
+....22222294992.
+..2244444499192f
+.2999999999999f.
+.29922222299992f
+.2992.....2222..
+.299222222222...
+.2999999999992..
 ..299999999992..
-...2222222222...
+...222222222992.
+...........2992.
+...222222222992.
+..2999999999992.
+.2999999999992..
+2922222222222...
+.2..............
 ```
 
 It is saved as `art/snek-offline.txt`. Check it with `python -m render art/snek-offline.txt`.

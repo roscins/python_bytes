@@ -108,7 +108,7 @@ class TestRun(unittest.TestCase):
         self.assertEqual(len(messages), 2)
 
 
-    def test_walk_is_drawn_as_an_animation(self):
+    def test_slither_is_drawn_as_an_animation(self):
         """Playing 1-2 after 1-1 draws frames over each other, with pauses."""
         state, output = self.play(["play 1-1", "play 1-2", "quit"])
         self.assertGreater(len(self.pauses), 0)
