@@ -6,9 +6,9 @@ Python Bytes (working title: small bites of Python, from a python that bites) is
 • Advanced tier (Worlds 5–8) covers Advanced Python Programming for Engineers: object-oriented and functional programming, choosing between them, robust design, debugging, reading other people's code and code review.
 • Audience: first-year engineering students with no prior programming, who want real understanding, not memorised patterns.
 • Format: a terminal game written in Python, drawn with coloured Unicode block characters so it looks like an 8-bit console game. The game's own source code becomes level material in World 7.
-• Story frame: the player is a new technician in an abandoned robotics lab. The lab robot ARIA is offline; each world restores part of her, and from World 5 the player rebuilds the whole automated factory around her.
+• Story frame: the player is a new technician in an abandoned robotics lab. The lab robot Snek, a forest-green robot snake, is offline; each world restores part of her, and from World 5 the player rebuilds the whole automated factory around her.
 Progression model: worlds, levels and bosses
-The game is a classic arcade map: the player walks ARIA along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
+The game is a classic arcade map: the player guides Snek along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
 Tier
 World
 Theme
@@ -33,7 +33,7 @@ Basic
 4
 The Core
 4-1 to 4-3
-Boss 4: ARIA Online (tier final)
+Boss 4: Snek Online (tier final)
 Advanced
 5
 Robot Foundry
@@ -62,17 +62,17 @@ Inside a level. Every level runs the same short loop, like stages in a shoot-'em
 5.  Wave 3 – Debug: predict the output of code, or find and fix the bug.
 6.  Level clear – stars, XP, and a power-up command.
 Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 lives (one lost per failed submission). Losing all lives restarts the fight, not the world.
-What we keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
+What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
 Example cutscene from Level 1-2, where variables are new and print() is already known:
-# >> ARIA's memory banks flicker. Two empty cells light up.
-name = "ARIA"
+# >> Snek's memory banks flicker. Two empty cells light up.
+name = "Snek"
 battery = 12
-print(name)      # screen: ARIA
+print(name)      # screen: Snek
 print(battery)   # screen: 12
 # >> You patch in more power...
 battery = 13
 print(battery)   # screen: 13
-# >> ARIA: "MEMORY CELL UPDATED. THANK YOU, TECHNICIAN."
+# >> Snek: "MEMORY CELL UPDATED. THANK YOU, TECHNICIAN."
 Learning outcomes mapped to levels
 Every learning outcome in the two course descriptions is taught in at least one level and tested in at least one wave or boss. The tables are the coverage contract: a level may not be removed without moving its outcome elsewhere.
 Basic tier – Introduction to Python Programming
@@ -158,7 +158,7 @@ How it is earned
 What it does
 XP
 Points from every wave
-Fills the XP bar; level-ups change ARIA's sprite and colours
+Fills the XP bar; level-ups change Snek's sprite and colours
 Stars (1–3 per level)
 1 star ≥ 70 %, 2 stars ≥ 85 %, 3 stars = 100 % with no hints
 A boss door opens only when the world's levels hold enough stars (proposal: 2 of 3 on average)
@@ -198,20 +198,20 @@ Style checks on Wave 2: naming, indentation, comments, docstrings
 • Three hint levels per wave, paid in coins: a nudge (cheap), an approach outline (medium), a partial solution (expensive, and it caps that level at 2 stars).
 • Written answers in World 7 and 8 (trade-off notes, review reports) are graded against a published rubric, by self-assessment or a classmate.
 • A local high-score table is opt-in, so nobody is ranked against classmates without choosing it.
-Tier grade. Levels count 50 %, Bosses 1–3 (or 5–7) 20 % and the tier's final boss 30 %. The game shows the result on an A–F scale as a proposal: A ≥ 90 %, B ≥ 80 %, C ≥ 60 %, D ≥ 50 %, E ≥ 40 %, F below 40 %. These bands are our own choice for motivation and do not represent OsloMet's grading.
+Tier grade. Levels count 50 %, Bosses 1–3 (or 5–7) 20 % and the tier's final boss 30 %. The game shows the result on an A–F scale as a proposal: A ≥ 90 %, B ≥ 80 %, C ≥ 60 %, D ≥ 50 %, E ≥ 40 %, F below 40 %. These bands are my own choice for motivation and do not represent OsloMet's grading.
 Look and feel: pixel art in the terminal
 The game runs in an ordinary terminal but looks like an 8-bit console game. The trick is the Unicode half-block character ▀: with a different foreground and background colour, each character cell shows two stacked pixels, so an 80 × 24 terminal becomes an 80 × 48 pixel screen.
-• Palette: one fixed 16-colour palette of our own, used for every sprite, so the game looks consistent.
-• Sprites: ARIA (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
+• Palette: one fixed 16-colour palette of my own, used for every sprite, so the game looks consistent.
+• Sprites: Snek (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
 • Screens: title screen, world map, level intro card, code-wave screen, boss fight screen, level-clear screen, Codex, shop, stats.
-• Animation: a few frames only (ARIA walking on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
+• Animation: a few frames only (Snek slithering on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
 • Fallbacks: a plain-ASCII mode for terminals without colour, and an accessible mode with no flashing and screen-reader-friendly text.
 Rough mock-up of the world map and a boss fight (pixel art shown as text):
  WORLD 1 · BOOT SECTOR            XP 1240   ★ 7/12   COINS 35
 
    [1-1]★★★ ══ [1-2]★★☆ ══ [1-3]★☆☆ ══ [1-4] ··· ══ [BOSS 1]
                                ▲
-                              ARIA
+                              Snek
 
  > play 1-3    > codex    > shop    > stats
 
@@ -219,7 +219,7 @@ Rough mock-up of the world map and a boss fight (pixel art shown as text):
  BOSS HP [██████████░░░░░░░░░░]  5 of 10 hidden tests still failing
  TIME 07:42
 Basic tier: Worlds 1–4
-The Basic tier restores ARIA one subsystem at a time, from her voice in Level 1-1 to a full log-analysis routine in Boss 4. Each row lists only what is new; everything earlier is assumed and keeps coming back.
+The Basic tier restores Snek one subsystem at a time, from her voice in Level 1-1 to a full log-analysis routine in Boss 4. Each row lists only what is new; everything earlier is assumed and keeps coming back.
 Level
 Title (story beat)
 New concepts
@@ -231,14 +231,14 @@ Boot Sector
 
 
 1-1
-Hello, Terminal (ARIA's voice)
-print(), string literals, comments, running a script
-Make ARIA print a three-line start-up message
+Hello, Terminal (Snek's voice)
+print(), string literals, comments
+Make Snek print a three-line start-up message
 status
 1-2
 Memory Cells (short-term memory)
 Variables, assignment, int, float, str, bool, type(), snake_case naming
-Store and print ARIA's serial number, battery level and online state
+Store and print Snek's serial number, battery level and online state
 memory
 1-3
 Power Calculations (the battery)
@@ -301,7 +301,7 @@ def, parameters, return, calling, docstrings, local vs global scope
 Write celsius_to_kelvin() and distance() with docstrings
 define
 3-3
-Subroutines II (refactoring ARIA)
+Subroutines II (refactoring Snek)
 Default and keyword arguments, returning several values, decomposition, min, max, sum, sorted, enumerate, zip
 Split an earlier 40-line script into four well-named functions
 refactor
@@ -336,7 +336,7 @@ open(), with, reading lines, writing and appending, parsing comma-separated data
 Read a sensor log file and write a summary report file
 save
 Boss 4
-ARIA Online (tier final)
+Snek Online (tier final)
 Phase 1: timed mixed waves. Phase 2: a small project plus peer review
 Analyse a week of warehouse-robot logs from files, then review a classmate's code
 Advanced tier
@@ -344,7 +344,7 @@ Two threads run through every level rather than belonging to one:
 • Code quality is scored from Level 1-2 onwards: naming, indentation and comments, then docstrings from Level 3-2.
 • Algorithmic thinking starts in Level 2-2: from there on, harder missions ask for a short plan in comments before the code is accepted.
 Advanced tier: Worlds 5–8
-In the Advanced tier ARIA asks the player to bring the whole lab back online: a simulated factory with robots, conveyors, sensors and a scheduler. Missions grow from single files into small multi-file projects with test suites, and from writing code to reading, reviewing and redesigning it.
+In the Advanced tier Snek asks the player to bring the whole lab back online: a simulated factory with robots, conveyors, sensors and a scheduler. Missions grow from single files into small multi-file projects with test suites, and from writing code to reading, reviewing and redesigning it.
 Level
 Title (story beat)
 New concepts
@@ -505,20 +505,19 @@ forbid = ["For"]
 [[wave.test]]
 stdin = "\n\nstop\n"
 expected_stdout_contains = ["Battery: 10 %"]
-Limits we accept. The runner protects against infinite loops and crashes, but it is not a security sandbox; it is meant for players running their own code on their own machine. ANSI colours work in Windows Terminal, macOS Terminal and Linux terminals; the plain-ASCII mode covers the rest.
+Limits I accept. The runner protects against infinite loops and crashes, but it is not a security sandbox; it is meant for players running their own code on their own machine. ANSI colours work in Windows Terminal, macOS Terminal and Linux terminals; the plain-ASCII mode covers the rest.
 Development roadmap, step by step
-The build runs in ten phases (0–9), each ending in a gate that must be met before the next starts. World 1 is playable, with real pixel art, at the end of Phase 3, so every later phase can be playtested.
+The build runs in ten phases (0–9), each ending in a gate that must be met before the next starts. World 1 is playable, with real pixel art, at the end of Phase 3, so students can playtest every later phase.
 Phase 0 – Foundations
-[ ] Create the shared Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
-[ ] Agree on Python 3.12 and the standard library only
-[ ] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
-[ ] Write the art style guide: the 16-colour palette, sprite sizes, a sample ARIA sprite
-[ ] Assign roles (see Collaboration)
-Gate: repository exists; both style guides approved by the group.
+[x] Create the Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
+[x] Choose Python 3.12 and the standard library only
+[x] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
+[x] Write the art style guide: the 16-colour palette, sprite sizes, a sample Snek sprite
+Gate: repository exists; both style guides approved by me.
 Phase 1 – Engine and renderer prototype
-[ ] Command loop with help, map, play, submit, quit
-[ ] Half-block pixel renderer that draws a sprite from a text file
-[ ] World map screen with placeholder sprites and ARIA walking between level nodes
+[x] Command loop with help, map, play, submit, quit
+[x] Half-block pixel renderer that draws a sprite from a text file
+[ ] World map screen with placeholder sprites and Snek slithering between level nodes
 [ ] Level-pack loader (TOML) and save/load of progress (JSON)
 [ ] Write Level 1-1 as the test level
 Gate: a player can open the map, play Level 1-1, quit and resume.
@@ -531,15 +530,15 @@ Gate: Level 1-1 is fully graded; each wave's reference solution passes and a kno
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-4 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2
-[ ] Draw ARIA's states and the first two boss sprites
-[ ] Build the progression checker; peer-review every level before merging
+[ ] Draw Snek's states and the first two boss sprites
+[ ] Build the progression checker; review every level against the level style guide before merging
 Gate: Worlds 1–2 playable end to end.
 Phase 4 – Playtest round 1
-[ ] At least 5 testers who have not seen the content play Worlds 1–2
-[ ] Record time per level, hints bought, stars earned and where players got stuck
+[ ] At least 5 students who have not seen the content playtest Worlds 1–2
+[ ] Record time per level, hints bought, stars earned and where students got stuck
 [ ] Ask whether the rewards feel motivating, not just whether the tasks are clear
-[ ] Rewrite the levels where most testers stalled
-Gate: the median tester clears Worlds 1–2 without outside help.
+[ ] Rewrite the levels where most students stalled
+Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
 [ ] Write Levels 3-1 to 4-3 and Bosses 3 and 4 (both phases)
 [ ] Add the shop, badges, the Codex screen and the peer-review mode
@@ -557,7 +556,7 @@ Phase 7 – Worlds 5–8 (content and art)
 [ ] Draw the factory tileset and the remaining boss sprites
 Gate: Advanced tier playable end to end.
 Phase 8 – Playtest round 2 and balancing
-[ ] Full playthrough by testers from both tiers
+[ ] Full playthrough by student playtesters from both tiers
 [ ] Tune XP, coin prices, star thresholds, boss timers and pass marks from the data
 [ ] Fix all bugs in the issue tracker
 Gate: no open critical bugs; pass rates per level reviewed.
@@ -565,40 +564,22 @@ Phase 9 – Release 1.0
 [ ] Installation guide and player handbook
 [ ] Contributor guide: how to make a new level and its sprites
 [ ] Tag version 1.0 and share it with the class
-Collaboration, quality assurance and open questions
-The team builds Python Bytes the way the courses ask students to work: in small reviewed changes. Writing and reviewing the game is itself practice for the "code review" outcomes of both courses.
-Roles (one person can hold several)
-Role
-Responsible for
-Engine developer
-Command loop, level loader, save system, pixel renderer
-Grader developer
-Runner, test types, style and structure checks
-Content author
-Writing levels: cutscenes, tips, waves and power-ups
-Test writer
-Reference solutions, wrong solutions and test cases for each task
-Reviewer
-Reviewing every pull request against the style guide
-Playtest lead
-Recruiting testers, collecting and summarising feedback
-Pixel artist
-Palette, ARIA and boss sprites, map tiles, level-clear animations
+How I work, quality assurance and open questions
+Python Bytes is a solo project: I build it on my own, for students. I work the way the courses ask students to work: in small reviewed changes. Students take part as playtesters in Phases 4 and 8.
 Working rules
-• Every change goes through a pull request and needs one approving review from someone other than the author.
+• Every change goes through a pull request and is reviewed by me before it is merged.
 • A level is "done" only when its reference solutions pass, its wrong solutions fail, and the progression checker accepts it.
-• Bugs and ideas go in the issue tracker, never only in chat.
+• Bugs and ideas go in the issue tracker.
 Quality checks
 • Automated tests for the engine and grader, run before each merge.
 • For every task: one reference solution that must pass and at least one typical wrong solution that must fail, so grading is neither too strict nor too lenient.
 • Progression checker run on all content, so no level uses a construct before it is taught.
-• Playtest data (time, hints, failure points) reviewed after each round.
-Open questions for the group
+• Playtest data from the student playtesters (time, hints, failure points) reviewed after each round.
+Open questions
 • How should players write code: in the terminal itself, or in their own editor with the game watching a workspace/ folder? (Proposal: own editor, because that is how real work is done.)
-• Should the style checker use our own ast-based rules only, or the third-party pycodestyle package as an optional extra?
+• Should the style checker use my own ast-based rules only, or the third-party pycodestyle package as an optional extra?
 • How should the game treat AI-generated or copied answers, given that it is self-study?
 • Is the grade scale in Game design acceptable, or should it be removed so the game is not confused with official OsloMet grading?
 • Which licence should the code and content use if the game is shared beyond the class?
-• Do we keep the ARIA robotics-lab story, or vote on alternatives before drawing the sprites?
-• Do we stay with pixel art in the terminal (standard library only), or move to a real graphics window with the third-party pygame package for true pixels and sound? (Proposal: terminal first; it keeps the game text-based and easy to install.)
+• Do I stay with pixel art in the terminal (standard library only), or move to a real graphics window with the third-party pygame package for true pixels and sound? (Proposal: terminal first; it keeps the game text-based and easy to install.)
 • Should a class-wide leaderboard exist at all, or only personal bests?
