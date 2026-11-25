@@ -1,0 +1,658 @@
+# Python Bytes – machine-readable curriculum.
+# Human-readable twin: docs/curriculum.md. Change both in the same PR.
+#
+# Fields of a level:
+#   concepts   2-4 headline concepts the player learns (bosses have none).
+#   constructs what the level ADDS to the allowed set. The checker allows the
+#              union of all constructs from this level and every earlier one,
+#              in file order.
+#   technique  true: the level teaches a method (an algorithm, a design
+#              approach) rather than new syntax, so constructs may be empty.
+#   recycles   earlier items whose material comes back in this level.
+#   power_up   the terminal command the player earns (bosses have none).
+#
+# Forms of a construct (the full grammar is in docs/curriculum.md, section 6):
+#   "Node"             an ast node type, e.g. "While". Allows all its sub-forms.
+#   "Node:detail"      e.g. "BinOp:FloorDiv", "Compare:Is"
+#   "call:name"        a call of a built-in, e.g. "call:print"
+#   "method:name"      a method of a built-in str/list/dict/set/file
+#   "import:module"    the module, its from-imports and everything module.*
+#   "decorator:name"   e.g. "decorator:property"
+#   "dunder:name"      a special method defined in a class, e.g. "dunder:__eq__"
+#   "pattern:name"     a checker rule beyond plain syntax, e.g. "pattern:recursion"
+#
+# Always allowed, never listed: Module, Load, Store, Expr, and the name of a
+# function that is being called.
+
+[meta]
+version = 2
+levels_per_world = 5
+outcome_codes = [
+  "B1","B2","B3","B4","B5","B6","B7","B8","B9","B10","B11","B12",
+  "A1","A2","A3","A4","A5","A6","A7","A8","A9",
+  "R1","R2","R3","R4","R5","R6","R7","R8","R9","R10",
+]
+
+# ---------------------------------------------------------------- World 1
+[[level]]
+id = "1-1"
+world = 1
+title = "Hello, Terminal"
+concepts = ["print()", "string literals", "comments"]
+constructs = ["call:print", "Constant:str"]
+recycles = []
+difficulty = 1
+outcomes = ["B1", "B8"]
+power_up = "status"
+story = "The lab is dark. One terminal blinks; the voice module is offline."
+mission = "Print a three-line start-up message."
+
+[[level]]
+id = "1-2"
+world = 1
+title = "Memory Cells"
+concepts = ["variables and assignment", "the types int, float, str and bool", "type()", "snake_case names"]
+constructs = ["Assign", "Name", "Constant:int", "Constant:float", "Constant:bool", "call:type"]
+recycles = ["1-1"]
+difficulty = 1
+outcomes = ["B1", "B8", "R4"]
+power_up = "memory"
+story = "Short-term memory cells light up, empty."
+mission = "Store serial number, battery level and online state; rebind one name and print all."
+
+[[level]]
+id = "1-3"
+world = 1
+title = "Power Calculations"
+concepts = ["arithmetic operators and precedence", "//, % and **", "converting between int, float and str", "round()"]
+constructs = ["BinOp:Add", "BinOp:Sub", "BinOp:Mult", "BinOp:Div", "BinOp:FloorDiv", "BinOp:Mod", "BinOp:Pow", "UnaryOp:USub", "call:int", "call:float", "call:str", "call:round"]
+recycles = ["1-2"]
+difficulty = 2
+outcomes = ["B2"]
+power_up = "calc"
+story = "The battery controller needs numbers before it will charge."
+mission = "Compute remaining run-time in hours and minutes from capacity and power draw."
+
+[[level]]
+id = "1-4"
+world = 1
+title = "Floating Truth"
+concepts = ["why 0.1 + 0.2 != 0.3", "comparison operators", "absolute and relative tolerance", "math.isclose() and abs()"]
+constructs = ["Compare:Eq", "Compare:NotEq", "Compare:Lt", "Compare:LtE", "Compare:Gt", "Compare:GtE", "import:math", "call:abs"]
+recycles = ["1-3"]
+difficulty = 2
+outcomes = ["B2", "R1"]
+power_up = "approx"
+story = "Two sensors agree, yet the comparison says they differ."
+mission = "Compare readings with absolute and relative tolerance; explain why == failed."
+
+[[level]]
+id = "1-5"
+world = 1
+title = "Corrupted Logs"
+concepts = ["indexing and slicing", "len()", "string methods", "f-strings with format specs"]
+constructs = ["Subscript", "Slice", "call:len", "JoinedStr", "FormattedValue", "method:upper", "method:lower", "method:strip", "method:replace", "method:split", "method:find", "method:join", "method:startswith", "method:isdigit"]
+recycles = ["1-3", "1-4"]
+difficulty = 2
+outcomes = ["B2"]
+power_up = "read"
+story = "The log reader returns half-scrambled lines."
+mission = "Extract timestamp, code and value from a damaged log line; print an aligned report."
+
+[[level]]
+id = "boss-1"
+world = 1
+title = "The Corrupted Bootloader"
+boss = true
+constructs = []
+recycles = ["1-1", "1-2", "1-3", "1-4", "1-5"]
+difficulty = 3
+outcomes = ["B1", "B2", "R1"]
+mission = "Repair a scrambled boot report under time pressure."
+
+# ---------------------------------------------------------------- World 2
+[[level]]
+id = "2-1"
+world = 2
+title = "Listening"
+concepts = ["input()", "converting input to numbers", "input, process, output"]
+constructs = ["call:input"]
+recycles = ["1-3", "1-5"]
+difficulty = 1
+outcomes = ["B1", "B2"]
+power_up = "talk"
+story = "The microphone works. Something is listening back."
+mission = "Ask for two readings and print the calibrated offset to two decimals."
+
+[[level]]
+id = "2-2"
+world = 2
+title = "Decisions"
+concepts = ["and, or, not", "if / elif / else", "truthiness and bool()", "planning in comments first"]
+constructs = ["BoolOp:And", "BoolOp:Or", "UnaryOp:Not", "If", "call:bool"]
+recycles = ["2-1", "1-4"]
+difficulty = 2
+outcomes = ["B3", "B7"]
+power_up = "alarm"
+story = "The alarm system must decide what counts as danger."
+mission = "Classify a temperature as OK, WARNING or CRITICAL with hysteresis."
+
+[[level]]
+id = "2-3"
+world = 2
+title = "Charging"
+concepts = ["while loops", "sentinel values", "break and continue", "augmented assignment"]
+constructs = ["While", "Break", "Continue", "AugAssign"]
+recycles = ["2-2"]
+difficulty = 2
+outcomes = ["B4"]
+power_up = "charge"
+story = "The charge controller loops forever unless told when to stop."
+mission = "Charge in 5 % steps until full or until the user types stop."
+
+[[level]]
+id = "2-4"
+world = 2
+title = "Grid Scan"
+concepts = ["for loops and range()", "looping over strings", "accumulators", "nested loops"]
+constructs = ["For", "call:range"]
+recycles = ["2-2", "2-3", "1-5"]
+difficulty = 3
+outcomes = ["B4", "B7"]
+power_up = "scan"
+story = "The camera sweeps the lab floor row by row."
+mission = "Scan a 5 x 5 grid string and print the coordinates of every obstacle."
+
+[[level]]
+id = "2-5"
+world = 2
+title = "Finding the Signal"
+technique = true
+concepts = ["exhaustive enumeration and guess-and-check", "bisection search", "stopping on a float tolerance", "counting iterations"]
+constructs = []
+recycles = ["1-4", "2-3", "2-4"]
+difficulty = 3
+outcomes = ["B7", "R1", "R2", "R7"]
+power_up = "seek"
+story = "A weak signal hides somewhere in a frequency band."
+mission = "Find a square root by enumeration, then by bisection; compare iteration counts."
+
+[[level]]
+id = "boss-2"
+world = 2
+title = "The Night Patrol"
+boss = true
+constructs = []
+recycles = ["2-1", "2-2", "2-3", "2-4", "2-5"]
+difficulty = 3
+outcomes = ["B3", "B4", "B7"]
+mission = "Patrol simulation combining input, decisions, loops and a bisection search."
+
+# ---------------------------------------------------------------- World 3
+[[level]]
+id = "3-1"
+world = 3
+title = "Inventory"
+concepts = ["lists: literals, indexing and slicing", "adding, removing and sorting items", "searching with in", "lists of lists"]
+constructs = ["List", "Compare:In", "method:append", "method:insert", "method:remove", "method:pop", "method:sort", "call:list", "Delete"]
+recycles = ["2-4", "1-5"]
+difficulty = 2
+outcomes = ["B6"]
+power_up = "inventory"
+story = "The parts storage has no index."
+mission = "Add, remove, search and sort parts; keep a list of [name, count] pairs."
+
+[[level]]
+id = "3-2"
+world = 3
+title = "Subroutines I"
+concepts = ["def, parameters and return", "None", "docstrings", "local scope"]
+constructs = ["FunctionDef", "Return", "Constant:None", "pattern:docstring", "Pass"]
+recycles = ["3-1", "2-4"]
+difficulty = 2
+outcomes = ["B5", "B8"]
+power_up = "define"
+story = "The motor controller needs reusable movements."
+mission = "Write celsius_to_kelvin() and distance() with docstrings; reuse them in a loop."
+
+[[level]]
+id = "3-3"
+world = 3
+title = "Subroutines II"
+concepts = ["default and keyword arguments", "returning several values", "min, max, sum and sorted", "decomposition, specifications and Newton-Raphson"]
+constructs = ["keyword", "pattern:default_args", "Tuple", "call:min", "call:max", "call:sum", "call:sorted"]
+recycles = ["3-2", "3-1", "2-5"]
+difficulty = 3
+outcomes = ["B5", "B11", "R5", "R7"]
+power_up = "refactor"
+story = "Old control code is one 60-line block nobody dares touch."
+mission = "Split it into specified functions; make bisection from 2-5 a reusable function and add Newton-Raphson."
+
+[[level]]
+id = "3-4"
+world = 3
+title = "Echoes and Aliases"
+concepts = ["mutability and aliasing", "is versus ==", "cloning with slices and copy", "the mutable default argument trap"]
+constructs = ["Compare:Is", "call:id", "import:copy", "method:copy"]
+recycles = ["3-1", "3-3"]
+difficulty = 3
+outcomes = ["B6", "R4"]
+power_up = "clone"
+story = "Changing one robot's settings mysteriously changes another's."
+mission = "Find and fix three aliasing bugs, including a mutable default argument."
+
+[[level]]
+id = "3-5"
+world = 3
+title = "Fixed Records"
+concepts = ["tuples in depth: immutability and unpacking", "sets and set algebra", "zip()", "enumerate()"]
+constructs = ["Set", "call:set", "call:tuple", "method:add", "BinOp:BitOr", "BinOp:BitAnd", "BinOp:BitXor", "call:zip", "call:enumerate"]
+recycles = ["3-1", "3-3", "3-4"]
+difficulty = 3
+outcomes = ["B6"]
+power_up = "compare"
+story = "Sensor history must never be edited, only compared."
+mission = "Find sensors present in both runs, in only one, and in either; pair readings with their timestamps."
+
+[[level]]
+id = "boss-3"
+world = 3
+title = "The Storage Auditor"
+boss = true
+constructs = []
+recycles = ["3-1", "3-2", "3-3", "3-4", "3-5"]
+difficulty = 4
+outcomes = ["B5", "B6", "R4"]
+mission = "Audit the inventory with functions, lists, tuples and sets; fix an aliasing fault."
+
+# ---------------------------------------------------------------- World 4
+[[level]]
+id = "4-1"
+world = 4
+title = "The Catalogue"
+concepts = ["dictionaries: keys, values and get()", "looping over dictionaries and nesting", "the counting pattern", "choosing a data structure, with timing and Big-O vocabulary"]
+constructs = ["Dict", "method:get", "method:items", "method:keys", "method:values", "call:dict", "import:time"]
+recycles = ["3-1", "3-5"]
+difficulty = 3
+outcomes = ["B6", "B7", "R2"]
+power_up = "lookup"
+story = "The knowledge base stores everything by name."
+mission = "Build a parts catalogue; choose list, tuple, set or dict for four scenarios (multiple choice); time `in` on a list, a set and a dict."
+
+[[level]]
+id = "4-2"
+world = 4
+title = "Fault Tolerance"
+concepts = ["exceptions and reading tracebacks", "try / except / else / finally", "raise and exception constructors", "assert and defensive programming"]
+constructs = ["Try", "ExceptHandler", "Raise", "Assert", "call:ValueError", "call:TypeError", "call:KeyError"]
+recycles = ["2-1", "3-3", "1-5"]
+difficulty = 3
+outcomes = ["B9", "R5"]
+power_up = "debug"
+story = "One bad keystroke crashes the calibration routine."
+mission = "Make the calibration program survive any input; raise a clear error for impossible values."
+
+[[level]]
+id = "4-3"
+world = 4
+title = "The Archive"
+concepts = ["reading and writing files with open() and with", "the csv module", "pathlib.Path", "validating input data"]
+constructs = ["With", "call:open", "call:next", "import:csv", "import:pathlib", "method:write", "method:read", "method:readlines"]
+recycles = ["4-1", "4-2", "1-5"]
+difficulty = 3
+outcomes = ["B10", "B11"]
+power_up = "save"
+story = "Long-term memory is a folder of CSV logs, some of them corrupt."
+mission = "Read sensor CSVs, skip invalid rows with a report, write a summary file and a text bar chart."
+
+[[level]]
+id = "4-4"
+world = 4
+title = "The Test Bench"
+technique = true
+concepts = ["black-box and glass-box test design", "boundary cases", "assert-based test functions", "systematic debugging and reviewing a provided solution"]
+constructs = []
+recycles = ["4-2", "3-3", "4-3"]
+difficulty = 3
+outcomes = ["B8", "B9", "B12", "R5"]
+power_up = "test"
+story = "Repairs keep breaking older repairs."
+mission = "Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by choosing the right feedback for each fault."
+
+[[level]]
+id = "4-5"
+world = 4
+title = "Echo Chamber"
+concepts = ["recursion: base case and recursive case", "inductive reasoning", "recursion on lists and strings", "memoisation with a dictionary"]
+constructs = ["pattern:recursion"]
+recycles = ["3-3", "4-1", "4-4"]
+difficulty = 4
+outcomes = ["B5", "B7", "R3"]
+power_up = "echo"
+story = "A message echoes through relay stations."
+mission = "Recursive sum, reverse and palindrome; Fibonacci with and without a memo dict, with call counts."
+
+[[level]]
+id = "boss-4"
+world = 4
+title = "Systems Online"
+boss = true
+constructs = []
+recycles = ["4-1", "4-2", "4-3", "4-4", "4-5"]
+difficulty = 5
+outcomes = ["B11", "B12", "R5"]
+mission = "Phase 1: timed mixed waves. Phase 2: a single-file sensor-warning project with tests; review a provided solution."
+
+# ---------------------------------------------------------------- World 5
+[[level]]
+id = "5-1"
+world = 5
+title = "The Lab Network"
+concepts = ["modules and import", "packages and namespaces", "the main guard", "project layout with tests beside the code"]
+constructs = ["import:local", "pattern:main_guard"]
+recycles = ["boss-4", "4-4"]
+difficulty = 2
+outcomes = ["A1", "B11", "R9"]
+power_up = "project"
+story = "The lab's machines must share code over the network."
+mission = "Split the Boss 4 project into a package of three modules with a main guard; run its tests."
+
+[[level]]
+id = "5-2"
+world = 5
+title = "Blueprints"
+concepts = ["classes and objects", "__init__ and attributes", "methods and self", "class versus instance attributes"]
+constructs = ["ClassDef", "dunder:__init__"]
+recycles = ["5-1", "4-1"]
+difficulty = 2
+outcomes = ["A2"]
+power_up = "build"
+story = "The foundry prints robots from blueprints."
+mission = "Write a Robot class with position, battery, move() and report(); a class-level counter of robots."
+
+[[level]]
+id = "5-3"
+world = 5
+title = "Safety Interlocks"
+concepts = ["encapsulation and the _private convention", "@property", "setters with validation", "invariants"]
+constructs = ["decorator:property", "decorator:setter"]
+recycles = ["5-2", "4-2"]
+difficulty = 3
+outcomes = ["A2", "A4"]
+power_up = "lock"
+story = "Robots must never be able to set an impossible state."
+mission = "Battery level and speed with validated setters; invariants checked in tests."
+
+[[level]]
+id = "5-4"
+world = 5
+title = "Coordinates"
+concepts = ["printing: __repr__ and __str__", "equality and hashing: exact __eq__ with __hash__", "ordering and arithmetic: __lt__, __add__, __radd__", "value objects with a separate is_close()"]
+constructs = ["dunder:__repr__", "dunder:__str__", "dunder:__eq__", "dunder:__hash__", "dunder:__lt__", "dunder:__add__", "dunder:__radd__", "call:repr", "call:hash"]
+recycles = ["5-2", "1-4", "3-5"]
+difficulty = 3
+outcomes = ["A2"]
+power_up = "plot"
+story = "Robot positions must add, compare and print like numbers."
+mission = "A Vector2D value class usable in sets, sorting and sum(), with exact equality and a separate is_close()."
+
+[[level]]
+id = "5-5"
+world = 5
+title = "Data Structures by Hand"
+concepts = ["abstract data type versus implementation", "stack, queue and linked list as classes", "the container protocol: __len__ and __iter__", "cost of each operation and collections.deque"]
+constructs = ["import:collections", "dunder:__len__", "dunder:__iter__", "call:iter"]
+recycles = ["5-2", "5-4", "3-5"]
+difficulty = 4
+outcomes = ["A2", "A5", "R2", "R6"]
+power_up = "stack"
+story = "Parts arrive on a belt and leave from a stack."
+mission = "Implement Stack, Queue and LinkedList classes; compare operation costs with deque."
+
+[[level]]
+id = "boss-5"
+world = 5
+title = "The First Robot"
+boss = true
+constructs = []
+recycles = ["5-1", "5-2", "5-3", "5-4", "5-5"]
+difficulty = 4
+outcomes = ["A2", "R6"]
+mission = "Build a tested robot package from a specification."
+
+# ---------------------------------------------------------------- World 6
+[[level]]
+id = "6-1"
+world = 6
+title = "Specialists"
+concepts = ["inheritance and super()", "overriding", "isinstance()", "is-a versus has-a: composition"]
+constructs = ["pattern:class_bases", "call:super", "call:isinstance"]
+recycles = ["5-2", "5-3"]
+difficulty = 3
+outcomes = ["A2", "A4"]
+power_up = "spawn"
+story = "Welders and couriers share a chassis but not a job."
+mission = "WeldingRobot and DeliveryRobot from Robot; a Gripper by composition; justify each choice."
+
+[[level]]
+id = "6-2"
+world = 6
+title = "One Interface"
+concepts = ["polymorphism and duck typing", "abstract base classes", "type hints", "typing.Protocol"]
+constructs = ["import:abc", "decorator:abstractmethod", "import:typing", "AnnAssign", "pattern:annotations"]
+recycles = ["6-1", "5-4"]
+difficulty = 3
+outcomes = ["A2", "A9"]
+power_up = "sensors"
+story = "Every sensor speaks a different dialect."
+mission = "A Sensor ABC and a Protocol; the controller reads any mix of sensors through one interface."
+
+[[level]]
+id = "6-3"
+world = 6
+title = "Fail-safe Systems"
+concepts = ["custom exception hierarchies", "class-based context managers", "logging", "EAFP versus LBYL"]
+constructs = ["dunder:__enter__", "dunder:__exit__", "import:logging"]
+recycles = ["4-2", "4-3", "6-1"]
+difficulty = 4
+outcomes = ["A4", "A6"]
+power_up = "log"
+story = "When the belt jams, it must stop safely every time."
+mission = "A ConveyorFault hierarchy and a class-based context manager that always stops the belt; log every fault."
+
+[[level]]
+id = "6-4"
+world = 6
+title = "Operating Modes"
+concepts = ["finite state machines", "enum.Enum", "transition table versus the State pattern", "match statements"]
+constructs = ["import:enum", "Match"]
+recycles = ["6-2", "4-1"]
+difficulty = 4
+outcomes = ["A4", "A9", "R10"]
+power_up = "mode"
+story = "A machine is always IDLE, RUNNING, PAUSED or FAULT, never in between."
+mission = "One state machine two ways: a transition dict and the State pattern; compare in a short note."
+
+[[level]]
+id = "6-5"
+world = 6
+title = "The Control Loop"
+technique = true
+concepts = ["discrete-time simulation", "Euler integration of a motor model", "a PID controller class", "step response and tuning"]
+constructs = []
+recycles = ["6-4", "5-3", "1-4", "4-3"]
+difficulty = 5
+outcomes = ["A1", "R7", "R10"]
+power_up = "pid"
+story = "The motor overshoots its target and oscillates."
+mission = "Simulate a motor with Euler steps, write a PID class, tune it, plot the step response as text."
+
+[[level]]
+id = "boss-6"
+world = 6
+title = "The Production Line"
+boss = true
+constructs = []
+recycles = ["6-1", "6-2", "6-3", "6-4", "6-5"]
+difficulty = 5
+outcomes = ["A1", "A4", "R10"]
+mission = "Run a mixed robot line with state machines, a PID-controlled belt and fault handling."
+
+# ---------------------------------------------------------------- World 7
+[[level]]
+id = "7-1"
+world = 7
+title = "Pipelines I"
+concepts = ["first-class functions and lambda", "map and filter", "list, dict and set comprehensions", "conditional expressions, any() and all()"]
+constructs = ["Lambda", "call:map", "call:filter", "ListComp", "DictComp", "SetComp", "IfExp", "call:any", "call:all"]
+recycles = ["4-3", "3-3"]
+difficulty = 3
+outcomes = ["A3", "A5"]
+power_up = "pipe"
+story = "Ten thousand readings flood in every second."
+mission = "Clean, filter and summarise 10 000 readings as a pipeline of small functions."
+
+[[level]]
+id = "7-2"
+world = 7
+title = "Pipelines II"
+concepts = ["closures and nonlocal", "decorators, wraps and lru_cache", "generators and yield", "the iterator protocol"]
+constructs = ["GeneratorExp", "Nonlocal", "pattern:varargs", "pattern:custom_decorator", "decorator:wraps", "decorator:lru_cache", "import:functools", "Yield", "YieldFrom", "dunder:__next__"]
+recycles = ["7-1", "4-5", "5-5"]
+difficulty = 4
+outcomes = ["A3", "R3"]
+power_up = "stream"
+story = "The log file is too big to load at once."
+mission = "A @timed decorator, a generator streaming a huge log, lru_cache on recursive Fibonacci."
+
+[[level]]
+id = "7-3"
+world = 7
+title = "Two Roads"
+concepts = ["functional versus object-oriented design of one system", "dataclasses and NamedTuple", "immutability", "contextlib and itertools"]
+constructs = ["import:dataclasses", "decorator:dataclass", "import:contextlib", "import:itertools"]
+recycles = ["7-1", "7-2", "6-4", "6-3"]
+difficulty = 4
+outcomes = ["A3", "A9"]
+power_up = "twins"
+story = "Two engineers insist on two designs for the same scheduler."
+mission = "Solve one scheduling problem functionally and with objects; write a half-page trade-off note."
+
+[[level]]
+id = "7-4"
+world = 7
+title = "The Test Bench II"
+concepts = ["unittest and fixtures", "test-first fixing", "dependency injection and mocks", "debugging with breakpoint() and pdb"]
+constructs = ["import:unittest", "import:unittest.mock", "call:breakpoint"]
+recycles = ["4-4", "6-3", "7-3"]
+difficulty = 4
+outcomes = ["A6", "R5"]
+power_up = "mock"
+story = "The test bench itself has bugs."
+mission = "Make a failing suite pass without changing tests; inject a fake sensor; explain a pdb session."
+
+[[level]]
+id = "7-5"
+world = 7
+title = "The Legacy Controller"
+technique = true
+concepts = ["reading unfamiliar code", "documenting a module", "code smells and refactoring under tests", "writing a code-review report"]
+constructs = []
+recycles = ["7-4", "6-1", "5-3"]
+difficulty = 4
+outcomes = ["A7", "A8"]
+power_up = "review"
+story = "An old controller works, mostly, and nobody knows how."
+mission = "Document an unfamiliar module, find five planted bugs, refactor under tests, write a review report."
+
+[[level]]
+id = "boss-7"
+world = 7
+title = "The Legacy Machine"
+boss = true
+constructs = []
+recycles = ["7-1", "7-2", "7-3", "7-4", "7-5"]
+difficulty = 5
+outcomes = ["A7", "A8", "A9"]
+mission = "Review, test and improve a provided mini-project, including parts of Python Bytes' own code (provided files are exempt from the construct rule)."
+
+# ---------------------------------------------------------------- World 8
+[[level]]
+id = "8-1"
+world = 8
+title = "The Architect"
+technique = true
+concepts = ["coupling and cohesion", "SOLID in plain terms", "strategy, factory and observer patterns", "comparing two designs"]
+constructs = []
+recycles = ["6-2", "7-3"]
+difficulty = 4
+outcomes = ["A4", "A9"]
+power_up = "design"
+story = "The mainframe needs one design that will last."
+mission = "Two designs for the task scheduler using strategy, factory or observer; argue for one in writing."
+
+[[level]]
+id = "8-2"
+world = 8
+title = "Speed Run"
+concepts = ["Big-O and Big-Theta", "analysing loops and recursion", "timeit and cProfile", "heapq and bisect"]
+constructs = ["import:timeit", "import:cProfile", "import:heapq", "import:bisect"]
+recycles = ["4-1", "5-5", "7-2"]
+difficulty = 4
+outcomes = ["A5", "R2"]
+power_up = "profile"
+story = "The part-matcher takes minutes; the line needs milliseconds."
+mission = "Derive Big-O of given functions, profile a slow routine, speed it up and measure the gain."
+
+[[level]]
+id = "8-3"
+world = 8
+title = "Sorting Line"
+technique = true
+concepts = ["insertion sort", "merge sort and divide and conquer", "binary search", "stability"]
+constructs = []
+recycles = ["4-5", "8-2"]
+difficulty = 4
+outcomes = ["A5", "R2", "R3"]
+power_up = "sort"
+story = "Parts must leave the line in order, fast."
+mission = "Implement insertion sort, merge sort and binary search; test stability; compare with sorted()."
+
+[[level]]
+id = "8-4"
+world = 8
+title = "Path Planning"
+technique = true
+concepts = ["graphs as adjacency dicts", "BFS and DFS", "Dijkstra with heapq", "paths on a grid"]
+constructs = []
+recycles = ["4-1", "5-5", "8-2"]
+difficulty = 5
+outcomes = ["A1", "A5", "R8"]
+power_up = "route"
+story = "Robots must cross a factory floor full of obstacles."
+mission = "Model the floor as a graph; BFS, DFS and Dijkstra; show each robot's path on the pixel map."
+
+[[level]]
+id = "8-5"
+world = 8
+title = "The Scheduler"
+technique = true
+concepts = ["greedy versus optimal", "dynamic programming: memoised and tabulated", "0/1 knapsack as job scheduling", "proving a greedy solution can fail"]
+constructs = []
+recycles = ["8-3", "7-2", "4-5"]
+difficulty = 5
+outcomes = ["A5", "A9", "R2", "R3"]
+power_up = "schedule"
+story = "More jobs than machine hours: something must wait."
+mission = "Greedy versus dynamic-programming job scheduling (0/1 knapsack); show the greedy one can fail."
+
+[[level]]
+id = "boss-8"
+world = 8
+title = "The Factory Wakes"
+boss = true
+constructs = []
+recycles = ["8-1", "8-2", "8-3", "8-4", "8-5", "boss-6"]
+difficulty = 5
+outcomes = ["A1", "A4", "A8", "R9", "R10"]
+mission = "Full factory simulation: state machines, control loop, path planning, scheduling; design note, tests, review."

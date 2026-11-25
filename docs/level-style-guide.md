@@ -9,30 +9,39 @@ levels/w<world>/<level-id>-<short-name>/level.toml
 ```
 
 Examples: `levels/w1/1-1-hello-terminal/level.toml`, `levels/w2/2-3-charging/level.toml`.
-Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
+Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`. The last boss is `boss-8`, in `levels/w8/`.
 
 ## Required parts of a level
 
 | Part | What it is | Limit |
 | --- | --- | --- |
-| `[level]` | id, title, world, new concepts, power-up | 2–4 new concepts |
+| `[level]` | id, title, world, new concepts, power-up | 2–4 new concepts, the same as `concepts` of this level in `levels/concepts.toml` |
 | `cutscene` | Story scene with working code in it | 25 lines |
 | `tips` | One-line explanations of the new syntax (go to the Codex) | 1 tip per new concept |
 | Wave 1 `fill-in` | Given code with `___` blanks to complete | 1–3 blanks |
-| Wave 2 `build` | Write a program from a short brief | Brief: 5 sentences |
-| Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code |
+| Wave 2 `build` | Write a program from a short brief, optionally from a `starter` | Brief: 5 sentences |
+| Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code; from World 3: up to 3 bugs and 30 lines |
 | Tests | At least 2 tests per wave. In a predict-mode debug wave, `answer` and `wrong` count as its tests | – |
 | Reference + wrong solution | One solution that must pass, one typical mistake that must fail | Per wave |
 | `hints` (optional) | A nudge, an outline and a partial solution, bought with coins | Exactly 3 per wave |
+| `time_limit` (optional, per wave) | Seconds the player's code may run, for missions that time code (Level 8-2) | Runner default if left out |
 
 ## Hard rules
 
-1. A level uses only constructs taught in earlier levels, plus its own new concepts. The progression checker enforces this.
+1. A level uses only constructs taught in earlier levels, plus its own new concepts. `docs/curriculum.md` and `levels/concepts.toml` decide what each level teaches; never add a construct to a level that is not listed there. The progression checker enforces this (the rules are in section 6 of `docs/curriculum.md`).
 2. At most 4 new concepts per level.
 3. Everything is in English.
 4. Every wave has a reference solution that passes and a wrong solution that fails. A predict-mode debug wave has a right `answer` and a `wrong` answer instead.
 5. The cutscene shows the new syntax working **before** the tips explain it.
 6. Code in levels follows the style the game grades: snake_case names, 4-space indents, comments where useful.
+
+## Bigger waves from World 3
+
+From World 3, a debug wave may hold up to 3 bugs and 30 lines (3-4 asks the player to fix three aliasing bugs). A build wave may have a `starter`: code the player builds on, for example a long script to split into functions (3-3). Bosses keep their one wave. Before World 3 the limits in the table above apply.
+
+## What is never taught
+
+`global` is never taught, and level code never uses it. A function that changes a variable outside itself cannot be read, tested or reused on its own, and first-year students then learn to fix a bug by adding another global. The player passes values in and returns values out; where a count must survive several calls (the call counter in 4-5), a mutable object such as a list is passed in.
 
 ## Kinds of test
 
