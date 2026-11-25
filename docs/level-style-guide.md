@@ -23,6 +23,7 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
 | Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code |
 | Tests | At least 2 tests per wave. In a predict-mode debug wave, `answer` and `wrong` count as its tests | – |
 | Reference + wrong solution | One solution that must pass, one typical mistake that must fail | Per wave |
+| `hints` (optional) | A nudge, an outline and a partial solution, bought with coins | Exactly 3 per wave |
 
 ## Hard rules
 
@@ -86,6 +87,11 @@ brief = "Fill in the blank so Snek says SNEK ONLINE."
 starter = '''print(___)'''
 reference = '''print("SNEK ONLINE")'''
 wrong = '''print(SNEK ONLINE)'''
+hints = [
+  "Python reads words without quotes as names. Is SNEK ONLINE a name, or text?",
+  "Text goes inside quotes, and the quotes go inside the brackets.",
+  "The line starts like this: print(\"SNEK",
+]
 
 [[wave.test]]
 expected_stdout = "SNEK ONLINE\n"
@@ -108,6 +114,11 @@ print("HELLO, TECHNICIAN")
 wrong = '''
 print("SYSTEM CHECK", "VOICE MODULE OK", "HELLO, TECHNICIAN")
 '''
+hints = [
+  "Each print() call prints one line.",
+  "Write one # comment line, then three print() lines, one per message.",
+  "Start with: # Snek's start-up message, then print(\"SYSTEM CHECK\") and two more lines like it.",
+]
 
 [[wave.test]]
 expected_stdout = "SYSTEM CHECK\nVOICE MODULE OK\nHELLO, TECHNICIAN\n"
@@ -126,6 +137,11 @@ print("THREE")
 '''
 answer = "ONE\nTHREE"
 wrong = "ONE\nTWO\nTHREE"
+hints = [
+  "Look at the start of each line. Does Python run all of them?",
+  "Python skips a line that starts with #. Only two lines run.",
+  "The first line of the output is ONE.",
+]
 ```
 
 This is the format the level loader (`engine/level_pack.py`) reads. The loader checks the structure, and `tests/test_levels.py` checks every level in `levels/` against the limits in this guide. This example is saved as `levels/w1/1-1-hello-terminal/level.toml`.

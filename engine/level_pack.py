@@ -18,6 +18,9 @@ from grader.checks import TEST_KINDS
 # The three kinds of wave a level can have, in the order the guide lists them.
 WAVE_KINDS = ["fill-in", "build", "debug"]
 
+# A wave with hints has exactly this many: a nudge, an outline and a partial solution.
+HINT_COUNT = 3
+
 # How many new concepts one level may teach.
 MIN_NEW_CONCEPTS = 2
 MAX_NEW_CONCEPTS = 4
@@ -40,10 +43,12 @@ class Wave:
         wrong: a typical mistake that must fail.
         answer: the right output (predict waves), or None.
         tests: a list of dicts, one per [[wave.test]] in the file.
+        hints: the wave's three hints (nudge, outline, partial solution),
+            or an empty list if it has none.
     """
 
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
-                 reference=None, wrong=None, answer=None, tests=None):
+                 reference=None, wrong=None, answer=None, tests=None, hints=None):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -56,6 +61,9 @@ class Wave:
         if tests is None:
             tests = []
         self.tests = list(tests)
+        if hints is None:
+            hints = []
+        self.hints = list(hints)
 
 
 class Level:
@@ -172,6 +180,13 @@ def make_wave(table, place):
         test_number = test_number + 1
         check_test(test, f"{place}, test {test_number}")
 
+    hints = []
+    if "hints" in table:
+        hints = get_list_of_text(table, "hints", place)
+        if len(hints) != HINT_COUNT:
+            raise LevelError(f"{place}: a wave has {HINT_COUNT} hints (nudge, outline, "
+                             f"partial solution), this one has {len(hints)}")
+
     return Wave(
         kind,
         brief,
@@ -182,6 +197,7 @@ def make_wave(table, place):
         wrong=table.get("wrong"),
         answer=table.get("answer"),
         tests=tests,
+        hints=hints,
     )
 
 

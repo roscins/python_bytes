@@ -199,6 +199,27 @@ class TestLoadTests(unittest.TestCase):
             self.load_with_test('expected_stdout = "OK"\nstdin = 5')
 
 
+class TestLoadHints(unittest.TestCase):
+    """Check the optional hints of a wave."""
+
+    def load_with_hints(self, hints_line):
+        """Load the valid level with `hints_line` added to its first wave."""
+        text = VALID_LEVEL_TOML.replace('wrong = "print(OK)"\n', 'wrong = "print(OK)"\n' + hints_line + "\n")
+        levels_folder = make_temporary_folder(self)
+        return load_level(write_level_pack(levels_folder, "w1", "1-1-hello-terminal", text))
+
+    def test_three_hints_load(self):
+        """Three hints are read in order; a wave without hints has none."""
+        level = self.load_with_hints('hints = ["Nudge.", "Outline.", "Partial."]')
+        self.assertEqual(level.waves[0].hints, ["Nudge.", "Outline.", "Partial."])
+        self.assertEqual(level.waves[1].hints, [])
+
+    def test_two_hints_is_an_error(self):
+        """A wave with hints has exactly three."""
+        with self.assertRaisesRegex(LevelError, "a wave has 3 hints"):
+            self.load_with_hints('hints = ["Nudge.", "Outline."]')
+
+
 class TestLoadLevels(unittest.TestCase):
     """Check finding every level in a levels folder."""
 

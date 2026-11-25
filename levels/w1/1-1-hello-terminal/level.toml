@@ -26,6 +26,11 @@ brief = "Fill in the blank so Snek says SNEK ONLINE."
 starter = '''print(___)'''
 reference = '''print("SNEK ONLINE")'''
 wrong = '''print(SNEK ONLINE)'''
+hints = [
+  "Python reads words without quotes as names. Is SNEK ONLINE a name, or text?",
+  "Text goes inside quotes, and the quotes go inside the brackets.",
+  "The line starts like this: print(\"SNEK",
+]
 
 [[wave.test]]
 expected_stdout = "SNEK ONLINE\n"
@@ -48,6 +53,11 @@ print("HELLO, TECHNICIAN")
 wrong = '''
 print("SYSTEM CHECK", "VOICE MODULE OK", "HELLO, TECHNICIAN")
 '''
+hints = [
+  "Each print() call prints one line.",
+  "Write one # comment line, then three print() lines, one per message.",
+  "Start with: # Snek's start-up message, then print(\"SYSTEM CHECK\") and two more lines like it.",
+]
 
 [[wave.test]]
 expected_stdout = "SYSTEM CHECK\nVOICE MODULE OK\nHELLO, TECHNICIAN\n"
@@ -66,3 +76,8 @@ print("THREE")
 '''
 answer = "ONE\nTHREE"
 wrong = "ONE\nTWO\nTHREE"
+hints = [
+  "Look at the start of each line. Does Python run all of them?",
+  "Python skips a line that starts with #. Only two lines run.",
+  "The first line of the output is ONE.",
+]

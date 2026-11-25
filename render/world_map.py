@@ -28,6 +28,7 @@ PATH_THICKNESS = 2
 PATH_TOP = NODE_TOP + (NODE_SIZE - PATH_THICKNESS) // 2
 
 SLITHER_STEP = 4           # Snek moves this many pixels per frame
+MAX_STARS = 3              # a level can earn up to 3 stars
 
 # The worlds' names, from docs/plan.md.
 WORLD_NAMES = {
@@ -47,15 +48,40 @@ class MapArt:
 
     Attributes:
         palette: the game's palette, from art/palette.txt.
-        node: the sprite for a level node.
+        node: the sprite for an open level node.
         snek: the sprite for Snek.
+        node_locked: the sprite for a locked level node (the open node's
+            sprite if none is given).
     """
 
-    def __init__(self, palette, node, snek):
-        """Remember the palette and the two sprites."""
+    def __init__(self, palette, node, snek, node_locked=None):
+        """Remember the palette and the sprites."""
         self.palette = palette
         self.node = node
         self.snek = snek
+        if node_locked is None:
+            node_locked = node
+        self.node_locked = node_locked
+
+
+class MapStatus:
+    """The player's progress, as the map shows it.
+
+    The engine builds this from the game state, so the renderer never needs
+    to know about the engine.
+
+    Attributes:
+        hud: the text at the right of the header, for example
+            "XP 1240   ★ 7/12   COINS 35".
+        locked: one True or False per level: is the level locked?
+        stars: one number (0 to 3) per level: the stars earned there.
+    """
+
+    def __init__(self, hud, locked, stars):
+        """Remember the HUD text, the locks and the stars."""
+        self.hud = hud
+        self.locked = list(locked)
+        self.stars = list(stars)
 
 
 def load_map_art(art_folder=ART_FOLDER):
@@ -63,7 +89,8 @@ def load_map_art(art_folder=ART_FOLDER):
     palette = load_palette(art_folder / "palette.txt")
     node = load_sprite(art_folder / "node-open.txt", palette)
     snek = load_sprite(art_folder / "snek-offline.txt", palette)
-    return MapArt(palette, node, snek)
+    node_locked = load_sprite(art_folder / "node-locked.txt", palette)
+    return MapArt(palette, node, snek, node_locked)
 
 
 def node_centre(index, node_count):
@@ -96,23 +123,57 @@ def header_line(world):
     return f"WORLD {world}"
 
 
-def label_line(level_ids):
-    """Return a line with each level id in brackets, centred over its node."""
+def centred_line(texts):
+    """Return a line with each text centred over its node.
+
+    `texts` has one text per node; an empty text leaves that place blank.
+    """
     line = " " * MAP_WIDTH
-    for index in range(len(level_ids)):
-        label = f"[{level_ids[index]}]"
-        start = node_centre(index, len(level_ids)) - len(label) // 2
+    for index in range(len(texts)):
+        text = texts[index]
+        start = node_centre(index, len(texts)) - len(text) // 2
         if start < 0:
             start = 0
-        line = line[:start] + label + line[start + len(label):]
-    # The label may have made the line longer than the map; cut it back.
+        line = line[:start] + text + line[start + len(text):]
+    # A text may have made the line longer than the map; cut it back.
     return line[:MAP_WIDTH].rstrip()
 
 
-def map_frame(world, level_ids, snek_column, art):
+def label_line(level_ids):
+    """Return a line with each level id in brackets, centred over its node."""
+    labels = []
+    for level_id in level_ids:
+        labels.append(f"[{level_id}]")
+    return centred_line(labels)
+
+
+def star_line(status):
+    """Return a line with each open level's stars, like ★★☆, under its label."""
+    texts = []
+    for index in range(len(status.stars)):
+        if status.locked[index]:
+            texts.append("")
+        else:
+            stars = status.stars[index]
+            texts.append("★" * stars + "☆" * (MAX_STARS - stars))
+    return centred_line(texts)
+
+
+def header_with_hud(world, hud):
+    """Return the header with the HUD text pushed to the right edge of the map."""
+    header = header_line(world)
+    gap = MAP_WIDTH - len(header) - len(hud)
+    if gap < 2:
+        gap = 2
+    return header + " " * gap + hud
+
+
+def map_frame(world, level_ids, snek_column, art, status=None):
     """Return one picture of the map as text, with Snek's left edge at `snek_column`.
 
-    If `snek_column` is None, Snek is not drawn.
+    If `snek_column` is None, Snek is not drawn. With a MapStatus, the
+    header shows the HUD, locked levels get the locked tile, and each open
+    level's stars are shown under its label.
     """
     canvas = new_canvas(MAP_WIDTH, MAP_HEIGHT)
     node_count = len(level_ids)
@@ -122,23 +183,29 @@ def map_frame(world, level_ids, snek_column, art):
         draw_line(canvas, PATH_CODE, first, last, PATH_TOP, PATH_THICKNESS)
     for index in range(node_count):
         left = node_centre(index, node_count) - NODE_SIZE // 2
-        paste(canvas, art.node, left, NODE_TOP)
+        node = art.node
+        if status is not None and status.locked[index]:
+            node = art.node_locked
+        paste(canvas, node, left, NODE_TOP)
     if snek_column is not None:
         paste(canvas, art.snek, snek_column, SNEK_TOP)
 
-    lines = [header_line(world), "", label_line(level_ids)]
+    if status is None:
+        lines = [header_line(world), "", label_line(level_ids)]
+    else:
+        lines = [header_with_hud(world, status.hud), "", label_line(level_ids), star_line(status)]
     lines.extend(render_sprite(canvas, art.palette))
     return "\n".join(lines)
 
 
-def map_screen(world, level_ids, snek_index, art):
+def map_screen(world, level_ids, snek_index, art, status=None):
     """Return the map with Snek under level number `snek_index`, or None for no Snek."""
     if snek_index is None:
-        return map_frame(world, level_ids, None, art)
-    return map_frame(world, level_ids, snek_left(snek_index, len(level_ids)), art)
+        return map_frame(world, level_ids, None, art, status)
+    return map_frame(world, level_ids, snek_left(snek_index, len(level_ids)), art, status)
 
 
-def slither_frames(world, level_ids, from_index, to_index, art):
+def slither_frames(world, level_ids, from_index, to_index, art, status=None):
     """Return the frames of Snek slithering from one node to another.
 
     The first frame has Snek under node `from_index` and the last under
@@ -154,5 +221,5 @@ def slither_frames(world, level_ids, from_index, to_index, art):
     columns.append(end)
     frames = []
     for column in columns:
-        frames.append(map_frame(world, level_ids, column, art))
+        frames.append(map_frame(world, level_ids, column, art, status))
     return frames

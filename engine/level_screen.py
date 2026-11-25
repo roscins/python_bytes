@@ -73,5 +73,5 @@ def intro_text(level):
         lines.append("")
         lines.extend(wave_lines(wave, number))
     lines.append("")
-    lines.append("When your waves are ready, type submit. Type map to see the levels.")
+    lines.append("When your waves are ready, type submit. Stuck? Type hint <wave>.")
     return "\n".join(lines)
