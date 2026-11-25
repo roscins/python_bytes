@@ -4,7 +4,7 @@ import unittest
 
 from engine.commands import COMMANDS, handle_line, parse_command
 from engine.game_state import GameState
-from tests.helpers import make_levels
+from tests.helpers import make_levels, make_temporary_folder
 
 
 class TestGameState(unittest.TestCase):
@@ -195,27 +195,75 @@ class TestSlithering(unittest.TestCase):
 
 
 class TestSubmit(unittest.TestCase):
-    """Check the submit placeholder."""
+    """Check the submit command."""
 
     def test_submit_before_play_asks_to_play_first(self):
         """Submitting without a level tells the player to start one."""
         text = handle_line(GameState(), "submit")
         self.assertIn("play", text)
 
-    def test_submit_during_level_names_the_level(self):
-        """Submitting during a level mentions that level."""
+    def test_submit_without_workspace_names_the_level(self):
+        """Without a workspace folder there is nothing to grade."""
         state = GameState(make_levels("1-1"))
         state.current_level = "1-1"
         text = handle_line(state, "submit")
+        self.assertIn("no workspace folder", text)
         self.assertIn("1-1", text)
+
+    def test_submit_grades_the_workspace_files(self):
+        """After play, submit grades the files in the level's folder."""
+        root = make_temporary_folder(self)
+        levels = make_levels("1-1")
+        levels[0].waves[0].tests = [{"expected_stdout": "OK\n"}]
+        state = GameState(levels, workspace_root=root)
+        handle_line(state, "play 1-1")
+        (root / "1-1" / "wave1.py").write_text('print("OK")', encoding="utf-8")
+        text = handle_line(state, "submit")
+        self.assertIn("LEVEL 1-1 · RESULTS", text)
+        self.assertIn("WAVE 1 · BUILD  1/1 test passed", text)
+
+
+class TestWorkspaceCommands(unittest.TestCase):
+    """Check that play makes the workspace and where shows it."""
+
+    def test_play_makes_the_workspace_and_says_where(self):
+        """play writes the wave files and ends with the folder's path."""
+        root = make_temporary_folder(self)
+        state = GameState(make_levels("1-1"), workspace_root=root)
+        text = handle_line(state, "play 1-1")
+        folder = (root / "1-1").resolve()
+        self.assertTrue((folder / "wave1.py").exists())
+        self.assertIn(f"Your files are in {folder}", text)
+
+    def test_play_without_workspace_writes_nothing(self):
+        """With no workspace folder, play only shows the intro."""
+        text = handle_line(GameState(make_levels("1-1")), "play 1-1")
+        self.assertNotIn("Your files are in", text)
+
+    def test_where_shows_the_full_path(self):
+        """where prints the absolute path of the current level's folder."""
+        root = make_temporary_folder(self)
+        state = GameState(make_levels("1-1"), workspace_root=root)
+        state.current_level = "1-1"
+        self.assertEqual(handle_line(state, "where"), str((root / "1-1").resolve()))
+
+    def test_where_before_play(self):
+        """where without a level asks the player to start one."""
+        self.assertIn("play <level>", handle_line(GameState(), "where"))
+
+    def test_where_without_workspace(self):
+        """where with no workspace folder says so."""
+        state = GameState(make_levels("1-1"))
+        state.current_level = "1-1"
+        self.assertEqual(handle_line(state, "where"), "There is no workspace folder.")
 
 
 class TestExtraWords(unittest.TestCase):
     """Check that commands without arguments reject words after them."""
 
     def test_each_command_without_arguments_rejects_extra_words(self):
-        """help, map, submit and quit all explain that they take nothing."""
-        for name in ["help", "map", "submit", "quit"]:
+        """help, map, submit, where and quit all explain that they take nothing."""
+        for name in ["help", "map", "submit", "where", "quit"]:
             text = handle_line(GameState(), f"{name} now")
             self.assertEqual(text, f"{name} does not take anything after it. Type just: {name}")
 

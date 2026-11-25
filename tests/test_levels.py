@@ -10,6 +10,7 @@ import unittest
 from pathlib import Path
 
 from engine.level_pack import load_levels
+from grader.wave_grader import grade_wave
 
 PROJECT_FOLDER = Path(__file__).parent.parent
 LEVELS_FOLDER = PROJECT_FOLDER / "levels"
@@ -167,6 +168,41 @@ class TestRealLevels(unittest.TestCase):
                 for word in FORBIDDEN_WORDS:
                     with self.subTest(level=level.id, word=word):
                         self.assertIsNone(re.search(rf"\b{word}\b", text, re.IGNORECASE))
+
+
+class TestPhaseTwoGate(unittest.TestCase):
+    """The Phase 2 gate: each reference solution passes, each wrong one fails."""
+
+    def setUp(self):
+        """Load every real level, leaving out bosses."""
+        self.levels = []
+        for level in load_levels(LEVELS_FOLDER):
+            if not level.id.startswith("boss-"):
+                self.levels.append(level)
+
+    def test_reference_solutions_pass_every_test(self):
+        """Every reference solution (or right answer) passes, with full code quality."""
+        for level in self.levels:
+            for wave in level.waves:
+                with self.subTest(level=level.id, wave=wave.kind):
+                    if wave.mode == "predict":
+                        result = grade_wave(wave, wave.answer)
+                    else:
+                        result = grade_wave(wave, wave.reference)
+                    failed = []
+                    for check in result.checks:
+                        if not check.passed:
+                            failed.append(check.name + ": " + check.message)
+                    self.assertTrue(result.all_passed(), failed)
+                    if result.quality is not None:
+                        self.assertEqual(result.quality_share(), 1.0)
+
+    def test_wrong_solutions_fail_at_least_one_test(self):
+        """Every wrong solution (or wrong answer) fails at least one test."""
+        for level in self.levels:
+            for wave in level.waves:
+                with self.subTest(level=level.id, wave=wave.kind):
+                    self.assertFalse(grade_wave(wave, wave.wrong).all_passed())
 
 
 class TestGuideExample(unittest.TestCase):

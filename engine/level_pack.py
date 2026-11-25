@@ -9,8 +9,11 @@ on a broken file. The style guide's content rules (line limits, number of
 tests, and so on) are checked by tests/test_levels.py.
 """
 
+import ast
 import tomllib
 from pathlib import Path
+
+from grader.checks import TEST_KINDS
 
 # The three kinds of wave a level can have, in the order the guide lists them.
 WAVE_KINDS = ["fill-in", "build", "debug"]
@@ -164,6 +167,10 @@ def make_wave(table, place):
     tests = table.get("test", [])
     if not isinstance(tests, list):
         raise LevelError(f"{place}: tests must be written as [[wave.test]] tables")
+    test_number = 0
+    for test in tests:
+        test_number = test_number + 1
+        check_test(test, f"{place}, test {test_number}")
 
     return Wave(
         kind,
@@ -176,6 +183,40 @@ def make_wave(table, place):
         answer=table.get("answer"),
         tests=tests,
     )
+
+
+def check_test(test, place):
+    """Raise LevelError if one [[wave.test]] table cannot be graded.
+
+    A test has exactly one key from TEST_KINDS, which says what kind of test
+    it is. require and forbid must name real Python AST node types, such as
+    "While", and a call test needs an expected value.
+    """
+    kinds = []
+    for kind in TEST_KINDS:
+        if kind in test:
+            kinds.append(kind)
+    if len(kinds) != 1:
+        raise LevelError(f"{place}: a test needs exactly one of {TEST_KINDS}, found {kinds}")
+    kind = kinds[0]
+
+    if kind in ("require", "forbid"):
+        node_types = get_list_of_text(test, kind, place)
+        for node_type in node_types:
+            if not isinstance(getattr(ast, node_type, None), type):
+                raise LevelError(f"{place}: {node_type!r} is not a Python AST node type")
+    if kind == "call":
+        get_text(test, "call", place)
+        if "expected" not in test:
+            raise LevelError(f"{place}: a call test needs an expected value")
+        if "args" in test and not isinstance(test["args"], list):
+            raise LevelError(f"{place}: args must be a list, like [1, 2]")
+    if kind == "expected_stdout":
+        get_text(test, "expected_stdout", place)
+    if kind == "expected_stdout_contains":
+        get_list_of_text(test, "expected_stdout_contains", place)
+    if "stdin" in test:
+        get_text(test, "stdin", place)
 
 
 def get_text(table, key, place):

@@ -38,7 +38,7 @@ class TestParts(unittest.TestCase):
         """A fill-in wave shows the code with blanks."""
         wave = make_intro_level().waves[0]
         self.assertEqual(wave_lines(wave, 1), [
-            "WAVE 1 · FILL-IN",
+            "WAVE 1 · FILL-IN · wave1.py",
             "Fill in the blank.",
             CODE_INDENT + "print(___)",
         ])
@@ -46,7 +46,7 @@ class TestParts(unittest.TestCase):
     def test_build_wave_shows_only_its_brief(self):
         """A build wave has no code to show, only the brief."""
         wave = make_intro_level().waves[1]
-        self.assertEqual(wave_lines(wave, 2), ["WAVE 2 · BUILD", "Print", "three lines."])
+        self.assertEqual(wave_lines(wave, 2), ["WAVE 2 · BUILD · wave2.py", "Print", "three lines."])
 
     def test_predict_wave_shows_the_code_to_read(self):
         """A predict wave shows the code, but never the answer."""
