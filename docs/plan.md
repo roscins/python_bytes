@@ -8,7 +8,7 @@ Python Bytes (working title: small bites of Python, from a python that bites) is
 • Format: a terminal game written in Python, drawn with coloured Unicode block characters so it looks like an 8-bit console game. The game's own source code becomes level material in World 7.
 • Story frame: the player is a new technician in an abandoned robotics lab. The lab robot Snek, a forest-green robot snake, is offline; each world restores part of her, and from World 5 the player rebuilds the whole automated factory around her.
 Progression model: worlds, levels and bosses
-The game is a classic arcade map: the player walks Snek along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
+The game is a classic arcade map: the player guides Snek along a pixel path from level to level, and each world ends in a boss fight that tests everything in that world. A level opens only when the one before it is cleared.
 Tier
 World
 Theme
@@ -204,7 +204,7 @@ The game runs in an ordinary terminal but looks like an 8-bit console game. The 
 • Palette: one fixed 16-colour palette of my own, used for every sprite, so the game looks consistent.
 • Sprites: Snek (16 × 16 pixels) in several states (offline, booting, happy, damaged), one sprite per boss, small icons for stars, coins and hearts.
 • Screens: title screen, world map, level intro card, code-wave screen, boss fight screen, level-clear screen, Codex, shop, stats.
-• Animation: a few frames only (Snek walking on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
+• Animation: a few frames only (Snek slithering on the map, a boss health bar draining, a level-clear flash), drawn by redrawing the screen.
 • Fallbacks: a plain-ASCII mode for terminals without colour, and an accessible mode with no flashing and screen-reader-friendly text.
 Rough mock-up of the world map and a boss fight (pixel art shown as text):
  WORLD 1 · BOOT SECTOR            XP 1240   ★ 7/12   COINS 35
@@ -509,15 +509,15 @@ Limits I accept. The runner protects against infinite loops and crashes, but it 
 Development roadmap, step by step
 The build runs in ten phases (0–9), each ending in a gate that must be met before the next starts. World 1 is playable, with real pixel art, at the end of Phase 3, so students can playtest every later phase.
 Phase 0 – Foundations
-[ ] Create the Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
-[ ] Choose Python 3.12 and the standard library only
-[ ] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
-[ ] Write the art style guide: the 16-colour palette, sprite sizes, a sample Snek sprite
+[x] Create the Git repository and folder layout (engine/, render/, levels/, runner/, grader/, art/, tests/)
+[x] Choose Python 3.12 and the standard library only
+[x] Write the level style guide: level template, at most 4 new concepts per level, English, tone of the story
+[x] Write the art style guide: the 16-colour palette, sprite sizes, a sample Snek sprite
 Gate: repository exists; both style guides approved by me.
 Phase 1 – Engine and renderer prototype
-[ ] Command loop with help, map, play, submit, quit
-[ ] Half-block pixel renderer that draws a sprite from a text file
-[ ] World map screen with placeholder sprites and Snek walking between level nodes
+[x] Command loop with help, map, play, submit, quit
+[x] Half-block pixel renderer that draws a sprite from a text file
+[ ] World map screen with placeholder sprites and Snek slithering between level nodes
 [ ] Level-pack loader (TOML) and save/load of progress (JSON)
 [ ] Write Level 1-1 as the test level
 Gate: a player can open the map, play Level 1-1, quit and resume.
