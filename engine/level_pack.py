@@ -1,0 +1,233 @@
+"""Read level packs: one level.toml file per level, inside levels/w<world>/.
+
+A level pack holds everything one level needs: its title, the story
+cutscene, the tips, and the waves of tasks with their tests. See
+docs/level-style-guide.md for what goes in a level.toml file.
+
+This module only checks the structure of a level, so the game never crashes
+on a broken file. The style guide's content rules (line limits, number of
+tests, and so on) are checked by tests/test_levels.py.
+"""
+
+import tomllib
+from pathlib import Path
+
+# The three kinds of wave a level can have, in the order the guide lists them.
+WAVE_KINDS = ["fill-in", "build", "debug"]
+
+# How many new concepts one level may teach.
+MIN_NEW_CONCEPTS = 2
+MAX_NEW_CONCEPTS = 4
+
+
+class LevelError(ValueError):
+    """A level.toml file that cannot be used, for example with a missing title."""
+
+
+class Wave:
+    """One wave of tasks in a level.
+
+    Attributes:
+        kind: "fill-in", "build" or "debug".
+        brief: the task, as the player reads it.
+        mode: for debug waves, "predict" or None.
+        starter: code the player starts from (fill-in waves), or None.
+        code: code the player reads (predict waves), or None.
+        reference: a solution that must pass, or None for predict waves.
+        wrong: a typical mistake that must fail.
+        answer: the right output (predict waves), or None.
+        tests: a list of dicts, one per [[wave.test]] in the file.
+    """
+
+    def __init__(self, kind, brief, mode=None, starter=None, code=None,
+                 reference=None, wrong=None, answer=None, tests=None):
+        """Remember every part of the wave. Parts a wave does not have are None."""
+        self.kind = kind
+        self.brief = brief
+        self.mode = mode
+        self.starter = starter
+        self.code = code
+        self.reference = reference
+        self.wrong = wrong
+        self.answer = answer
+        if tests is None:
+            tests = []
+        self.tests = list(tests)
+
+
+class Level:
+    """One level, as read from its level.toml file.
+
+    Attributes:
+        id: the level id, for example "1-1".
+        title: the level's name, for example "Hello, Terminal".
+        world: the world number, for example 1.
+        new_concepts: the concepts this level teaches.
+        power_up: the power-up the player earns.
+        cutscene: the story scene, with working code in it.
+        tips: one-line explanations, one per new concept.
+        waves: a list of Wave objects.
+        folder: the folder the level was read from, or None.
+    """
+
+    def __init__(self, level_id, title, world, new_concepts, power_up,
+                 cutscene, tips, waves, folder=None):
+        """Remember every part of the level."""
+        self.id = level_id
+        self.title = title
+        self.world = world
+        self.new_concepts = list(new_concepts)
+        self.power_up = power_up
+        self.cutscene = cutscene
+        self.tips = list(tips)
+        self.waves = list(waves)
+        self.folder = folder
+
+
+def load_level(path):
+    """Read one level.toml file and return a Level.
+
+    Raises LevelError, naming the file, if the file is not valid TOML or
+    if a part of the level is missing or has the wrong type.
+    """
+    path = Path(path)
+    try:
+        with open(path, "rb") as level_file:
+            data = tomllib.load(level_file)
+    except tomllib.TOMLDecodeError as error:
+        raise LevelError(f"{path}: not valid TOML: {error}") from error
+
+    if "level" not in data or not isinstance(data["level"], dict):
+        raise LevelError(f"{path}: the file needs a [level] table")
+    table = data["level"]
+
+    level_id = get_text(table, "id", path)
+    title = get_text(table, "title", path)
+    power_up = get_text(table, "power_up", path)
+    cutscene = get_text(table, "cutscene", path)
+    world = get_whole_number(table, "world", path)
+    new_concepts = get_list_of_text(table, "new_concepts", path)
+    tips = get_list_of_text(table, "tips", path)
+
+    if len(new_concepts) < MIN_NEW_CONCEPTS or len(new_concepts) > MAX_NEW_CONCEPTS:
+        raise LevelError(
+            f"{path}: a level has {MIN_NEW_CONCEPTS} to {MAX_NEW_CONCEPTS} new concepts, "
+            f"this one has {len(new_concepts)}"
+        )
+    if len(tips) != len(new_concepts):
+        raise LevelError(
+            f"{path}: there must be one tip per new concept, "
+            f"but there are {len(tips)} tips and {len(new_concepts)} concepts"
+        )
+    if not path.parent.name.startswith(level_id + "-"):
+        raise LevelError(
+            f"{path}: the folder name must start with the level id, "
+            f"for example {level_id}-short-name"
+        )
+
+    if "wave" not in data or not isinstance(data["wave"], list) or not data["wave"]:
+        raise LevelError(f"{path}: the level needs at least one [[wave]]")
+    waves = []
+    wave_number = 0
+    for wave_table in data["wave"]:
+        wave_number = wave_number + 1
+        waves.append(make_wave(wave_table, f"{path}, wave {wave_number}"))
+
+    return Level(level_id, title, world, new_concepts, power_up,
+                 cutscene, tips, waves, folder=path.parent)
+
+
+def make_wave(table, place):
+    """Turn one [[wave]] table into a Wave, checking the parts it needs.
+
+    `place` says which file and wave this is, for error messages.
+    """
+    kind = get_text(table, "kind", place)
+    if kind not in WAVE_KINDS:
+        raise LevelError(f"{place}: kind must be one of {WAVE_KINDS}, got {kind!r}")
+    brief = get_text(table, "brief", place)
+
+    mode = None
+    if "mode" in table:
+        mode = get_text(table, "mode", place)
+
+    # A predict wave shows code and asks for its output, so it has an
+    # answer instead of a reference solution. Every other wave has a
+    # reference solution. Both kinds have a wrong solution.
+    if mode == "predict":
+        needed = ["code", "answer", "wrong"]
+    else:
+        needed = ["reference", "wrong"]
+    for key in needed:
+        get_text(table, key, place)
+
+    tests = table.get("test", [])
+    if not isinstance(tests, list):
+        raise LevelError(f"{place}: tests must be written as [[wave.test]] tables")
+
+    return Wave(
+        kind,
+        brief,
+        mode=mode,
+        starter=table.get("starter"),
+        code=table.get("code"),
+        reference=table.get("reference"),
+        wrong=table.get("wrong"),
+        answer=table.get("answer"),
+        tests=tests,
+    )
+
+
+def get_text(table, key, place):
+    """Return table[key] if it is a string; otherwise raise LevelError."""
+    if key not in table:
+        raise LevelError(f"{place}: {key} is missing")
+    value = table[key]
+    if not isinstance(value, str):
+        raise LevelError(f"{place}: {key} must be text in quotes")
+    return value
+
+
+def get_whole_number(table, key, place):
+    """Return table[key] if it is a whole number; otherwise raise LevelError."""
+    if key not in table:
+        raise LevelError(f"{place}: {key} is missing")
+    value = table[key]
+    # True and False count as numbers in Python, so they are ruled out first.
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise LevelError(f"{place}: {key} must be a whole number")
+    return value
+
+
+def get_list_of_text(table, key, place):
+    """Return table[key] if it is a list of strings; otherwise raise LevelError."""
+    if key not in table:
+        raise LevelError(f"{place}: {key} is missing")
+    value = table[key]
+    if not isinstance(value, list):
+        raise LevelError(f"{place}: {key} must be a list, like [\"a\", \"b\"]")
+    for item in value:
+        if not isinstance(item, str):
+            raise LevelError(f"{place}: every item in {key} must be text in quotes")
+    return value
+
+
+def load_levels(folder):
+    """Read every level in `folder` and return them as a list, in map order.
+
+    Levels live in folder/w<world>/<level-id>-<short-name>/level.toml. They
+    are read in folder-name order, so 1-1-... comes before 1-2-... and
+    boss-1-.... A folder that does not exist gives an empty list.
+
+    Raises LevelError if a level is broken or two levels have the same id.
+    """
+    folder = Path(folder)
+    levels = []
+    seen_ids = []
+    for path in sorted(folder.glob("w*/*/level.toml")):
+        level = load_level(path)
+        if level.id in seen_ids:
+            raise LevelError(f"{path}: level id {level.id} is used twice")
+        seen_ids.append(level.id)
+        levels.append(level)
+    return levels

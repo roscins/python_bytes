@@ -3,16 +3,18 @@
 import unittest
 
 from engine.commands import COMMANDS, handle_line, parse_command
-from engine.game_state import DEFAULT_LEVELS, GameState
+from engine.game_state import GameState
+from tests.helpers import make_levels
 
 
 class TestGameState(unittest.TestCase):
     """Check what a new game starts with."""
 
-    def test_new_game_uses_default_levels(self):
-        """Without a level list, the game uses the World 1 levels."""
+    def test_new_game_without_levels_has_none(self):
+        """Without a level list, the game has no levels and nothing cleared."""
         state = GameState()
-        self.assertEqual(state.levels, DEFAULT_LEVELS)
+        self.assertEqual(state.levels, [])
+        self.assertEqual(state.cleared, [])
 
     def test_new_game_has_no_current_level_and_is_running(self):
         """A new game has not started a level and is running."""
@@ -22,10 +24,16 @@ class TestGameState(unittest.TestCase):
 
     def test_level_list_is_a_copy(self):
         """Changing the game's level list must not change the caller's list."""
-        levels = ["1-1"]
+        levels = make_levels("1-1")
         state = GameState(levels)
-        state.levels.append("1-2")
-        self.assertEqual(levels, ["1-1"])
+        state.levels.append("anything")
+        self.assertEqual(len(levels), 1)
+
+    def test_find_level_by_id(self):
+        """find_level returns the level with that id, or None."""
+        state = GameState(make_levels("1-1", "1-2"))
+        self.assertEqual(state.find_level("1-2").id, "1-2")
+        self.assertIsNone(state.find_level("9-9"))
 
 
 class TestParseCommand(unittest.TestCase):
@@ -74,22 +82,27 @@ class TestMap(unittest.TestCase):
 
     def test_map_lists_every_level(self):
         """Every level id appears on the map."""
-        text = handle_line(GameState(["1-1", "1-2"]), "map")
-        self.assertIn("[1-1]", text)
-        self.assertIn("[1-2]", text)
+        text = handle_line(GameState(make_levels("1-1", "1-2")), "map")
+        self.assertIn("[1-1] Level 1-1", text)
+        self.assertIn("[1-2] Level 1-2", text)
+
+    def test_map_without_levels_says_so(self):
+        """With no level packs, the map explains where they go."""
+        text = handle_line(GameState(), "map")
+        self.assertIn("No levels found", text)
 
     def test_map_without_current_level_marks_nothing(self):
         """Before any level is started, no level is marked."""
-        text = handle_line(GameState(["1-1", "1-2"]), "map")
+        text = handle_line(GameState(make_levels("1-1", "1-2")), "map")
         self.assertNotIn("you are here", text)
 
     def test_map_marks_current_level(self):
         """The level being played is marked on the map."""
-        state = GameState(["1-1", "1-2"])
+        state = GameState(make_levels("1-1", "1-2"))
         state.current_level = "1-2"
         text = handle_line(state, "map")
-        self.assertIn("[1-2]  <- you are here", text)
-        self.assertNotIn("[1-1]  <- you are here", text)
+        self.assertIn("[1-2] Level 1-2  <- you are here", text)
+        self.assertNotIn("[1-1] Level 1-1  <- you are here", text)
 
 
 class TestPlay(unittest.TestCase):
@@ -97,14 +110,14 @@ class TestPlay(unittest.TestCase):
 
     def test_play_known_level_sets_current_level(self):
         """Playing a level that exists makes it the current level."""
-        state = GameState(["1-1"])
+        state = GameState(make_levels("1-1"))
         text = handle_line(state, "play 1-1")
         self.assertEqual(state.current_level, "1-1")
-        self.assertIn("1-1", text)
+        self.assertEqual(text, "Starting level 1-1: Level 1-1.")
 
     def test_play_unknown_level_changes_nothing(self):
         """Playing a level that does not exist leaves the state alone."""
-        state = GameState(["1-1"])
+        state = GameState(make_levels("1-1"))
         text = handle_line(state, "play 9-9")
         self.assertIsNone(state.current_level)
         self.assertIn("no level 9-9", text)
@@ -118,7 +131,7 @@ class TestPlay(unittest.TestCase):
 
     def test_play_with_too_many_words_shows_usage(self):
         """Typing more than one level after play explains how to use it."""
-        state = GameState(["1-1"])
+        state = GameState(make_levels("1-1"))
         text = handle_line(state, "play 1-1 extra")
         self.assertIn("Usage", text)
         self.assertIsNone(state.current_level)
@@ -134,7 +147,7 @@ class TestSubmit(unittest.TestCase):
 
     def test_submit_during_level_names_the_level(self):
         """Submitting during a level mentions that level."""
-        state = GameState(["1-1"])
+        state = GameState(make_levels("1-1"))
         state.current_level = "1-1"
         text = handle_line(state, "submit")
         self.assertIn("1-1", text)

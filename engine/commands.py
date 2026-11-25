@@ -53,12 +53,14 @@ def do_map(state, arguments):
     """Return the list of levels, marking the one being played."""
     if arguments:
         return extra_words_message("map")
+    if not state.levels:
+        return "No levels found. Level packs go in the levels/ folder."
     lines = ["Levels:"]
-    for level_id in state.levels:
-        if level_id == state.current_level:
-            lines.append(f"  [{level_id}]  <- you are here")
+    for level in state.levels:
+        if level.id == state.current_level:
+            lines.append(f"  [{level.id}] {level.title}  <- you are here")
         else:
-            lines.append(f"  [{level_id}]")
+            lines.append(f"  [{level.id}] {level.title}")
     return "\n".join(lines)
 
 
@@ -67,10 +69,11 @@ def do_play(state, arguments):
     if len(arguments) != 1:
         return "Usage: play <level>, for example: play 1-1"
     level_id = arguments[0]
-    if level_id not in state.levels:
+    level = state.find_level(level_id)
+    if level is None:
         return f"There is no level {level_id}. Type map to see the levels."
-    state.current_level = level_id
-    return f"Starting level {level_id}."
+    state.current_level = level.id
+    return f"Starting level {level.id}: {level.title}."
 
 
 def do_submit(state, arguments):
