@@ -1,7 +1,7 @@
 Python Bytes: Development Plan for a Task-Based Python Learning Game
 Nov 24, 2026 · @Aleksander
 Overview
-Python Bytes (working title: small bites of Python, from a python that bites) is an arcade-style, pixel-art terminal game that teaches Python across 8 worlds, 29 levels and 8 boss fights. Each level teaches a few concepts, then the player clears coding waves to earn XP, stars and a new power-up before the next level on the map opens.
+Python Bytes (working title: small bites of Python, from a python that bites) is an arcade-style, pixel-art terminal game that teaches Python across 8 worlds, 40 levels and 8 boss fights. Each level teaches a few concepts, then the player clears coding waves to earn XP, stars and a new power-up before the next level on the map opens.
 • Basic tier (Worlds 1–4) covers the learning outcomes of OsloMet's Introduction to Python Programming: variables, data types, strings and numbers, conditionals, loops, functions, lists, tuples, sets, dictionaries, exception handling and file I/O.
 • Advanced tier (Worlds 5–8) covers Advanced Python Programming for Engineers: object-oriented and functional programming, choosing between them, robust design, debugging, reading other people's code and code review.
 • Audience: first-year engineering students with no prior programming, who want real understanding, not memorised patterns.
@@ -17,43 +17,43 @@ Boss
 Basic
 1
 Boot Sector
-1-1 to 1-4
+1-1 to 1-5
 Boss 1: The Corrupted Bootloader
 Basic
 2
 Sensor Fields
-2-1 to 2-4
+2-1 to 2-5
 Boss 2: The Night Patrol
 Basic
 3
 Data Vaults
-3-1 to 3-4
+3-1 to 3-5
 Boss 3: The Storage Auditor
 Basic
 4
 The Core
-4-1 to 4-3
-Boss 4: Snek Online (tier final)
+4-1 to 4-5
+Boss 4: Systems Online (tier final)
 Advanced
 5
 Robot Foundry
-5-1 to 5-4
+5-1 to 5-5
 Boss 5: The First Robot
 Advanced
 6
 Assembly Line
-6-1 to 6-4
+6-1 to 6-5
 Boss 6: The Production Line
 Advanced
 7
 Data Streams
-7-1 to 7-4
+7-1 to 7-5
 Boss 7: The Legacy Machine
 Advanced
 8
 Factory Mainframe
-8-1 to 8-2
-Final Boss: The Factory Wakes
+8-1 to 8-5
+Boss 8: The Factory Wakes (final)
 Inside a level. Every level runs the same short loop, like stages in a shoot-'em-up:
 1.  Cutscene – a short story scene with working code in it. The new syntax is seen in action before it is explained.
 2.  Tips – a few one-line explanations of the new syntax, saved to the player's Codex.
@@ -62,7 +62,7 @@ Inside a level. Every level runs the same short loop, like stages in a shoot-'em
 5.  Wave 3 – Debug: predict the output of code, or find and fix the bug.
 6.  Level clear – stars, XP, and a power-up command.
 Bosses. A boss has a health bar made of hidden tests: every test the player's code passes knocks off one block of health. Bosses introduce no new concepts; they combine the whole world, add a time limit, and give the player 3 lives (one lost per failed submission). Losing all lives restarts the fight, not the world.
-What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture).
+What I keep from Lingua Latina per se Illustrata. Only the core idea: strict cumulative progression. A level may use only what earlier levels taught plus 2–4 new things, and old concepts keep returning in new combinations. An automatic checker enforces this (see Technical architecture). What each level teaches is decided in docs/curriculum.md and levels/concepts.toml; the tables in this plan are a summary of them.
 Example cutscene from Level 1-2, where variables are new and print() is already known:
 # >> Snek's memory banks flicker. Two empty cells light up.
 name = "Snek"
@@ -83,8 +83,8 @@ Variables, data types, basic syntax
 1-1, 1-2
 Waves in 1-1 and 1-2, Boss 1
 Manipulate numbers and strings
-1-3, 1-4, 2-1
-Wave 2 in 1-3 to 2-1
+1-3, 1-4, 1-5, 2-1
+Wave 2 in 1-3 to 2-1, Boss 1
 Conditional statements
 2-2
 Wave 2 in 2-2, Boss 2
@@ -95,11 +95,11 @@ Define and call functions, pass arguments
 3-2, 3-3
 Wave 2 in 3-2 and 3-3, Boss 3
 Lists, tuples, sets, dictionaries
-3-1, 3-4, 4-1
-"Choose the structure" wave in 4-1, Boss 4
+3-1, 3-5, 4-1
+Multiple-choice "choose the structure" wave in 4-1, Bosses 3 and 4
 Algorithmic thinking
-2-2 onwards
-Plan-first missions, Boss 4
+2-2 onwards, 2-5
+Plan-first missions, Boss 2, Boss 4
 Best practice: indentation, naming, documentation
 1-1, 1-2, 3-2 (then continuous)
 Code-quality score on every Wave 2
@@ -110,44 +110,44 @@ File input and output
 4-3
 Wave 2 in 4-3, Boss 4
 Break real problems into sub-tasks
-3-3, Boss 4
+3-3, 4-3, Boss 4
 Boss 4, phase 2 (project)
 Collaborate, review code, give feedback
-Boss 4
-Peer-review round in Boss 4
+4-4
+Review of a provided solution in 4-4 and Boss 4
 Advanced tier – Advanced Python Programming for Engineers
 Outcome (from course description)
 Taught in
 Tested by
 Overview of Python for moderate real problems
-5-1, Final Boss
-Final Boss
+5-1, Boss 8
+Boss 8
 OOP: class, object, method, inheritance, polymorphism, encapsulation
 5-2 to 6-2
 Wave 2 in 5-2 to 6-2, Bosses 5 and 6
 Functional vs object-oriented features, when to use each
-6-4, 7-1, 7-2
-Dual-solution mission in 7-2
+7-1, 7-2, 7-3
+Dual-solution mission in 7-3
 Robust, reliable programs with good OO design
-6-3, 8-1
-Design mission in 8-1, Final Boss
+5-3, 6-3, 8-1
+Design mission in 8-1, Boss 8
 Alternative solutions, weigh pros and cons
-7-2, 8-1
-Written trade-off notes in 7-2 and 8-1
+7-3, 8-1
+Written trade-off notes in 7-3 and 8-1
 Clear and efficient programs
-6-4, 8-2
+7-1, 8-2, 8-3
 Speed-run missions in 8-2
 Find and fix errors in own programs
-6-3, 7-3
-Bug-hunt waves in 7-3
+6-3, 7-4
+Bug-hunt waves in 7-4
 Understand others' programs to debug and change them
-7-4
-Legacy-code mission in 7-4, Boss 7
+7-5
+Legacy-code mission in 7-5, Boss 7
 Conduct code review, document errors, suggest improvements
-7-4, Final Boss
-Review report in 7-4, peer review in Final Boss
+7-5, Boss 8
+Review report in 7-5, review in Boss 8
 Critically assess programming approaches
-7-2, 8-1
+6-2, 7-3, 8-1
 Trade-off notes, Boss 7
 Game design: level loop, rewards and scoring
 Every level is a closed loop: watch, practise, score, and only then move on. A player who scores below 70 % spends coins on hints if they want, and replays only the waves they failed.
@@ -209,7 +209,7 @@ The game runs in an ordinary terminal but looks like an 8-bit console game. The 
 Rough mock-up of the world map and a boss fight (pixel art shown as text):
  WORLD 1 · BOOT SECTOR            XP 1240   ★ 7/12   COINS 35
 
-   [1-1]★★★ ══ [1-2]★★☆ ══ [1-3]★☆☆ ══ [1-4] ··· ══ [BOSS 1]
+   [1-1]★★★ ══ [1-2]★★☆ ══ [1-3]★☆☆ ══ [1-4] ··· ══ [1-5] ··· ══ [BOSS 1]
                                ▲
                               Snek
 
@@ -221,7 +221,7 @@ Rough mock-up of the world map and a boss fight (pixel art shown as text):
 Basic tier: Worlds 1–4
 The Basic tier restores Snek one subsystem at a time, from her voice in Level 1-1 to a full log-analysis routine in Boss 4. Each row lists only what is new; everything earlier is assumed and keeps coming back.
 Level
-Title (story beat)
+Title
 New concepts
 Example Wave 2 mission
 Power-up
@@ -231,29 +231,34 @@ Boot Sector
 
 
 1-1
-Hello, Terminal (Snek's voice)
+Hello, Terminal
 print(), string literals, comments
-Make Snek print a three-line start-up message
+Print a three-line start-up message.
 status
 1-2
-Memory Cells (short-term memory)
-Variables, assignment, int, float, str, bool, type(), snake_case naming
-Store and print Snek's serial number, battery level and online state
+Memory Cells
+variables and assignment, the types int, float, str and bool, type(), snake_case names
+Store serial number, battery level and online state; rebind one name and print all.
 memory
 1-3
-Power Calculations (the battery)
-Arithmetic operators, //, %, **, precedence, round(), int/float conversion
-Compute remaining run-time from battery capacity and power draw
+Power Calculations
+arithmetic operators and precedence, //, % and **, converting between int, float and str, round()
+Compute remaining run-time in hours and minutes from capacity and power draw.
 calc
 1-4
-Corrupted Logs (the log reader)
-String indexing, slicing, len(), f-strings, methods upper, strip, replace, split
-Extract the timestamp and error code from a damaged log line
-read <file>
+Floating Truth
+why 0.1 + 0.2 != 0.3, comparison operators, absolute and relative tolerance, math.isclose() and abs()
+Compare readings with absolute and relative tolerance; explain why == failed.
+approx
+1-5
+Corrupted Logs
+indexing and slicing, len(), string methods, f-strings with format specs
+Extract timestamp, code and value from a damaged log line; print an aligned report.
+read
 Boss 1
 The Corrupted Bootloader
 Everything in World 1
-Repair a scrambled boot report under time pressure
+Repair a scrambled boot report under time pressure.
 –
 World 2
 Sensor Fields
@@ -261,29 +266,34 @@ Sensor Fields
 
 
 2-1
-Listening (the microphone)
-input(), converting input with int() and float(), input → process → output
-Ask for two sensor readings and print the offset
+Listening
+input(), converting input to numbers, input, process, output
+Ask for two readings and print the calibrated offset to two decimals.
 talk
 2-2
-Decisions (the alarm system)
-bool expressions, comparisons, and/or/not, if/elif/else, nesting; plan first
-Classify a temperature as OK, WARNING or CRITICAL
+Decisions
+and, or, not, if / elif / else, truthiness and bool(), planning in comments first
+Classify a temperature as OK, WARNING or CRITICAL with hysteresis.
 alarm
 2-3
-Charging (the charge controller)
-while, counters, sentinel values, break, continue, avoiding infinite loops
-Charge in 5 % steps until full or the user types stop
+Charging
+while loops, sentinel values, break and continue, augmented assignment
+Charge in 5 % steps until full or until the user types stop.
 charge
 2-4
-The Grid Scan (the camera)
-for, range(), looping over strings, accumulators, nested loops
-Scan a 5 × 5 grid and print the coordinates of every obstacle
+Grid Scan
+for loops and range(), looping over strings, accumulators, nested loops
+Scan a 5 x 5 grid string and print the coordinates of every obstacle.
 scan
+2-5
+Finding the Signal
+exhaustive enumeration and guess-and-check, bisection search, stopping on a float tolerance, counting iterations
+Find a square root by enumeration, then by bisection; compare iteration counts.
+seek
 Boss 2
 The Night Patrol
 Everything in Worlds 1–2
-Patrol simulation combining input, decisions and loops
+Patrol simulation combining input, decisions, loops and a bisection search.
 –
 World 3
 Data Vaults
@@ -291,29 +301,34 @@ Data Vaults
 
 
 3-1
-Inventory (parts storage)
-Lists: indexing, slicing, append, insert, remove, pop, sort, in, lists of lists
-Add, remove, search and sort items in a parts list
+Inventory
+lists: literals, indexing and slicing, adding, removing and sorting items, searching with in, lists of lists
+Add, remove, search and sort parts; keep a list of [name, count] pairs.
 inventory
 3-2
-Subroutines I (motor functions)
-def, parameters, return, calling, docstrings, local vs global scope
-Write celsius_to_kelvin() and distance() with docstrings
+Subroutines I
+def, parameters and return, None, docstrings, local scope
+Write celsius_to_kelvin() and distance() with docstrings; reuse them in a loop.
 define
 3-3
-Subroutines II (refactoring Snek)
-Default and keyword arguments, returning several values, decomposition, min, max, sum, sorted, enumerate, zip
-Split an earlier 40-line script into four well-named functions
+Subroutines II
+default and keyword arguments, returning several values, min, max, sum and sorted, decomposition, specifications and Newton-Raphson
+Split it into specified functions; make bisection from 2-5 a reusable function and add Newton-Raphson.
 refactor
 3-4
-Fixed Records (sensor history)
-Tuples, immutability, unpacking, sets, union/intersection/difference
-Find which sensors reported in both of two test runs
+Echoes and Aliases
+mutability and aliasing, is versus ==, cloning with slices and copy, the mutable default argument trap
+Find and fix three aliasing bugs, including a mutable default argument.
+clone
+3-5
+Fixed Records
+tuples in depth: immutability and unpacking, sets and set algebra, zip(), enumerate()
+Find sensors present in both runs, in only one, and in either; pair readings with their timestamps.
 compare
 Boss 3
 The Storage Auditor
 Everything in Worlds 1–3
-Audit the inventory with functions, lists, tuples and sets
+Audit the inventory with functions, lists, tuples and sets; fix an aliasing fault.
 –
 World 4
 The Core
@@ -321,24 +336,35 @@ The Core
 
 
 4-1
-The Catalogue (knowledge base)
-Dictionaries: get, items, looping, nested dictionaries, counting pattern; choosing the right data structure
-Build a parts catalogue; pick list, tuple, set or dict for four scenarios
+The Catalogue
+dictionaries: keys, values and get(), looping over dictionaries and nesting, the counting pattern, choosing a data structure, with timing and Big-O vocabulary
+Build a parts catalogue; choose list, tuple, set or dict for four scenarios (multiple choice); time `in` on a list, a set and a dict.
 lookup
 4-2
-Fault Tolerance (error recovery)
-Exceptions, reading tracebacks, try/except/else/finally, raise, debugging strategy
-Make the calibration program survive any bad input
+Fault Tolerance
+exceptions and reading tracebacks, try / except / else / finally, raise and exception constructors, assert and defensive programming
+Make the calibration program survive any input; raise a clear error for impossible values.
 debug
 4-3
-The Archive (long-term memory)
-open(), with, reading lines, writing and appending, parsing comma-separated data
-Read a sensor log file and write a summary report file
+The Archive
+reading and writing files with open() and with, the csv module, pathlib.Path, validating input data
+Read sensor CSVs, skip invalid rows with a report, write a summary file and a text bar chart.
 save
+4-4
+The Test Bench
+black-box and glass-box test design, boundary cases, assert-based test functions, systematic debugging and reviewing a provided solution
+Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by choosing the right feedback for each fault.
+test
+4-5
+Echo Chamber
+recursion: base case and recursive case, inductive reasoning, recursion on lists and strings, memoisation with a dictionary
+Recursive sum, reverse and palindrome; Fibonacci with and without a memo dict, with call counts.
+echo
 Boss 4
-Snek Online (tier final)
-Phase 1: timed mixed waves. Phase 2: a small project plus peer review
-Analyse a week of warehouse-robot logs from files, then review a classmate's code
+Systems Online (tier final)
+Phase 1: timed mixed waves. Phase 2: a small single-file project plus a review
+Phase 1: timed mixed waves. Phase 2: a single-file sensor-warning project with tests; review a provided solution.
+–
 Advanced tier
 Two threads run through every level rather than belonging to one:
 • Code quality is scored from Level 1-2 onwards: naming, indentation and comments, then docstrings from Level 3-2.
@@ -346,7 +372,7 @@ Two threads run through every level rather than belonging to one:
 Advanced tier: Worlds 5–8
 In the Advanced tier Snek asks the player to bring the whole lab back online: a simulated factory with robots, conveyors, sensors and a scheduler. Missions grow from single files into small multi-file projects with test suites, and from writing code to reading, reviewing and redesigning it.
 Level
-Title (story beat)
+Title
 New concepts
 Example Wave 2 mission
 Power-up
@@ -356,29 +382,34 @@ Robot Foundry
 
 
 5-1
-The Lab Network (bridge level)
-Modules, import, packages, if __name__ == "__main__":, project layout
-Split the Boss 4 project into three modules
+The Lab Network
+modules and import, packages and namespaces, the main guard, project layout with tests beside the code
+Split the Boss 4 project into a package of three modules with a main guard; run its tests.
 project
 5-2
-Blueprints (robot classes)
-class, objects, __init__, attributes, methods, self
-Write a Robot class with move() and report()
+Blueprints
+classes and objects, __init__ and attributes, methods and self, class versus instance attributes
+Write a Robot class with position, battery, move() and report(); a class-level counter of robots.
 build
 5-3
-Safety Interlocks (protecting state)
-Encapsulation, _private convention, @property, setters with validation, invariants
-A battery level that can never go below 0 % or above 100 %
+Safety Interlocks
+encapsulation and the _private convention, @property, setters with validation, invariants
+Battery level and speed with validated setters; invariants checked in tests.
 lock
 5-4
-Coordinates (robot positions)
-__str__, __repr__, __eq__, __lt__, __add__, operator overloading
-A Vector2D class that supports +, == and printing
+Coordinates
+printing: __repr__ and __str__, equality and hashing: exact __eq__ with __hash__, ordering and arithmetic: __lt__, __add__, __radd__, value objects with a separate is_close()
+A Vector2D value class usable in sets, sorting and sum(), with exact equality and a separate is_close().
 plot
+5-5
+Data Structures by Hand
+abstract data type versus implementation, stack, queue and linked list as classes, the container protocol: __len__ and __iter__, cost of each operation and collections.deque
+Implement Stack, Queue and LinkedList classes; compare operation costs with deque.
+stack
 Boss 5
 The First Robot
 Everything in World 5
-Build a tested robot package from a specification
+Build a tested robot package from a specification.
 –
 World 6
 Assembly Line
@@ -386,29 +417,34 @@ Assembly Line
 
 
 6-1
-Specialists (robot types)
-Inheritance, super(), overriding, is-a vs has-a, composition
-WeldingRobot and DeliveryRobot from Robot; a gripper by composition
+Specialists
+inheritance and super(), overriding, isinstance(), is-a versus has-a: composition
+WeldingRobot and DeliveryRobot from Robot; a Gripper by composition; justify each choice.
 spawn
 6-2
-Many Sensors, One Interface
-Polymorphism, duck typing, abc.ABC, @abstractmethod
-A Sensor base class; the controller reads any list of sensors via read()
+One Interface
+polymorphism and duck typing, abstract base classes, type hints, typing.Protocol
+A Sensor ABC and a Protocol; the controller reads any mix of sensors through one interface.
 sensors
 6-3
 Fail-safe Systems
-Custom exception hierarchies, context managers (__enter__/__exit__), logging
-A ConveyorFault hierarchy and a context manager that always stops the belt
+custom exception hierarchies, class-based context managers, logging, EAFP versus LBYL
+A ConveyorFault hierarchy and a class-based context manager that always stops the belt; log every fault.
 log
 6-4
-Data Pipelines I
-First-class functions, lambda, map, filter, comprehensions, generator expressions, sorted(key=...)
-Clean and filter 10 000 sensor readings in a pipeline
-pipe
+Operating Modes
+finite state machines, enum.Enum, transition table versus the State pattern, match statements
+One state machine two ways: a transition dict and the State pattern; compare in a short note.
+mode
+6-5
+The Control Loop
+discrete-time simulation, Euler integration of a motor model, a PID controller class, step response and tuning
+Simulate a motor with Euler steps, write a PID class, tune it, plot the step response as text.
+pid
 Boss 6
 The Production Line
 Everything in Worlds 5–6
-Run a mixed robot line and log its faults
+Run a mixed robot line with state machines, a PID-controlled belt and fault handling.
 –
 World 7
 Data Streams
@@ -416,29 +452,34 @@ Data Streams
 
 
 7-1
-Data Pipelines II
-Closures, decorators, generators and yield, the iterator protocol, itertools, functools, pure functions
-A @timed decorator and a generator streaming a large log file
-stream
+Pipelines I
+first-class functions and lambda, map and filter, list, dict and set comprehensions, conditional expressions, any() and all()
+Clean, filter and summarise 10 000 readings as a pipeline of small functions.
+pipe
 7-2
-Two Roads (paradigm choice)
-Functional vs object-oriented design, dataclasses, immutability; when each fits
-Solve one scheduling problem both ways and write a half-page trade-off note
-compare-designs
+Pipelines II
+closures and nonlocal, decorators, wraps and lru_cache, generators and yield, the iterator protocol
+A @timed decorator, a generator streaming a huge log, lru_cache on recursive Fibonacci.
+stream
 7-3
-The Test Bench
-assert, unittest, test-first fixing, pdb, systematic debugging
-Make a failing test suite pass without changing the tests
-test
+Two Roads
+functional versus object-oriented design of one system, dataclasses and NamedTuple, immutability, contextlib and itertools
+Solve one scheduling problem functionally and with objects; write a half-page trade-off note.
+twins
 7-4
-The Legacy Controller (others' code)
-Reading unfamiliar code, documenting it, refactoring safely, writing a code-review report
-Find and document five planted bugs in an old module, then fix them
+The Test Bench II
+unittest and fixtures, test-first fixing, dependency injection and mocks, debugging with breakpoint() and pdb
+Make a failing suite pass without changing tests; inject a fake sensor; explain a pdb session.
+mock
+7-5
+The Legacy Controller
+reading unfamiliar code, documenting a module, code smells and refactoring under tests, writing a code-review report
+Document an unfamiliar module, find five planted bugs, refactor under tests, write a review report.
 review
 Boss 7
 The Legacy Machine
 Everything in Worlds 5–7
-Review, test and improve a provided mini-project, including parts of Python Bytes's own code
+Review, test and improve a provided mini-project, including parts of Python Bytes' own code (provided files are exempt from the construct rule).
 –
 World 8
 Factory Mainframe
@@ -447,20 +488,35 @@ Factory Mainframe
 
 8-1
 The Architect
-Coupling and cohesion, SOLID in plain terms, type hints, three patterns (strategy, factory, observer)
-Propose two designs for the task scheduler and argue for one
+coupling and cohesion, SOLID in plain terms, strategy, factory and observer patterns, comparing two designs
+Two designs for the task scheduler using strategy, factory or observer; argue for one in writing.
 design
 8-2
-Speed Run (efficiency)
-Big-O intuition, choosing data structures for speed, timeit, profiling
-Speed up a slow part-matching routine and measure the gain
+Speed Run
+Big-O and Big-Theta, analysing loops and recursion, timeit and cProfile, heapq and bisect
+Derive Big-O of given functions, profile a slow routine, speed it up and measure the gain.
 profile
-Final Boss
+8-3
+Sorting Line
+insertion sort, merge sort and divide and conquer, binary search, stability
+Implement insertion sort, merge sort and binary search; test stability; compare with sorted().
+sort
+8-4
+Path Planning
+graphs as adjacency dicts, BFS and DFS, Dijkstra with heapq, paths on a grid
+Model the floor as a graph; BFS, DFS and Dijkstra; show each robot's path on the pixel map.
+route
+8-5
+The Scheduler
+greedy versus optimal, dynamic programming: memoised and tabulated, 0/1 knapsack as job scheduling, proving a greedy solution can fail
+Greedy versus dynamic-programming job scheduling (0/1 knapsack); show the greedy one can fail.
+schedule
+Boss 8
 The Factory Wakes
-A full project with design note, tests and peer review
-Build the factory simulation; review another team's code with the review template
+A full project with design note, tests and review
+Full factory simulation: state machines, control loop, path planning, scheduling; design note, tests, review.
 Ending + credits
-From Level 7-3 onward, Wave 2 is graded by hidden unittest suites, and some missions are partly graded by a written note checked against a rubric (see Game design).
+From Level 7-4 onward, Wave 2 is graded by hidden unittest suites, and some missions are partly graded by a written note checked against a rubric (see Game design).
 Technical architecture
 Python Bytes is a single Python program built on the standard library only, so it installs with nothing but Python 3.12. The game engine is the hub: it reads level packs, draws through the renderer, sends player code to the runner and turns the grader's results into XP, stars and unlocks.
 The player writes code in their own editor, in a workspace/ folder the game watches; the game then runs and grades it.
@@ -487,8 +543,8 @@ Save file
 Progress, XP, stars, coins, badges
 json, pathlib
 Progression checker (developer tool)
-Fails the build if a level uses a construct not taught yet
-ast
+Fails the build if a level uses a construct not taught yet. Reads levels/concepts.toml; the rules are in docs/curriculum.md
+ast, tomllib
 What a level pack looks like (simplified):
 [level]
 id = "2-3"
@@ -528,10 +584,10 @@ Phase 2 – Runner, grader and scoring
 [x] Level-clear screen and boss fight screen with health bar and lives
 Gate: Level 1-1 is fully graded; each wave's reference solution passes and a known-wrong solution fails.
 Phase 3 – Worlds 1–2 (content and art)
-[ ] Write Levels 1-1 to 2-4 in order: cutscene, tips, three waves, tests, power-up
+[ ] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2
 [ ] Draw Snek's states and the first two boss sprites
-[ ] Build the progression checker; review every level against the level style guide before merging
+[ ] Build the progression checker (reads levels/concepts.toml, enforces the six rules in docs/curriculum.md); review every level against the level style guide before merging
 Gate: Worlds 1–2 playable end to end.
 Phase 4 – Playtest round 1
 [ ] At least 5 students who have not seen the content playtest Worlds 1–2
@@ -540,7 +596,8 @@ Phase 4 – Playtest round 1
 [ ] Rewrite the levels where most students stalled
 Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
-[ ] Write Levels 3-1 to 4-3 and Bosses 3 and 4 (both phases)
+[ ] Write Levels 3-1 to 4-5 and Bosses 3 and 4 (both phases)
+[ ] Data files for waves (the sensor CSVs of Level 4-3 and Boss 4)
 [ ] Add the shop, badges, the Codex screen and the peer-review mode
 [ ] Add tier grades and a printable progress report
 Gate: Basic tier complete; every Basic outcome in the mapping table is tested.
@@ -549,10 +606,12 @@ Phase 6 – Engine features for the Advanced tier
 [ ] Grading with hidden unittest suites
 [ ] Rubric-graded written answers (trade-off notes, review reports)
 [ ] Legacy-code missions that ship deliberately buggy modules
-Gate: Level 5-2 runs on the new features.
+Gate: Level 5-1 runs on the new features.
 Phase 7 – Worlds 5–8 (content and art)
 [ ] Write the Advanced levels in order, using Python Bytes's own source code as material in World 7
-[ ] Build Bosses 5–7 and the Final Boss, with its specification and test suite
+[ ] Build Bosses 5–7 and Boss 8 (the final boss), with its specification and test suite
+[ ] Draw paths on the pixel map (Level 8-4)
+[ ] Optional time limit per wave (Level 8-2 timing missions); pdb in Level 7-4 is graded as a predict/explain wave, not run
 [ ] Draw the factory tileset and the remaining boss sprites
 Gate: Advanced tier playable end to end.
 Phase 8 – Playtest round 2 and balancing
