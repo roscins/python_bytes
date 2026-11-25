@@ -1,7 +1,7 @@
 """Tests for engine/__main__.py, the file that starts the game.
 
-Every test passes its own temporary save path, so the player's real save
-file is never touched. The gate test reads the real levels/ folder; the
+Every test passes its own temporary save path and workspace folder, so the
+player's real save file and workspace are never touched. The gate test reads the real levels/ folder; the
 others use temporary level packs.
 """
 
@@ -26,6 +26,7 @@ class TestMain(unittest.TestCase):
         self.levels_folder = folder / "levels"
         self.levels_folder.mkdir()
         self.save_path = folder / "save" / "save.json"
+        self.workspace_root = folder / "workspace"
 
     def run_main(self, typed_text):
         """Run main with `typed_text` as the keyboard; return exit code and output."""
@@ -36,7 +37,7 @@ class TestMain(unittest.TestCase):
         sys.stdin = io.StringIO(typed_text)
         output = io.StringIO()
         with redirect_stdout(output):
-            exit_code = engine_main.main(self.levels_folder, self.save_path)
+            exit_code = engine_main.main(self.levels_folder, self.save_path, self.workspace_root)
         return exit_code, output.getvalue()
 
     def test_main_runs_until_quit_and_saves(self):
@@ -84,14 +85,16 @@ class TestPhaseOneGate(unittest.TestCase):
 
     def test_open_map_play_1_1_quit_and_resume(self):
         """With the real levels, a player is welcomed back to 1-1 after quitting."""
-        save_path = make_temporary_folder(self) / "save.json"
+        folder = make_temporary_folder(self)
+        save_path = folder / "save.json"
+        workspace_root = folder / "workspace"
         output = io.StringIO()
         real_stdin = sys.stdin
         self.addCleanup(setattr, sys, "stdin", real_stdin)
 
         sys.stdin = io.StringIO("map\nplay 1-1\nquit\n")
         with redirect_stdout(output):
-            exit_code = engine_main.main(save_path=save_path)
+            exit_code = engine_main.main(save_path=save_path, workspace_root=workspace_root)
         self.assertEqual(exit_code, 0)
         first_game = output.getvalue()
         self.assertIn("WORLD 1 · BOOT SECTOR", first_game)
@@ -101,7 +104,7 @@ class TestPhaseOneGate(unittest.TestCase):
         output = io.StringIO()
         sys.stdin = io.StringIO("map\nquit\n")
         with redirect_stdout(output):
-            engine_main.main(save_path=save_path)
+            engine_main.main(save_path=save_path, workspace_root=workspace_root)
         second_game = output.getvalue()
         self.assertIn("Welcome back. You were on level 1-1.", second_game)
         self.assertIn("You are at [1-1] Hello, Terminal.", second_game)

@@ -33,6 +33,21 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
 5. The cutscene shows the new syntax working **before** the tips explain it.
 6. Code in levels follows the style the game grades: snake_case names, 4-space indents, comments where useful.
 
+## Kinds of test
+
+Each `[[wave.test]]` table has exactly one of these keys:
+
+| Key | Passes when |
+| --- | --- |
+| `expected_stdout = "..."` | the program prints exactly this (spaces at line ends and blank lines at the end are ignored) |
+| `expected_stdout_contains = ["...", "..."]` | every piece appears in the output |
+| `call = "name"`, `args = [...]`, `expected = ...` | the function returns `expected` |
+| `require = ["While"]` | the code uses these Python AST node types |
+| `forbid = ["For"]` | the code uses none of them |
+| `require_comment = true` | the code has a `#` comment |
+
+`stdin = "..."` gives fake input to the first three. Build waves are also scored on code quality: snake_case names, 4-space indents, a comment, and docstrings on functions and classes.
+
 ## Tone
 
 - The narrator speaks to the player in the second person: "You patch in more power…"

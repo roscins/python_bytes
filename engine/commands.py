@@ -8,6 +8,9 @@ This keeps them easy to test.
 """
 
 from engine.level_screen import intro_text
+from engine.results_screen import results_text
+from engine.submission import grade_submission
+from engine.workspace import level_folder, prepare_workspace
 from render.world_map import load_map_art, map_screen, slither_frames
 
 
@@ -81,6 +84,8 @@ def do_play(state, arguments):
     """Start the level whose id is given, for example "play 1-1".
 
     The answer is the level's intro: title, cutscene, tips and waves.
+    The level's workspace folder is made, with a file for each wave, and
+    the intro ends with where it is.
     If the player was already on another level in the same world, Snek
     slithers there first: the answer is then a list of map frames, and the
     last frame has the intro below the map.
@@ -94,6 +99,9 @@ def do_play(state, arguments):
     previous = state.find_level(state.current_level)
     state.current_level = level.id
     intro = intro_text(level)
+    if state.workspace_root is not None:
+        folder = prepare_workspace(level, state.workspace_root)
+        intro = intro + f"\nYour files are in {folder.resolve()}"
     if previous is None or previous.world != level.world or previous.id == level.id:
         return intro
     ids = level_ids(state.levels_in_world(level.world))
@@ -103,17 +111,32 @@ def do_play(state, arguments):
     return frames
 
 
-def do_submit(state, arguments):
-    """Hand in the player's code for the current level.
+NOT_PLAYING = "You are not playing a level. Type play <level> first."
 
-    Grading arrives in Phase 2; for now this only checks that a level has
-    been started.
-    """
+
+def do_submit(state, arguments):
+    """Grade the player's files for the current level and show the results."""
     if arguments:
         return extra_words_message("submit")
-    if state.current_level is None:
-        return "You are not playing a level. Type play <level> first."
-    return f"Grading is not ready yet, so level {state.current_level} cannot be checked."
+    level = state.find_level(state.current_level)
+    if level is None:
+        return NOT_PLAYING
+    if state.workspace_root is None:
+        return f"There is no workspace folder, so level {level.id} cannot be graded."
+    submissions = grade_submission(level, state.workspace_root)
+    return results_text(level, submissions)
+
+
+def do_where(state, arguments):
+    """Return the full path of the current level's workspace folder."""
+    if arguments:
+        return extra_words_message("where")
+    level = state.find_level(state.current_level)
+    if level is None:
+        return NOT_PLAYING
+    if state.workspace_root is None:
+        return "There is no workspace folder."
+    return str(level_folder(level, state.workspace_root).resolve())
 
 
 def do_quit(state, arguments):
@@ -131,6 +154,7 @@ COMMANDS = {
     "map": (do_map, "show the world map"),
     "play": (do_play, "start a level, for example: play 1-1"),
     "submit": (do_submit, "hand in your code for the current level"),
+    "where": (do_where, "show the folder where your code for this level goes"),
     "quit": (do_quit, "leave the game"),
 }
 

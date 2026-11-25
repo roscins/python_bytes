@@ -11,13 +11,17 @@ class GameState:
         cleared: the ids of the levels the player has cleared. Grading
             arrives in Phase 2, so for now this stays empty.
         running: True while the game should keep asking for commands.
+        workspace_root: the folder that holds the players' code, one
+            folder per level (see engine/workspace.py), or None for no
+            workspace. Tests leave it as None, so they never write files.
     """
 
-    def __init__(self, levels=None):
-        """Start a new game with the given levels (or none)."""
+    def __init__(self, levels=None, workspace_root=None):
+        """Start a new game with the given levels (or none) and workspace folder."""
         if levels is None:
             levels = []
         self.levels = list(levels)
+        self.workspace_root = workspace_root
         self.current_level = None
         self.cleared = []
         self.running = True

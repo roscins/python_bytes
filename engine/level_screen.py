@@ -5,6 +5,8 @@ waves into one piece of text. Like the commands, it returns text and never
 prints, so it is easy to test.
 """
 
+from engine.workspace import wave_file_name
+
 # Story lines in a cutscene start with this; every other line is code.
 STORY_MARKER = "# >>"
 
@@ -44,8 +46,8 @@ def code_lines(code):
 
 
 def wave_lines(wave, number):
-    """Return the lines that introduce one wave: its number, kind, brief and code."""
-    lines = [f"WAVE {number} · {wave.kind.upper()}"]
+    """Return the lines that introduce one wave: its number, kind, file, brief and code."""
+    lines = [f"WAVE {number} · {wave.kind.upper()} · {wave_file_name(wave, number)}"]
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
     # A fill-in wave shows the code with blanks; a predict wave shows the
@@ -71,5 +73,5 @@ def intro_text(level):
         lines.append("")
         lines.extend(wave_lines(wave, number))
     lines.append("")
-    lines.append("Grading arrives in a later version. Type map to see the levels.")
+    lines.append("When your waves are ready, type submit. Type map to see the levels.")
     return "\n".join(lines)

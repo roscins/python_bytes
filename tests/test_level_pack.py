@@ -145,6 +145,60 @@ class TestLoadLevel(unittest.TestCase):
             self.load(text)
 
 
+class TestLoadTests(unittest.TestCase):
+    """Check that the loader rejects [[wave.test]] tables the grader cannot run."""
+
+    TEST_LINE = 'expected_stdout = "OK\\n"'
+
+    def load_with_test(self, test_text):
+        """Load the valid level with its one test table replaced by `test_text`."""
+        self.assertIn(self.TEST_LINE, VALID_LEVEL_TOML)
+        text = VALID_LEVEL_TOML.replace(self.TEST_LINE, test_text)
+        levels_folder = make_temporary_folder(self)
+        return load_level(write_level_pack(levels_folder, "w1", "1-1-hello-terminal", text))
+
+    def test_every_kind_of_test_loads(self):
+        """Each kind of test, written correctly, is accepted."""
+        good_tests = [
+            'expected_stdout = "OK\\n"\nstdin = "x\\n"',
+            'expected_stdout_contains = ["OK"]',
+            'call = "add"\nargs = [1, 2]\nexpected = 3',
+            'require = ["While", "Call"]',
+            'forbid = ["For"]',
+            "require_comment = true",
+        ]
+        for test_text in good_tests:
+            with self.subTest(test=test_text):
+                self.load_with_test(test_text)
+
+    def test_no_kind_or_two_kinds_is_an_error(self):
+        """A test needs exactly one kind key."""
+        for test_text in ['stdin = "x"', 'require = ["Call"]\nforbid = ["For"]']:
+            with self.subTest(test=test_text):
+                with self.assertRaisesRegex(LevelError, "test 1: a test needs exactly one of"):
+                    self.load_with_test(test_text)
+
+    def test_unknown_ast_node_is_an_error(self):
+        """require = ["Loop"] is not a real AST node type."""
+        with self.assertRaisesRegex(LevelError, "'Loop' is not a Python AST node type"):
+            self.load_with_test('require = ["Loop"]')
+
+    def test_call_needs_expected(self):
+        """A call test without expected is rejected."""
+        with self.assertRaisesRegex(LevelError, "needs an expected value"):
+            self.load_with_test('call = "add"')
+
+    def test_call_args_must_be_a_list(self):
+        """args = 3 is rejected."""
+        with self.assertRaisesRegex(LevelError, "args must be a list"):
+            self.load_with_test('call = "add"\nargs = 3\nexpected = 3')
+
+    def test_stdin_must_be_text(self):
+        """stdin = 5 is rejected."""
+        with self.assertRaisesRegex(LevelError, "stdin must be text"):
+            self.load_with_test('expected_stdout = "OK"\nstdin = 5')
+
+
 class TestLoadLevels(unittest.TestCase):
     """Check finding every level in a levels folder."""
 
