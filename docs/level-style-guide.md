@@ -21,7 +21,7 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
 | Wave 1 `fill-in` | Given code with `___` blanks to complete | 1–3 blanks |
 | Wave 2 `build` | Write a program from a short brief | Brief: 5 sentences |
 | Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code |
-| Tests | At least 2 tests per wave | – |
+| Tests | At least 2 tests per wave. In a predict-mode debug wave, `answer` and `wrong` count as its tests | – |
 | Reference + wrong solution | One solution that must pass, one typical mistake that must fail | Per wave |
 
 ## Hard rules
@@ -29,9 +29,9 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`.
 1. A level uses only constructs taught in earlier levels, plus its own new concepts. The progression checker enforces this.
 2. At most 4 new concepts per level.
 3. Everything is in English.
-4. Every wave has a reference solution that passes and a wrong solution that fails.
+4. Every wave has a reference solution that passes and a wrong solution that fails. A predict-mode debug wave has a right `answer` and a `wrong` answer instead.
 5. The cutscene shows the new syntax working **before** the tips explain it.
-6. Code in levels follows the same style we grade: snake_case names, 4-space indents, comments where useful.
+6. Code in levels follows the style the game grades: snake_case names, 4-space indents, comments where useful.
 
 ## Tone
 
@@ -113,4 +113,4 @@ answer = "ONE\nTHREE"
 wrong = "ONE\nTWO\nTHREE"
 ```
 
-The field names above are a proposal. When the level loader is built (Phase 1, item 4), it decides the final format and this guide is updated to match.
+This is the format the level loader (`engine/level_pack.py`) reads. The loader checks the structure, and `tests/test_levels.py` checks every level in `levels/` against the limits in this guide. This example is saved as `levels/w1/1-1-hello-terminal/level.toml`.

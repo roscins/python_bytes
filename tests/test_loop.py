@@ -55,7 +55,7 @@ class TestRun(unittest.TestCase):
     def test_commands_run_in_order(self):
         """Each line is run as a command, and its answer is written out."""
         state, output = self.play(["play 1-2", "map", "quit"])
-        self.assertIn("Starting level 1-2: Level 1-2.", output)
+        self.assertIn("LEVEL 1-2 · LEVEL 1-2", "\n".join(output))
         self.assertIn("[1-2] Level 1-2  <- you are here", "\n".join(output))
         self.assertEqual(state.current_level, "1-2")
 

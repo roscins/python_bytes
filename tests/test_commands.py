@@ -113,7 +113,7 @@ class TestPlay(unittest.TestCase):
         state = GameState(make_levels("1-1"))
         text = handle_line(state, "play 1-1")
         self.assertEqual(state.current_level, "1-1")
-        self.assertEqual(text, "Starting level 1-1: Level 1-1.")
+        self.assertTrue(text.startswith("LEVEL 1-1 · LEVEL 1-1"))
 
     def test_play_unknown_level_changes_nothing(self):
         """Playing a level that does not exist leaves the state alone."""

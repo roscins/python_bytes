@@ -13,7 +13,7 @@ level". Approved before coding, on branch `phase-1/level-1-1` (built on
   - the title card: `LEVEL 1-1 · HELLO, TERMINAL`
   - the cutscene: story lines (`# >> …`) as plain text, code lines
     indented, so the player can tell them apart
-  - the tips, under `TIPS (saved to your Codex)`
+  - the tips, under `TIPS` (the Codex that keeps them comes later)
   - each wave: number, kind and brief, with its starter code (fill-in) or
     the code to read (predict)
   - how to go on: `submit` is still a placeholder until Phase 2
