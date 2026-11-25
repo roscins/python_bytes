@@ -28,6 +28,25 @@ def make_level(level_id, title=None):
                  'print("OK")', ["tip one", "tip two"], [wave])
 
 
+def make_full_level(**build_changes):
+    """Return a small Level with the three waves of the style guide, breaking no limit.
+
+    It is Level 1-1 in short: fill-in, build and predict-mode debug. Keyword
+    arguments replace parts of the build wave (reference, wrong, starter).
+    """
+    from engine.level_pack import Level, Wave
+
+    tests = [{"expected_stdout": "a\n"}, {"require": ["Call"]}]
+    fill_in = Wave("fill-in", "Fill.", starter="print(___)", reference='print("a")',
+                   wrong="print(a b)", tests=tests)
+    build_parts = {"reference": 'print("a")', "wrong": 'print("b")', "starter": None}
+    build_parts.update(build_changes)
+    build = Wave("build", "Build.", tests=tests, **build_parts)
+    debug = Wave("debug", "Predict.", mode="predict", code='print("a")', answer="a", wrong="b")
+    return Level("1-1", "Hello, Terminal", 1, ["print()", "string literals", "comments"],
+                 "status", '# >> Hi.\nprint("a")', ["t1", "t2", "t3"], [fill_in, build, debug])
+
+
 def make_levels(*level_ids):
     """Return a list of small Levels, one for each id given."""
     levels = []
