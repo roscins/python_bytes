@@ -6,7 +6,8 @@ the bottom pixel as the background colour, so an 8 x 8 sprite fits in 8 x 4
 cells.
 
 A sprite file has one line per row of pixels. Each character is a palette
-code, or "." for a transparent pixel. Lines that start with "#" are comments.
+code, or "." for a transparent pixel. The art style guide allows nothing
+else: no comments, no blank lines and no spaces.
 """
 
 from render.palette import TRANSPARENT, background, foreground
@@ -27,8 +28,8 @@ def load_sprite(path, palette):
     If the sprite has an odd number of rows, a transparent row is added at
     the bottom, because each terminal line shows two rows.
 
-    Raises SpriteError if the file has no rows, if the rows have different
-    widths, or if a pixel is not "." or a code in the palette.
+    Raises SpriteError if the file has no rows, a blank line, rows of
+    different widths, or a pixel that is not "." or a code in the palette.
     """
     rows = []
     width = None
@@ -37,8 +38,8 @@ def load_sprite(path, palette):
         for line in sprite_file:
             line_number = line_number + 1
             row = line.rstrip("\n")
-            if row.strip() == "" or row.startswith("#"):
-                continue
+            if row.strip() == "":
+                raise SpriteError(f"{path}, line {line_number}: blank lines are not allowed")
             if width is None:
                 width = len(row)
             elif len(row) != width:
@@ -47,16 +48,28 @@ def load_sprite(path, palette):
                     f"but the first row is {width}"
                 )
             for pixel in row:
-                if pixel != TRANSPARENT and pixel not in palette:
-                    raise SpriteError(
-                        f"{path}, line {line_number}: {pixel!r} is not in the palette"
-                    )
+                check_pixel(pixel, palette, f"{path}, line {line_number}")
             rows.append(row)
     if not rows:
         raise SpriteError(f"{path}: the sprite has no rows")
     if len(rows) % 2 == 1:
         rows.append(TRANSPARENT * width)
     return rows
+
+
+def check_pixel(pixel, palette, place):
+    """Raise SpriteError if `pixel` is not "." or a code in the palette.
+
+    `place` says where the pixel came from, for error messages. Spaces and
+    "#" get their own message, because they are easy mistakes to make.
+    """
+    if pixel == TRANSPARENT or pixel in palette:
+        return
+    if pixel == " ":
+        raise SpriteError(f"{place}: spaces are not allowed, use '.' for a transparent pixel")
+    if pixel == "#":
+        raise SpriteError(f"{place}: comments are not allowed in sprite files")
+    raise SpriteError(f"{place}: {pixel!r} is not in the palette")
 
 
 def draw_cell(top, bottom, palette):
@@ -84,9 +97,12 @@ def draw_row_pair(top_row, bottom_row, palette):
 def render_sprite(sprite, palette):
     """Return a list of terminal lines that draw the whole sprite.
 
-    The sprite must have an even number of rows; load_sprite makes sure of
-    that.
+    The sprite must have an even number of rows, because each line shows
+    two rows. load_sprite makes sure of that; a sprite made some other way
+    with an odd number of rows raises SpriteError.
     """
+    if len(sprite) % 2 == 1:
+        raise SpriteError(f"the sprite has {len(sprite)} rows, but it needs an even number")
     lines = []
     for row in range(0, len(sprite), 2):
         lines.append(draw_row_pair(sprite[row], sprite[row + 1], palette))

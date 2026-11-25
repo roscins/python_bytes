@@ -4,17 +4,21 @@ A palette file has one colour per line:
 
     code red green blue name
 
-for example "2 29 43 83 dark-blue". Lines that start with "#" are comments,
+for example "2 62 76 102 slate". Lines that start with "#" are comments,
 and blank lines are skipped.
 """
 
 TRANSPARENT = "."
 
+# The only characters that can be palette codes: 16 codes for 16 colours,
+# as the art style guide says.
+PALETTE_CODES = "0123456789abcdef"
+
 
 def load_palette(path):
     """Read a palette file and return a dict from code to (red, green, blue).
 
-    Example: a line "2 29 43 83 dark-blue" gives the entry {"2": (29, 43, 83)}.
+    Example: a line "2 62 76 102 slate" gives the entry {"2": (62, 76, 102)}.
     Raises ValueError, naming the file and line, if a line is not valid.
     """
     palette = {}
@@ -41,8 +45,8 @@ def parse_palette_line(text, place):
     if len(parts) != 5:
         raise ValueError(f"{place}: expected 'code red green blue name', got {text!r}")
     code = parts[0]
-    if len(code) != 1 or code == TRANSPARENT:
-        raise ValueError(f"{place}: the code must be one character other than '.'")
+    if len(code) != 1 or code not in PALETTE_CODES:
+        raise ValueError(f"{place}: the code must be one of {PALETTE_CODES}, got {code!r}")
     numbers = []
     for part in parts[1:4]:
         if not part.isdigit() or int(part) > 255:

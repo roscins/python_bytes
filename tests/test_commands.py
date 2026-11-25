@@ -61,6 +61,13 @@ class TestHelp(unittest.TestCase):
         for name in COMMANDS:
             self.assertIn(name, text)
 
+    def test_help_shows_each_description(self):
+        """Every command's description appears next to it in the help text."""
+        text = handle_line(GameState(), "help")
+        for name in COMMANDS:
+            _, description = COMMANDS[name]
+            self.assertIn(description, text)
+
 
 class TestMap(unittest.TestCase):
     """Check the map command."""
@@ -70,6 +77,11 @@ class TestMap(unittest.TestCase):
         text = handle_line(GameState(["1-1", "1-2"]), "map")
         self.assertIn("[1-1]", text)
         self.assertIn("[1-2]", text)
+
+    def test_map_without_current_level_marks_nothing(self):
+        """Before any level is started, no level is marked."""
+        text = handle_line(GameState(["1-1", "1-2"]), "map")
+        self.assertNotIn("you are here", text)
 
     def test_map_marks_current_level(self):
         """The level being played is marked on the map."""
@@ -104,6 +116,13 @@ class TestPlay(unittest.TestCase):
         self.assertIn("Usage", text)
         self.assertIsNone(state.current_level)
 
+    def test_play_with_too_many_words_shows_usage(self):
+        """Typing more than one level after play explains how to use it."""
+        state = GameState(["1-1"])
+        text = handle_line(state, "play 1-1 extra")
+        self.assertIn("Usage", text)
+        self.assertIsNone(state.current_level)
+
 
 class TestSubmit(unittest.TestCase):
     """Check the submit placeholder."""
@@ -119,6 +138,22 @@ class TestSubmit(unittest.TestCase):
         state.current_level = "1-1"
         text = handle_line(state, "submit")
         self.assertIn("1-1", text)
+
+
+class TestExtraWords(unittest.TestCase):
+    """Check that commands without arguments reject words after them."""
+
+    def test_each_command_without_arguments_rejects_extra_words(self):
+        """help, map, submit and quit all explain that they take nothing."""
+        for name in ["help", "map", "submit", "quit"]:
+            text = handle_line(GameState(), f"{name} now")
+            self.assertEqual(text, f"{name} does not take anything after it. Type just: {name}")
+
+    def test_quit_with_extra_words_keeps_running(self):
+        """"quit now" does not quit, so the player sees why."""
+        state = GameState()
+        handle_line(state, "quit now")
+        self.assertTrue(state.running)
 
 
 class TestQuitAndUnknown(unittest.TestCase):

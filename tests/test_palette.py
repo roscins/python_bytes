@@ -1,11 +1,10 @@
 """Tests for render/palette.py."""
 
-import os
-import tempfile
 import unittest
 from pathlib import Path
 
-from render.palette import background, foreground, load_palette
+from render.palette import PALETTE_CODES, background, foreground, load_palette
+from tests.helpers import write_temporary_file
 
 ART_FOLDER = Path(__file__).parent.parent / "art"
 ART_GUIDE = Path(__file__).parent.parent / "docs" / "art-style-guide.md"
@@ -33,15 +32,6 @@ def read_guide_palette():
     return palette
 
 
-def write_temporary_file(test, text):
-    """Write `text` to a temporary file, delete it after `test`, return its path."""
-    handle, path = tempfile.mkstemp(suffix=".txt")
-    with os.fdopen(handle, "w", encoding="utf-8") as temporary_file:
-        temporary_file.write(text)
-    test.addCleanup(os.remove, path)
-    return path
-
-
 class TestColourCodes(unittest.TestCase):
     """Check that colours turn into the right ANSI escape codes."""
 
@@ -67,6 +57,15 @@ class TestLoadPalette(unittest.TestCase):
         palette = load_palette(ART_FOLDER / "palette.txt")
         self.assertEqual(palette, read_guide_palette())
 
+    def test_guide_has_all_sixteen_codes(self):
+        """The guide's table has exactly the codes 0-9 and a-f.
+
+        Without this, a row missing from both the guide and palette.txt
+        would go unnoticed.
+        """
+        codes = sorted(read_guide_palette())
+        self.assertEqual(codes, sorted(PALETTE_CODES))
+
     def test_missing_part_is_an_error(self):
         """A line without a name is rejected, with its line number."""
         path = write_temporary_file(self, "1 10 20 30 grey\n2 10 20 30\n")
@@ -88,14 +87,22 @@ class TestLoadPalette(unittest.TestCase):
     def test_long_code_is_an_error(self):
         """A code must be one character."""
         path = write_temporary_file(self, "12 10 20 30 grey\n")
-        with self.assertRaisesRegex(ValueError, "one character"):
+        with self.assertRaisesRegex(ValueError, "must be one of"):
             load_palette(path)
 
     def test_dot_code_is_an_error(self):
         """"." is kept for transparent pixels, so it cannot be a colour."""
         path = write_temporary_file(self, ". 10 20 30 grey\n")
-        with self.assertRaisesRegex(ValueError, "one character"):
+        with self.assertRaisesRegex(ValueError, "must be one of"):
             load_palette(path)
+
+    def test_codes_outside_0_to_f_are_errors(self):
+        """Only 0-9 and a-f are codes: not capital letters or other signs."""
+        for code in ["A", "g", "*"]:
+            with self.subTest(code=code):
+                path = write_temporary_file(self, f"{code} 10 20 30 grey\n")
+                with self.assertRaisesRegex(ValueError, "must be one of"):
+                    load_palette(path)
 
     def test_code_used_twice_is_an_error(self):
         """Each code can only stand for one colour."""

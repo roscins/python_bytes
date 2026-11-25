@@ -67,6 +67,11 @@ class TestRun(unittest.TestCase):
         self.assertFalse(state.running)
         self.assertEqual(output[-1], "Goodbye, technician.")
 
+    def test_ctrl_d_starts_a_fresh_line(self):
+        """After Ctrl-D an empty line is written, so goodbye is not on the prompt."""
+        state, output = self.play([], end_with=EOFError)
+        self.assertEqual(output, [WELCOME, "", "Goodbye, technician."])
+
     def test_ctrl_c_quits(self):
         """An interrupt (Ctrl-C) quits like typing quit."""
         state, output = self.play(["map"], end_with=KeyboardInterrupt)
