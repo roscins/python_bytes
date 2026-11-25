@@ -120,27 +120,27 @@ class TestLoadSprite(unittest.TestCase):
         self.assertTrue(issubclass(SpriteError, ValueError))
 
 
-class TestAriaOffline(unittest.TestCase):
-    """Check the ARIA reference sprite from the art style guide."""
+class TestSnekOffline(unittest.TestCase):
+    """Check the Snek reference sprite from the art style guide."""
 
     def setUp(self):
-        """Load the game's palette and the ARIA sprite."""
+        """Load the game's palette and the Snek sprite."""
         self.palette = load_palette(ART_FOLDER / "palette.txt")
-        self.aria = load_sprite(ART_FOLDER / "aria-offline.txt", self.palette)
+        self.snek = load_sprite(ART_FOLDER / "snek-offline.txt", self.palette)
 
-    def test_aria_is_sixteen_by_sixteen(self):
-        """ARIA is 16 x 16 pixels, as the art style guide says."""
-        self.assertEqual(len(self.aria), 16)
-        for row in self.aria:
+    def test_snek_is_sixteen_by_sixteen(self):
+        """Snek is 16 x 16 pixels, as the art style guide says."""
+        self.assertEqual(len(self.snek), 16)
+        for row in self.snek:
             self.assertEqual(len(row), 16)
 
-    def test_aria_draws_as_eight_lines(self):
+    def test_snek_draws_as_eight_lines(self):
         """Sixteen pixel rows become eight terminal lines."""
-        self.assertEqual(len(render_sprite(self.aria, self.palette)), 8)
+        self.assertEqual(len(render_sprite(self.snek, self.palette)), 8)
 
     def test_every_line_ends_with_reset(self):
         """Each line resets colours so the next line starts clean."""
-        for line in render_sprite(self.aria, self.palette):
+        for line in render_sprite(self.snek, self.palette):
             self.assertTrue(line.endswith(RESET))
 
 
@@ -156,11 +156,11 @@ class TestEverySpriteFollowsTheArtGuide(unittest.TestCase):
                 self.sprite_paths.append(path)
 
     def test_there_are_sprites_to_check(self):
-        """The art folder has at least the ARIA reference sprite."""
-        self.assertIn(ART_FOLDER / "aria-offline.txt", self.sprite_paths)
+        """The art folder has at least the Snek reference sprite."""
+        self.assertIn(ART_FOLDER / "snek-offline.txt", self.sprite_paths)
 
     def test_names_are_subject_dash_state(self):
-        """Files are named <subject>-<state>.txt, for example aria-offline.txt."""
+        """Files are named <subject>-<state>.txt, for example snek-offline.txt."""
         for path in self.sprite_paths:
             with self.subTest(sprite=path.name):
                 self.assertIn("-", path.stem)
@@ -200,9 +200,9 @@ class TestCommandLine(unittest.TestCase):
             exit_code = render_main.main(arguments)
         return exit_code, output.getvalue()
 
-    def test_draws_aria(self):
-        """Drawing ARIA prints eight lines and succeeds."""
-        exit_code, text = self.run_main([str(ART_FOLDER / "aria-offline.txt")])
+    def test_draws_snek(self):
+        """Drawing Snek prints eight lines and succeeds."""
+        exit_code, text = self.run_main([str(ART_FOLDER / "snek-offline.txt")])
         self.assertEqual(exit_code, 0)
         self.assertEqual(len(text.splitlines()), 8)
 

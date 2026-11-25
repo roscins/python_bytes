@@ -13,7 +13,7 @@ def make_intro_level():
     build = Wave("build", "Print\nthree lines.", reference='print("A")', wrong="print(A)")
     predict = Wave("debug", "What does this print?", mode="predict",
                    code='print("ONE")', answer="ONE", wrong="TWO")
-    cutscene = '\n# >> The lab is dark.\nprint("SYSTEM CHECK")\n\n# >> ARIA: "HELLO."\n'
+    cutscene = '\n# >> The lab is dark.\nprint("SYSTEM CHECK")\n\n# >> Snek: "HELLO."\n'
     return Level("1-1", "Hello, Terminal", 1, ["print()", "strings"], "status",
                  cutscene, ["Tip one.", "Tip two."], [fill_in, build, predict])
 
@@ -31,7 +31,7 @@ class TestParts(unittest.TestCase):
         self.assertEqual(lines, [
             "The lab is dark.",
             CODE_INDENT + 'print("SYSTEM CHECK")',
-            'ARIA: "HELLO."',
+            'Snek: "HELLO."',
         ])
 
     def test_fill_in_wave_shows_its_starter(self):

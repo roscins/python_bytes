@@ -13,7 +13,7 @@ ART_GUIDE = Path(__file__).parent.parent / "docs" / "art-style-guide.md"
 def read_guide_palette():
     """Read the palette table in docs/art-style-guide.md.
 
-    Table rows look like:  | 3 | Steel | `#8a93a6` | Metal, ARIA's body |
+    Table rows look like:  | 3 | Steel | `#8a93a6` | Metal, machines |
     Returns a dict from code to (red, green, blue), like load_palette does.
     """
     palette = {}

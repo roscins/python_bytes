@@ -13,7 +13,7 @@
 6 41 197 246 cyan
 7 26 138 138 teal
 8 76 217 100 green
-9 42 122 58 moss
+9 34 139 34 moss
 a 255 210 63 gold
 b 255 140 26 orange
 c 230 57 70 red

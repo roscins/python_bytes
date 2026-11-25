@@ -50,7 +50,7 @@ draws a sprite from a text file". Approved before coding, on branch
 
 - `art/robot.txt` was removed. It broke the art style guide (comment lines,
   no `-<state>` in its name, colours from the old placeholder palette), and
-  `art/aria-offline.txt` now covers the same tests.
+  `art/snek-offline.txt` now covers the same tests.
 - Sprite files follow the art style guide strictly: comments, blank lines and
   spaces are errors, each with its own clear message.
 - Palette codes must be `0`–`9` or `a`–`f`.

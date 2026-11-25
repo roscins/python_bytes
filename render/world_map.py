@@ -1,4 +1,4 @@
-"""Draw the world map: level nodes joined by a path, with ARIA below them.
+"""Draw the world map: level nodes joined by a path, with Snek below them.
 
 The map is a canvas (see render/canvas.py) 80 pixels wide, which is 80
 terminal cells. Above the picture is a header and a line with the level
@@ -18,16 +18,16 @@ ART_FOLDER = Path(__file__).parent.parent / "art"
 
 MAP_WIDTH = 80          # pixels, the same as terminal cells
 NODE_SIZE = 8           # a node tile is 8 x 8 pixels
-ARIA_SIZE = 16          # ARIA is 16 x 16 pixels
+SNEK_SIZE = 16          # Snek is 16 x 16 pixels
 NODE_TOP = 0            # nodes sit at the top of the picture
-ARIA_TOP = NODE_SIZE    # ARIA stands just below the nodes
-MAP_HEIGHT = ARIA_TOP + ARIA_SIZE
+SNEK_TOP = NODE_SIZE    # Snek stands just below the nodes
+MAP_HEIGHT = SNEK_TOP + SNEK_SIZE
 
 PATH_CODE = "7"         # teal: the art guide's colour for map paths
 PATH_THICKNESS = 2
 PATH_TOP = NODE_TOP + (NODE_SIZE - PATH_THICKNESS) // 2
 
-WALK_STEP = 4           # ARIA moves this many pixels per frame
+SLITHER_STEP = 4           # Snek moves this many pixels per frame
 
 # The worlds' names, from docs/plan.md.
 WORLD_NAMES = {
@@ -48,22 +48,22 @@ class MapArt:
     Attributes:
         palette: the game's palette, from art/palette.txt.
         node: the sprite for a level node.
-        aria: the sprite for ARIA.
+        snek: the sprite for Snek.
     """
 
-    def __init__(self, palette, node, aria):
+    def __init__(self, palette, node, snek):
         """Remember the palette and the two sprites."""
         self.palette = palette
         self.node = node
-        self.aria = aria
+        self.snek = snek
 
 
 def load_map_art(art_folder=ART_FOLDER):
-    """Read the palette, the node tile and ARIA from the art folder."""
+    """Read the palette, the node tile and Snek from the art folder."""
     palette = load_palette(art_folder / "palette.txt")
     node = load_sprite(art_folder / "node-open.txt", palette)
-    aria = load_sprite(art_folder / "aria-offline.txt", palette)
-    return MapArt(palette, node, aria)
+    snek = load_sprite(art_folder / "snek-offline.txt", palette)
+    return MapArt(palette, node, snek)
 
 
 def node_centre(index, node_count):
@@ -76,16 +76,16 @@ def node_centre(index, node_count):
     return share * index + share // 2
 
 
-def aria_left(index, node_count):
-    """Return the column where ARIA's left edge is, under node `index`.
+def snek_left(index, node_count):
+    """Return the column where Snek's left edge is, under node `index`.
 
-    ARIA is kept fully on the map, even under the first or last node.
+    Snek is kept fully on the map, even under the first or last node.
     """
-    left = node_centre(index, node_count) - ARIA_SIZE // 2
+    left = node_centre(index, node_count) - SNEK_SIZE // 2
     if left < 0:
         left = 0
-    if left > MAP_WIDTH - ARIA_SIZE:
-        left = MAP_WIDTH - ARIA_SIZE
+    if left > MAP_WIDTH - SNEK_SIZE:
+        left = MAP_WIDTH - SNEK_SIZE
     return left
 
 
@@ -109,10 +109,10 @@ def label_line(level_ids):
     return line[:MAP_WIDTH].rstrip()
 
 
-def map_frame(world, level_ids, aria_column, art):
-    """Return one picture of the map as text, with ARIA's left edge at `aria_column`.
+def map_frame(world, level_ids, snek_column, art):
+    """Return one picture of the map as text, with Snek's left edge at `snek_column`.
 
-    If `aria_column` is None, ARIA is not drawn.
+    If `snek_column` is None, Snek is not drawn.
     """
     canvas = new_canvas(MAP_WIDTH, MAP_HEIGHT)
     node_count = len(level_ids)
@@ -123,33 +123,33 @@ def map_frame(world, level_ids, aria_column, art):
     for index in range(node_count):
         left = node_centre(index, node_count) - NODE_SIZE // 2
         paste(canvas, art.node, left, NODE_TOP)
-    if aria_column is not None:
-        paste(canvas, art.aria, aria_column, ARIA_TOP)
+    if snek_column is not None:
+        paste(canvas, art.snek, snek_column, SNEK_TOP)
 
     lines = [header_line(world), "", label_line(level_ids)]
     lines.extend(render_sprite(canvas, art.palette))
     return "\n".join(lines)
 
 
-def map_screen(world, level_ids, aria_index, art):
-    """Return the map with ARIA under level number `aria_index`, or None for no ARIA."""
-    if aria_index is None:
+def map_screen(world, level_ids, snek_index, art):
+    """Return the map with Snek under level number `snek_index`, or None for no Snek."""
+    if snek_index is None:
         return map_frame(world, level_ids, None, art)
-    return map_frame(world, level_ids, aria_left(aria_index, len(level_ids)), art)
+    return map_frame(world, level_ids, snek_left(snek_index, len(level_ids)), art)
 
 
-def walk_frames(world, level_ids, from_index, to_index, art):
-    """Return the frames of ARIA walking from one node to another.
+def slither_frames(world, level_ids, from_index, to_index, art):
+    """Return the frames of Snek slithering from one node to another.
 
-    The first frame has ARIA under node `from_index` and the last under
-    node `to_index`. In between, she moves WALK_STEP pixels per frame.
+    The first frame has Snek under node `from_index` and the last under
+    node `to_index`. In between, she moves SLITHER_STEP pixels per frame.
     """
-    start = aria_left(from_index, len(level_ids))
-    end = aria_left(to_index, len(level_ids))
+    start = snek_left(from_index, len(level_ids))
+    end = snek_left(to_index, len(level_ids))
     if end >= start:
-        step = WALK_STEP
+        step = SLITHER_STEP
     else:
-        step = -WALK_STEP
+        step = -SLITHER_STEP
     columns = list(range(start, end, step))
     columns.append(end)
     frames = []

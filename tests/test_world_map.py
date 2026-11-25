@@ -4,19 +4,19 @@ import re
 import unittest
 
 from render.world_map import (
-    ARIA_SIZE,
+    SNEK_SIZE,
     MAP_HEIGHT,
     MAP_WIDTH,
-    WALK_STEP,
+    SLITHER_STEP,
     WORLD_NAMES,
-    aria_left,
+    snek_left,
     header_line,
     label_line,
     load_map_art,
     map_frame,
     map_screen,
     node_centre,
-    walk_frames,
+    slither_frames,
 )
 
 WORLD_1_IDS = ["1-1", "1-2", "1-3", "1-4", "boss-1"]
@@ -31,7 +31,7 @@ def without_colours(text):
 
 
 class TestLayout(unittest.TestCase):
-    """Check where nodes, labels and ARIA go."""
+    """Check where nodes, labels and Snek go."""
 
     def test_nodes_are_spread_evenly(self):
         """Five nodes share 80 columns, 16 each, centred in their share."""
@@ -44,13 +44,13 @@ class TestLayout(unittest.TestCase):
         """A world with one level has its node in the middle."""
         self.assertEqual(node_centre(0, 1), MAP_WIDTH // 2)
 
-    def test_aria_stays_on_the_map(self):
-        """ARIA is never drawn past the left or right edge."""
+    def test_snek_stays_on_the_map(self):
+        """Snek is never drawn past the left or right edge."""
         for count in range(1, 8):
             for index in range(count):
-                left = aria_left(index, count)
+                left = snek_left(index, count)
                 self.assertGreaterEqual(left, 0)
-                self.assertLessEqual(left + ARIA_SIZE, MAP_WIDTH)
+                self.assertLessEqual(left + SNEK_SIZE, MAP_WIDTH)
 
     def test_header_names_the_world(self):
         """The header shows the world's number and name."""
@@ -85,32 +85,32 @@ class TestFrames(unittest.TestCase):
         for line in map_frame(1, WORLD_1_IDS, 0, self.art).split("\n"):
             self.assertLessEqual(len(without_colours(line)), MAP_WIDTH)
 
-    def test_map_without_aria_differs_from_map_with_aria(self):
-        """With aria_index None, ARIA is left out."""
-        with_aria = map_screen(1, WORLD_1_IDS, 0, self.art)
-        without_aria = map_screen(1, WORLD_1_IDS, None, self.art)
-        self.assertNotEqual(with_aria, without_aria)
+    def test_map_without_snek_differs_from_map_with_snek(self):
+        """With snek_index None, Snek is left out."""
+        with_snek = map_screen(1, WORLD_1_IDS, 0, self.art)
+        without_snek = map_screen(1, WORLD_1_IDS, None, self.art)
+        self.assertNotEqual(with_snek, without_snek)
 
-    def test_walk_starts_and_ends_under_the_nodes(self):
-        """The first and last frames match ARIA standing at each node."""
-        frames = walk_frames(1, WORLD_1_IDS, 1, 3, self.art)
+    def test_slither_starts_and_ends_under_the_nodes(self):
+        """The first and last frames match Snek standing at each node."""
+        frames = slither_frames(1, WORLD_1_IDS, 1, 3, self.art)
         self.assertEqual(frames[0], map_screen(1, WORLD_1_IDS, 1, self.art))
         self.assertEqual(frames[-1], map_screen(1, WORLD_1_IDS, 3, self.art))
 
-    def test_walk_moves_a_few_pixels_per_frame(self):
+    def test_slither_moves_a_few_pixels_per_frame(self):
         """From node 1 to node 3 is 32 pixels: 8 steps of 4, so 9 frames."""
-        distance = aria_left(3, 5) - aria_left(1, 5)
-        frames = walk_frames(1, WORLD_1_IDS, 1, 3, self.art)
-        self.assertEqual(len(frames), distance // WALK_STEP + 1)
+        distance = snek_left(3, 5) - snek_left(1, 5)
+        frames = slither_frames(1, WORLD_1_IDS, 1, 3, self.art)
+        self.assertEqual(len(frames), distance // SLITHER_STEP + 1)
 
-    def test_walk_can_go_left(self):
-        """Walking back to an earlier node also works."""
-        frames = walk_frames(1, WORLD_1_IDS, 3, 0, self.art)
+    def test_slither_can_go_left(self):
+        """Slithering back to an earlier node also works."""
+        frames = slither_frames(1, WORLD_1_IDS, 3, 0, self.art)
         self.assertEqual(frames[-1], map_screen(1, WORLD_1_IDS, 0, self.art))
 
     def test_all_frames_have_the_same_height(self):
         """Frames are drawn over each other, so they must be the same size."""
-        for frame in walk_frames(1, WORLD_1_IDS, 0, 4, self.art):
+        for frame in slither_frames(1, WORLD_1_IDS, 0, 4, self.art):
             self.assertEqual(len(frame.split("\n")), FRAME_LINES)
 
 
