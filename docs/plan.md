@@ -522,10 +522,10 @@ Phase 1 – Engine and renderer prototype
 [x] Write Level 1-1 as the test level
 Gate: a player can open the map, play Level 1-1, quit and resume.
 Phase 2 – Runner, grader and scoring
-[ ] Run player code in a separate process with a time limit and fake input
-[ ] Output tests, function tests, AST rules ("must use a for loop") and style rules
-[ ] XP, stars, coins, hints and the 70 % unlock rule
-[ ] Level-clear screen and boss fight screen with health bar and lives
+[x] Run player code in a separate process with a time limit and fake input
+[x] Output tests, function tests, AST rules ("must use a for loop") and style rules
+[x] XP, stars, coins, hints and the 70 % unlock rule
+[x] Level-clear screen and boss fight screen with health bar and lives
 Gate: Level 1-1 is fully graded; each wave's reference solution passes and a known-wrong solution fails.
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-4 in order: cutscene, tips, three waves, tests, power-up
