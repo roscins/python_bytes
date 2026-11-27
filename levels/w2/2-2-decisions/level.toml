@@ -1,0 +1,196 @@
+[level]
+id = "2-2"
+title = "Decisions"
+world = 2
+new_concepts = ["and, or, not", "if / elif / else", "truthiness and bool()", "planning in comments first"]
+power_up = "alarm"
+
+cutscene = '''
+# >> The sensors report again. Nothing in the lab decides what to do.
+# Plan first: 1. no message?  2. danger?  3. otherwise calm.
+heat = 75
+smoke = False
+message = ""
+print(bool(message), bool("FIRE"), bool(0))  # empty and zero are False
+if not message:
+    print("NO MESSAGE")
+if heat > 90 or smoke:
+    print("DANGER")
+elif heat > 70 and not smoke:
+    print("WATCH IT")
+else:
+    print("CALM")
+# >> Snek: "I CAN CHOOSE NOW, TECHNICIAN."
+'''
+
+tips = [
+  "a and b needs both to be true, a or b needs at least one, not a flips True and False.",
+  "if runs its indented lines when true. elif is tried only if those above failed, else is the rest.",
+  "bool(x) is False for 0, 0.0 and \"\", True for other numbers and text. if x: asks the same.",
+  "Before coding, write the steps as # comments, then put the code under each one.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Print ALARM for heat or smoke, otherwise CALM."
+brief = "Fill the blanks: ALARM if heat is above 80 or there is smoke, otherwise CALM."
+starter = '''
+heat = 95
+smoke = False
+if heat > 80 ___ smoke:
+    print("ALARM")
+___:
+    print("CALM")
+'''
+reference = '''
+heat = 95
+smoke = False
+if heat > 80 or smoke:
+    print("ALARM")
+else:
+    print("CALM")
+'''
+wrong = '''
+heat = 95
+smoke = False
+if heat > 80 and smoke:
+    print("ALARM")
+else:
+    print("CALM")
+'''
+hints = [
+  "Is one of the two reasons enough, or are both needed?",
+  "The first blank joins two conditions. The second catches every other case.",
+  "The third line is: if heat > 80 or smoke:",
+]
+
+[[wave.test]]
+expected_stdout = "ALARM\n"
+
+[[wave.test]]
+require = ["If", "BoolOp"]
+
+[[wave.test]]
+expected_stdout = "ALARM\n"
+values = { heat = 20, smoke = true }
+
+[[wave.test]]
+expected_stdout = "CALM\n"
+values = { heat = 80 }
+
+[[wave]]
+kind = "build"
+goal = "Print OK, WARNING or CRITICAL with hysteresis."
+brief = '''
+Hysteresis means an alarm that is already on stays on at a slightly lower temperature.
+Write your plan as comments, then print one word.
+Print CRITICAL if temperature is at least 90, or at least 85 while previous is "CRITICAL".
+Otherwise print WARNING if it is at least 70, or at least 65 while previous is not "OK".
+In all other cases print OK.
+'''
+starter = '''
+temperature = 87
+previous = "CRITICAL"
+'''
+reference = '''
+temperature = 87
+previous = "CRITICAL"
+# 1. critical: hot enough, or still hot after being critical
+# 2. warning: warm enough, or still warm after an alarm
+# 3. otherwise OK
+if temperature >= 90 or (previous == "CRITICAL" and temperature >= 85):
+    print("CRITICAL")
+elif temperature >= 70 or (previous != "OK" and temperature >= 65):
+    print("WARNING")
+else:
+    print("OK")
+'''
+wrong = '''
+temperature = 87
+previous = "CRITICAL"
+# ignores what the alarm said before
+if temperature >= 90:
+    print("CRITICAL")
+elif temperature >= 70:
+    print("WARNING")
+else:
+    print("OK")
+'''
+hints = [
+  "The same temperature can get a different answer, depending on previous.",
+  "Use if, elif, else. Each test is: hot enough, or (previous matches and a lower limit).",
+  "Start: if temperature >= 90 or (previous == \"CRITICAL\" and temperature >= 85):",
+]
+
+[[wave.test]]
+expected_stdout = "CRITICAL\n"
+
+[[wave.test]]
+require = ["If", "BoolOp"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave.test]]
+expected_stdout = "WARNING\n"
+values = { temperature = 87, previous = "OK" }
+
+[[wave.test]]
+expected_stdout = "CRITICAL\n"
+values = { temperature = 90, previous = "OK" }
+
+[[wave.test]]
+expected_stdout = "CRITICAL\n"
+values = { temperature = 85, previous = "CRITICAL" }
+
+[[wave.test]]
+expected_stdout = "WARNING\n"
+values = { temperature = 84, previous = "CRITICAL" }
+
+[[wave.test]]
+expected_stdout = "WARNING\n"
+values = { temperature = 86, previous = "WARNING" }
+
+[[wave.test]]
+expected_stdout = "WARNING\n"
+values = { temperature = 70, previous = "OK" }
+
+[[wave.test]]
+expected_stdout = "WARNING\n"
+values = { temperature = 65, previous = "WARNING" }
+
+[[wave.test]]
+expected_stdout = "OK\n"
+values = { temperature = 69, previous = "OK" }
+
+[[wave.test]]
+expected_stdout = "OK\n"
+values = { temperature = 64, previous = "CRITICAL" }
+
+[[wave]]
+kind = "debug"
+goal = "Type exactly what the program prints."
+mode = "predict"
+brief = "What does this program print? Type the output exactly."
+code = '''
+level = 0
+label = "0"
+print(bool(level), bool(label))
+if level:
+    print("A")
+elif label and not level:
+    print("B")
+else:
+    print("C")
+'''
+answer = "False True\nB"
+wrong = "False False\nC"
+explanation = '''
+The number 0 is False, but "0" is text that is not empty, so it is True.
+if level fails, label and not level is true, so only B is printed.
+'''
+hints = [
+  "One of these is a number and the other is text.",
+  "Zero is False. Only empty text is False. Then just one branch runs.",
+  "The first line is False True.",
+]

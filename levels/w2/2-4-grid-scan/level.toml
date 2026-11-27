@@ -1,0 +1,190 @@
+[level]
+id = "2-4"
+title = "Grid Scan"
+world = 2
+new_concepts = ["for loops and range()", "looping over strings", "accumulators", "nested loops"]
+power_up = "scan"
+
+cutscene = '''
+# >> The ceiling camera whirs and starts to sweep the lab floor.
+for step in range(3):          # step is 0, then 1, then 2
+    print(f"SWEEP {step}")
+for lane in range(1, 3):       # starts at 1, stops before 3
+    print(f"LANE {lane}")
+row = "..#.#"
+count = 0                      # start the total before the loop
+for cell in row:               # one character at a time
+    if cell == "#":
+        count += 1
+print(f"OBSTACLES: {count}")
+for r in range(2):             # outer loop: rows
+    for c in range(3):         # inner loop: runs fully for each row
+        print(f"LOOK AT {r},{c}")
+# >> Snek: "CAMERA ONLINE. THE FLOOR IS NOT EMPTY."
+'''
+
+tips = [
+  "for i in range(5): runs its block with i = 0 to 4; range(1, 5) starts at 1. The 5 is never included.",
+  "for cell in text: runs its block once for each character, from left to right.",
+  "An accumulator gets a start value before the loop and is updated inside it: count += 1.",
+  "A loop inside a loop runs all its rounds for every single round of the outer loop.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Count the obstacles in one row of the floor."
+brief = "Fill in the blanks so the scan counts every # in the row and prints the total."
+starter = '''
+row = "#..#."
+count = 0
+for cell in ___:
+    if cell == "#":
+        count += ___
+print(count)
+'''
+reference = '''
+row = "#..#."
+count = 0
+for cell in row:
+    if cell == "#":
+        count += 1
+print(count)
+'''
+wrong = '''
+row = "#..#."
+count = 0
+for cell in "row":
+    if cell == "#":
+        count += 1
+print(count)
+'''
+hints = [
+  "What should the loop walk through? And how much does one obstacle add?",
+  "Loop over the string itself. Each # makes the count one bigger.",
+  "The loop line is: for cell in row:",
+]
+
+[[wave.test]]
+expected_stdout = "2\n"
+
+[[wave.test]]
+require = ["For", "AugAssign"]
+
+[[wave.test]]
+expected_stdout = "4\n"
+values = { row = "##.##" }
+
+[[wave.test]]
+expected_stdout = "0\n"
+values = { row = "....." }
+
+[[wave]]
+kind = "build"
+goal = "Print row,column of every obstacle, then the total."
+brief = '''
+The string grid holds a 5 x 5 floor, row after row, where # is an obstacle.
+Scan it with two nested loops over range(5); the cell is grid[row * 5 + column].
+For every obstacle print its row and column, counted from 0, like 1,3.
+Scan row by row, left to right.
+After the scan, print TOTAL: and the number of obstacles, like TOTAL: 4.
+'''
+starter = '''
+grid = "..#.......#...#.....#...."
+'''
+reference = '''
+grid = "..#.......#...#.....#...."
+# Scan the floor row by row and report each obstacle
+total = 0
+for row in range(5):
+    for column in range(5):
+        if grid[row * 5 + column] == "#":
+            print(f"{row},{column}")
+            total += 1
+print(f"TOTAL: {total}")
+'''
+wrong = '''
+grid = "..#.......#...#.....#...."
+# Scan the floor row by row and report each obstacle
+total = 0
+for row in range(5):
+    for column in range(5):
+        if grid[row + column] == "#":
+            print(f"{row},{column}")
+            total += 1
+print(f"TOTAL: {total}")
+'''
+hints = [
+  "Which loop picks the row, and which walks along it? Where must the total start?",
+  "Set total = 0, loop over rows, then columns inside; if the cell is #, print and add 1.",
+  "Inside both loops: if grid[row * 5 + column] == \"#\":",
+]
+
+[[wave.test]]
+expected_stdout = "0,2\n2,0\n2,4\n4,0\nTOTAL: 4\n"
+
+[[wave.test]]
+require = ["For", "Subscript"]
+
+[[wave.test]]
+forbid = ["FloorDiv", "Mod"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave.test]]
+expected_stdout = "0,0\n1,3\n3,1\n4,4\nTOTAL: 4\n"
+values = { grid = "#.......#.......#.......#" }
+
+[[wave.test]]
+expected_stdout = "TOTAL: 0\n"
+values = { grid = "........................." }
+
+[[wave]]
+kind = "debug"
+goal = "Fix the bug so it counts the whole floor."
+brief = "This should print the number of obstacles on the whole floor, here 4. Fix the bug."
+starter = '''
+grid = "#.#............#........#"
+# Count the obstacles on the 5 x 5 floor
+for row in range(5):
+    total = 0
+    for column in range(5):
+        if grid[row * 5 + column] == "#":
+            total += 1
+print(total)
+'''
+reference = '''
+grid = "#.#............#........#"
+# Count the obstacles on the 5 x 5 floor
+total = 0
+for row in range(5):
+    for column in range(5):
+        if grid[row * 5 + column] == "#":
+            total += 1
+print(total)
+'''
+wrong = '''
+grid = "#.#............#........#"
+# Count the obstacles on the 5 x 5 floor
+for row in range(5):
+    total = 0
+    for column in range(5):
+        if grid[row * 5 + column] == "#":
+            total += 1
+    print(total)
+'''
+hints = [
+  "How many times does total = 0 run?",
+  "The total is set back to 0 at every new row. It should start only once.",
+  "Put total = 0 above the line: for row in range(5):",
+]
+
+[[wave.test]]
+expected_stdout = "4\n"
+
+[[wave.test]]
+require = ["For", "AugAssign"]
+
+[[wave.test]]
+expected_stdout = "7\n"
+values = { grid = "##.....#.......###......#" }

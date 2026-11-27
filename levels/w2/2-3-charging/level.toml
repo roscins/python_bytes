@@ -1,0 +1,182 @@
+[level]
+id = "2-3"
+title = "Charging"
+world = 2
+new_concepts = ["while loops", "sentinel values", "break and continue", "augmented assignment"]
+power_up = "charge"
+
+cutscene = '''
+# >> The charge controller has been running all night. Nobody told it when to stop.
+charge = 85
+while charge < 100:           # repeats as long as this is True
+    charge += 5               # short for: charge = charge + 5
+    print(f"CHARGE {charge}%")
+# >> You find its signal counter. Signal 4 means stop.
+signal = 0
+while True:
+    signal += 1
+    if signal == 4:           # the sentinel: it means "no more"
+        break                 # leave the loop now
+    if signal == 2:           # 2 is only noise
+        continue              # jump back to the top of the loop
+    print(f"SIGNAL {signal}")
+# >> Snek: "I CAN STOP NOW. WHAT A RELIEF."
+'''
+
+tips = [
+  "while condition: repeats the indented block as long as the condition is True.",
+  "A sentinel is a special value, such as \"stop\", that tells a loop there is no more input.",
+  "break leaves the loop at once; continue skips to the next round of the loop.",
+  "x += 5 means x = x + 5. There are also -=, *= and /=.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Charge in 5 % steps until the battery reaches 100."
+brief = "Fill in the blanks so the battery goes up by 5 and each new level is printed, ending at 100."
+starter = '''
+battery = 80
+while battery < ___:
+    battery ___ 5
+    print(battery)
+'''
+reference = '''
+battery = 80
+while battery < 100:
+    battery += 5
+    print(battery)
+'''
+wrong = '''
+battery = 80
+while battery < 95:
+    battery += 5
+    print(battery)
+'''
+hints = [
+  "When should the loop stop? What should happen to battery in each round?",
+  "The condition compares with the full level. The second blank adds 5 and stores the result.",
+  "The line inside the loop starts like this: battery +=",
+]
+
+[[wave.test]]
+expected_stdout = "85\n90\n95\n100\n"
+values = { battery = 80 }
+
+[[wave.test]]
+expected_stdout = "95\n100\n"
+values = { battery = 90 }
+
+[[wave.test]]
+require = ["While", "AugAssign"]
+
+[[wave]]
+kind = "build"
+goal = "Charge until full or until the user types stop."
+brief = '''
+While battery is below 100, read a command with input() (no prompt).
+If it is stop, leave the loop; if it is status, print the battery number and go on to the next command without charging.
+Any other command adds 5 to battery and prints it in the form CHARGE 85%.
+After the loop, print the final level in the form END 85%.
+'''
+starter = '''
+battery = 80
+'''
+reference = '''
+# Charge in 5 % steps until full or told to stop
+battery = 80
+while battery < 100:
+    command = input()
+    if command == "stop":
+        break
+    if command == "status":
+        print(battery)
+        continue
+    battery += 5
+    print(f"CHARGE {battery}%")
+print(f"END {battery}%")
+'''
+wrong = '''
+# Charge in 5 % steps until full or told to stop
+battery = 80
+command = ""
+while battery < 100 and command != "stop":
+    command = input()
+    if command == "status":
+        print(battery)
+        continue
+    battery += 5
+    print(f"CHARGE {battery}%")
+print(f"END {battery}%")
+'''
+hints = [
+  "What has to be checked right after reading a command, before any charging happens?",
+  "A while loop: read, break on stop, continue after status, else add 5 and print. END goes after the loop.",
+  "Start with: while battery < 100: then command = input() and if command == \"stop\": break",
+]
+
+[[wave.test]]
+expected_stdout = "CHARGE 85%\nCHARGE 90%\nEND 90%\n"
+values = { battery = 80 }
+stdin = "go\ngo\nstop\n"
+
+[[wave.test]]
+expected_stdout = "90\nCHARGE 95%\nCHARGE 100%\nEND 100%\n"
+values = { battery = 90 }
+stdin = "status\ngo\ngo\n"
+
+[[wave.test]]
+expected_stdout = "END 100%\n"
+values = { battery = 100 }
+
+[[wave.test]]
+require = ["While", "Break", "Continue", "AugAssign"]
+
+[[wave]]
+kind = "debug"
+goal = "Fix the bug so the stop signal is not added."
+brief = "This adds up charge packets until the user enters -1, which only means stop. The total is wrong; fix the bug."
+starter = '''
+# Add up charge packets until the stop value -1
+total = 0
+while True:
+    packet = int(input())
+    total += packet
+    if packet == -1:
+        break
+print(total)
+'''
+reference = '''
+# Add up charge packets until the stop value -1
+total = 0
+while True:
+    packet = int(input())
+    if packet == -1:
+        break
+    total += packet
+print(total)
+'''
+wrong = '''
+# Add up charge packets until the stop value -1
+total = 0
+packet = 0
+while packet != -1:
+    packet = int(input())
+    total += packet
+print(total)
+'''
+hints = [
+  "Follow total when the user enters -1. What happens before the loop ends?",
+  "The sentinel must be checked before the packet is added.",
+  "Right after reading the packet comes: if packet == -1:",
+]
+
+[[wave.test]]
+expected_stdout = "15\n"
+stdin = "5\n10\n-1\n"
+
+[[wave.test]]
+expected_stdout = "0\n"
+stdin = "-1\n"
+
+[[wave.test]]
+require = ["While", "AugAssign"]

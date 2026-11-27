@@ -1,0 +1,215 @@
+[level]
+id = "2-5"
+title = "Finding the Signal"
+world = 2
+new_concepts = ["exhaustive enumeration and guess-and-check", "bisection search", "stopping on a float tolerance", "counting iterations"]
+power_up = "seek"
+
+cutscene = '''
+# >> A weak signal hides somewhere in the frequency band 0 to 100.
+signal = 37
+guess = 0
+tries = 0
+while guess != signal:      # enumeration: check every value in turn
+    guess += 1
+    tries += 1
+print("Enumeration:", guess, "after", tries)
+
+low = 0.0
+high = 100.0
+guess = (low + high) / 2
+tries = 0
+while abs(guess - signal) >= 0.5:    # close enough counts
+    if guess < signal:
+        low = guess                  # signal is in the upper half
+    else:
+        high = guess                 # signal is in the lower half
+    guess = (low + high) / 2
+    tries += 1
+print("Bisection:", guess, "after", tries)
+# >> Snek: "SIGNAL LOCKED. HALVING BEATS WALKING."
+'''
+
+tips = [
+  "Enumeration, or guess-and-check: try candidates in order until one passes the check.",
+  "Bisection: guess the middle of low and high, then keep only the half holding the answer.",
+  "Floats rarely match exactly, so loop while abs(guess ** 2 - target) >= tolerance.",
+  "Count iterations: set tries = 0 before the loop and write tries += 1 inside it.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Find the square root by enumeration and count tries."
+brief = "Fill in the blanks so guess climbs until its square reaches target, counting each try."
+starter = '''
+target = 144
+guess = 0
+tries = 0
+while guess ** 2 ___ target:
+    guess += 1
+    tries ___ 1
+print("Root:", guess)
+print("Tries:", ___)
+'''
+reference = '''
+target = 144
+guess = 0
+tries = 0
+while guess ** 2 < target:
+    guess += 1
+    tries += 1
+print("Root:", guess)
+print("Tries:", tries)
+'''
+wrong = '''
+target = 144
+guess = 0
+tries = 0
+while guess ** 2 <= target:
+    guess += 1
+    tries += 1
+print("Root:", guess)
+print("Tries:", tries)
+'''
+hints = [
+  "The loop should go on only while the square is still too small.",
+  "The blanks are a comparison, an augmented assignment and the name of the counter.",
+  "The loop starts: while guess ** 2 < target:",
+]
+
+[[wave.test]]
+expected_stdout = "Root: 12\nTries: 12\n"
+
+[[wave.test]]
+expected_stdout = "Root: 20\nTries: 20\n"
+values = { target = 400 }
+
+[[wave.test]]
+require = ["While", "AugAssign"]
+
+[[wave]]
+kind = "build"
+goal = "Find the same square root again, by bisection."
+brief = '''
+The starter already finds the square root of target by enumeration and prints its number of tries.
+Now find it by bisection: set low to 0.0 and high to target, and guess the middle of the two.
+Loop while abs(guess ** 2 - target) >= tolerance, and count the tries.
+Print Bisection: and the number of tries, then Root: and the guess rounded to 2 decimals.
+Add a comment saying which method needs fewer tries.
+'''
+starter = '''
+target = 25
+tolerance = 0.01
+step = 0.125
+
+guess = 0.0
+tries = 0
+while abs(guess ** 2 - target) >= tolerance:
+    guess += step
+    tries += 1
+print("Enumeration:", tries)
+'''
+reference = '''
+target = 25
+tolerance = 0.01
+step = 0.125
+
+guess = 0.0
+tries = 0
+while abs(guess ** 2 - target) >= tolerance:
+    guess += step
+    tries += 1
+print("Enumeration:", tries)
+# Bisection needs fewer tries than enumeration
+
+low = 0.0
+high = target
+guess = (low + high) / 2
+tries = 0
+while abs(guess ** 2 - target) >= tolerance:
+    if guess ** 2 < target:
+        low = guess
+    else:
+        high = guess
+    guess = (low + high) / 2
+    tries += 1
+print("Bisection:", tries)
+print("Root:", round(guess, 2))
+'''
+wrong = '''
+target = 25
+tolerance = 0.01
+step = 0.125
+
+guess = 0.0
+tries = 0
+while abs(guess ** 2 - target) >= tolerance:
+    guess += step
+    tries += 1
+print("Enumeration:", tries)
+# Bisection needs fewer tries than enumeration
+
+low = 0.0
+high = target
+guess = (low + high) / 2
+tries = 0
+while guess ** 2 - target >= tolerance:
+    if guess ** 2 < target:
+        low = guess
+    else:
+        high = guess
+    guess = (low + high) / 2
+    tries += 1
+print("Bisection:", tries)
+print("Root:", round(guess, 2))
+'''
+hints = [
+  "The new loop stops by the same test as the first. Only the way the next guess is chosen differs.",
+  "In your loop: if guess ** 2 < target move low up, else move high down, then take the middle again.",
+  "The middle is guess = (low + high) / 2, needed before the loop and at the end of each pass.",
+]
+
+[[wave.test]]
+expected_stdout = "Enumeration: 40\nBisection: 13\nRoot: 5.0\n"
+
+[[wave.test]]
+expected_stdout = "Enumeration: 20\nBisection: 10\nRoot: 2.5\n"
+values = { target = 6.25 }
+
+[[wave.test]]
+expected_stdout = "Enumeration: 28\nBisection: 10\nRoot: 3.5\n"
+values = { target = 12.25 }
+
+[[wave.test]]
+require = ["While", "If"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Type exactly what the program prints."
+mode = "predict"
+brief = "What does this program print? Type the output exactly."
+code = '''
+low = 0
+high = 16
+for count in range(1, 4):
+    mid = (low + high) // 2
+    if mid < 11:
+        low = mid
+    else:
+        high = mid
+    print(count, mid)
+'''
+answer = "1 8\n2 12\n3 10"
+wrong = "1 8\n2 4\n3 6"
+explanation = '''
+8 is below 11, so low becomes 8 and the next middle is 12.
+12 is not below 11, so high becomes 12 and the middle of 8 and 12 is 10.
+'''
+hints = [
+  "Write down low, high and mid for each pass of the loop.",
+  "When mid is below 11, low moves up to mid. Otherwise high moves down to mid.",
+  "The first line is 1 8.",
+]

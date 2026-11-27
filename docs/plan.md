@@ -591,10 +591,10 @@ Phase 2.6 – Key-driven interface, before World 2 (design: docs/design/editor.m
 [x] Cleanup: remove the old full screen with a typing row
 
 Phase 3 – Worlds 1–2 (content and art)
-[ ] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
-[ ] Build Boss 1 and Boss 2
-[ ] Draw Snek's states and the first two boss sprites
-[ ] Build the progression checker (reads levels/concepts.toml, enforces the six rules in docs/curriculum.md); review every level against the level style guide before merging
+[x] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
+[x] Build Boss 1 and Boss 2
+[x] Draw Snek's states and the first two boss sprites
+[x] Build the progression checker (reads levels/concepts.toml, enforces the six rules in docs/curriculum.md); review every level against the level style guide before merging
 Gate: Worlds 1–2 playable end to end.
 Phase 4 – Playtest round 1
 [ ] At least 5 students who have not seen the content playtest Worlds 1–2
