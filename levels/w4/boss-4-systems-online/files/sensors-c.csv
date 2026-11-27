@@ -1,0 +1,6 @@
+name,value,limit
+core,err,10
+coil,10,10
+duct,-3,-5
+vent,0,1
+duct,1,0

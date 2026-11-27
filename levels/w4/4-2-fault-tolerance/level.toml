@@ -1,0 +1,264 @@
+[level]
+id = "4-2"
+title = "Fault Tolerance"
+world = 4
+new_concepts = ["exceptions and reading tracebacks", "try / except / else / finally", "raise and exception constructors", "assert and defensive programming"]
+power_up = "debug"
+
+cutscene = '''
+# >> One bad keystroke, and calibration crashed. The screen still shows:
+#      File "calibrate.py", line 3, in <module>
+#    ValueError: could not convert string to float: '4O'
+def check_gain(gain):
+    """Return the gain, or raise an error if it is impossible."""
+    if gain < 0:
+        raise ValueError(f"gain {gain} is below zero")
+    return gain
+
+for text in ["2.5", "4O", "-1"]:
+    try:
+        gain = check_gain(float(text))
+    except ValueError as error:
+        print(f"REJECTED: {error}")
+    else:
+        print(f"GAIN SET: {gain}")      # only if nothing was raised
+    finally:
+        print("CHECK DONE")             # always
+
+assert check_gain(0) == 0, "zero gain must be allowed"
+# >> Snek: "FAULT CONTAINED. I AM STILL RUNNING."
+'''
+
+tips = [
+  "Read a traceback from the bottom: the error type and message, then the line number above.",
+  "try runs code; except handles a named error; else runs if none was raised; finally always runs.",
+  "raise ValueError(\"message\") stops the function and reports why. TypeError means wrong type.",
+  "assert condition, \"message\" raises AssertionError if false. Use it to catch your own bugs.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Catch the bad reading instead of crashing."
+brief = "float(text) crashes on text that is not a number. Fill in the blanks so a bad text prints BAD READING, a good one prints the value, and DONE always prints."
+starter = '''
+text = "4O"
+try:
+    value = float(text)
+except ___:
+    print("BAD READING")
+___:
+    print(f"VALUE {value}")
+___:
+    print("DONE")
+'''
+reference = '''
+text = "4O"
+try:
+    value = float(text)
+except ValueError:
+    print("BAD READING")
+else:
+    print(f"VALUE {value}")
+finally:
+    print("DONE")
+'''
+wrong = '''
+text = "4O"
+try:
+    value = float(text)
+except TypeError:
+    print("BAD READING")
+else:
+    print(f"VALUE {value}")
+finally:
+    print("DONE")
+'''
+hints = [
+  "Which error type did the traceback in the story name?",
+  "The order is try, except, then the block for success, then the block that always runs.",
+  "The first blank is ValueError.",
+]
+
+[[wave.test]]
+expected_stdout = "BAD READING\nDONE\n"
+
+[[wave.test]]
+expected_stdout = "VALUE 7.5\nDONE\n"
+values = { text = "7.5" }
+
+[[wave.test]]
+require = ["Try"]
+
+[[wave]]
+kind = "build"
+goal = "Survive any input; reject impossible levels."
+brief = '''
+Write check_level(level), which returns level, or raises ValueError("out of range") if it is below 0 or above 100.
+Read lines with input() until the line is done.
+For each other line, convert it with int() and check it.
+Print OK and the level (like OK 40), or, on a ValueError as error, print(f"ERROR {error}").
+'''
+reference = '''
+# Calibration that survives any input
+def check_level(level):
+    """Return level, or raise ValueError if it is impossible."""
+    if level < 0 or level > 100:
+        raise ValueError("out of range")
+    return level
+
+
+line = input()
+while line != "done":
+    try:
+        level = check_level(int(line))
+    except ValueError as error:
+        print(f"ERROR {error}")
+    else:
+        print(f"OK {level}")
+    line = input()
+'''
+wrong = '''
+# Calibration without a range check
+def check_level(level):
+    """Return level."""
+    return level
+
+
+line = input()
+while line != "done":
+    try:
+        level = check_level(int(line))
+    except ValueError as error:
+        print(f"ERROR {error}")
+    else:
+        print(f"OK {level}")
+    line = input()
+'''
+hints = [
+  "Two things can go wrong: int() cannot read the text, or the number is impossible. Both can be ValueError.",
+  "Raise in check_level. In a while loop, put the conversion and check in try, with except and else.",
+  "Inside the loop: try: level = check_level(int(line)), then except ValueError as error: print it",
+]
+
+[[wave.test]]
+stdin = "40\nabc\n101\n-1\ndone\n"
+expected_stdout = "OK 40\nERROR invalid literal for int() with base 10: 'abc'\nERROR out of range\nERROR out of range\n"
+
+[[wave.test]]
+stdin = "0\n100\n\n2.5\n77\ndone\n"
+expected_stdout = "OK 0\nOK 100\nERROR invalid literal for int() with base 10: ''\nERROR invalid literal for int() with base 10: '2.5'\nOK 77\n"
+
+[[wave.test]]
+stdin = "done\n"
+call = "check_level"
+args = [0]
+expected = 0
+
+[[wave.test]]
+stdin = "55\ndone\n"
+call = "check_level"
+args = [100]
+expected = 100
+
+[[wave.test]]
+require = ["Try", "Raise"]
+
+[[wave]]
+kind = "debug"
+goal = "Fix 3 bugs so every reading is reported."
+brief = """
+Running this stops with a traceback that ends:
+  File "main.py", line 12, in <module>
+ValueError: could not convert string to float: 'x7'
+average() must return the mean, and must assert that the list is not empty. Each reading that is not a number should print SKIP and its text, and the others are averaged, or NO DATA printed if none are left. Read the traceback, then fix the three bugs.
+"""
+starter = '''
+# Average the readings, skipping damaged ones
+def average(values):
+    """Return the mean of a non-empty list."""
+    assert len(values) >= 0, "no values"
+    return sum(values) / len(values)
+
+
+readings = ["10", "x7", "20"]
+good = []
+for text in readings:
+    try:
+        value = float(text)
+    except TypeError:
+        print(f"SKIP {text}")
+    finally:
+        good.append(value)
+try:
+    print(f"MEAN {average(good):.1f}")
+except AssertionError:
+    print("NO DATA")
+'''
+reference = '''
+# Average the readings, skipping damaged ones
+def average(values):
+    """Return the mean of a non-empty list."""
+    assert len(values) > 0, "no values"
+    return sum(values) / len(values)
+
+
+readings = ["10", "x7", "20"]
+good = []
+for text in readings:
+    try:
+        value = float(text)
+    except ValueError:
+        print(f"SKIP {text}")
+    else:
+        good.append(value)
+try:
+    print(f"MEAN {average(good):.1f}")
+except AssertionError:
+    print("NO DATA")
+'''
+wrong = '''
+# Average the readings, skipping damaged ones
+def average(values):
+    """Return the mean of a non-empty list."""
+    assert len(values) >= 0, "no values"
+    return sum(values) / len(values)
+
+
+readings = ["10", "x7", "20"]
+good = []
+for text in readings:
+    try:
+        value = float(text)
+    except ValueError:
+        print(f"SKIP {text}")
+    else:
+        good.append(value)
+try:
+    print(f"MEAN {average(good):.1f}")
+except AssertionError:
+    print("NO DATA")
+'''
+hints = [
+  "Check three things: which error float() raises, when finally runs, and what the assert allows.",
+  "float(\"x7\") raises ValueError. Append only on success. An empty list must fail the assert.",
+  "The assert should be: assert len(values) > 0, \"no values\"",
+]
+
+[[wave.test]]
+expected_stdout = "SKIP x7\nMEAN 15.0\n"
+
+[[wave.test]]
+expected_stdout = "SKIP ?\nSKIP --\nMEAN 4.0\n"
+values = { readings = ["?", "3", "--", "5"] }
+
+[[wave.test]]
+call = "average"
+args = [[2, 4]]
+expected = 3.0
+
+[[wave.test]]
+expected_stdout = "NO DATA\n"
+values = { readings = [] }
+
+[[wave.test]]
+require = ["Try", "Assert"]
