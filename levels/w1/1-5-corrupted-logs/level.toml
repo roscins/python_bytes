@@ -1,0 +1,139 @@
+[level]
+id = "1-5"
+title = "Corrupted Logs"
+world = 1
+new_concepts = ["indexing and slicing", "len()", "string methods", "f-strings with format specs"]
+power_up = "read"
+
+cutscene = '''
+# >> The log reader coughs up a half-scrambled line.
+line = "  07:30|warn|4.5  "
+clean = line.strip()
+print(len(line))
+print(len(clean))
+print(clean[0])               # first character
+print(clean[-1])              # last character
+print(clean[0:5])             # from index 0 up to, not including, 5
+parts = clean.split("|")      # cut the text at every |
+print(parts[1].upper())
+value = float(parts[2])
+print(f"[{value:8.2f}]")      # 8 wide, 2 decimals
+print(f"[{parts[1]:<8}]")     # 8 wide, left aligned
+# >> Snek: "LOGS READABLE. SOMETHING WENT WRONG HERE."
+'''
+
+tips = [
+  "text[0] is the first character, text[-1] the last, text[0:5] those at 0, 1, 2, 3 and 4.",
+  "len(text) is the number of characters, spaces included.",
+  "strip(), upper(), lower(), replace(), split(), find() make new values; the text stays.",
+  "In f\"{x:8.2f}\", x is shown 8 wide with 2 decimals. < aligns left, > aligns right.",
+]
+
+[[wave]]
+kind = "fill-in"
+brief = "Cut the time 08:15 and the error code E42 out of the log line."
+starter = '''
+line = "08:15|E42|73.5"
+print(line[0:___])
+print(line[6:___])
+'''
+reference = '''
+line = "08:15|E42|73.5"
+print(line[0:5])
+print(line[6:9])
+'''
+wrong = '''
+line = "08:15|E42|73.5"
+print(line[0:4])
+print(line[6:8])
+'''
+hints = [
+  "Does a slice include the character at its end index?",
+  "Count from 0. The end is one past the last character you want.",
+  "The first print is: print(line[0:5])",
+]
+
+[[wave.test]]
+expected_stdout = "08:15\nE42\n"
+
+[[wave.test]]
+require = ["Subscript"]
+
+[[wave]]
+kind = "build"
+brief = '''
+Strip the damaged line and split it at | into time, code and value.
+Print one report line with an f-string: the time left-aligned in 8, the code
+in upper case left-aligned in 6, and the value as a number right-aligned in 8
+with 2 decimals.
+'''
+starter = '''
+line = "  09:42|e07|18.456  "
+'''
+reference = '''
+# Turn one damaged log line into an aligned report line
+line = "  09:42|e07|18.456  "
+parts = line.strip().split("|")
+timestamp = parts[0]
+code = parts[1].upper()
+value = float(parts[2])
+print(f"{timestamp:<8}{code:<6}{value:>8.2f}")
+'''
+wrong = '''
+# Turn one damaged log line into an aligned report line
+line = "  09:42|e07|18.456  "
+parts = line.split("|")
+timestamp = parts[0]
+code = parts[1].upper()
+value = float(parts[2])
+print(f"{timestamp:<8}{code:<6}{value:>8.2f}")
+'''
+hints = [
+  "Clean first, then cut. parts[0] is the first piece.",
+  "float() the third piece. The format specs are :<8, :<6 and :>8.2f.",
+  "Start with: parts = line.strip().split(\"|\")",
+]
+
+[[wave.test]]
+expected_stdout = "09:42   E07      18.46\n"
+
+[[wave.test]]
+require = ["JoinedStr", "Subscript"]
+
+[[wave]]
+kind = "debug"
+brief = "This should print [sys ok] and then 6. Fix the bug."
+starter = '''
+# Repair the status message from the damaged log
+message = "##SYS#OK##"
+cleaned = message.replace("#", " ")
+cleaned.strip()
+print(f"[{cleaned.lower()}]")
+print(len(cleaned))
+'''
+reference = '''
+# Repair the status message from the damaged log
+message = "##SYS#OK##"
+cleaned = message.replace("#", " ")
+cleaned = cleaned.strip()
+print(f"[{cleaned.lower()}]")
+print(len(cleaned))
+'''
+wrong = '''
+# Repair the status message from the damaged log
+message = "##SYS#OK##"
+cleaned = message.replace("#", "")
+print(f"[{cleaned.lower()}]")
+print(len(cleaned))
+'''
+hints = [
+  "Does a string method change the text, or hand you a new one?",
+  "The result of strip() is thrown away.",
+  "The line should be: cleaned = cleaned.strip()",
+]
+
+[[wave.test]]
+expected_stdout = "[sys ok]\n6\n"
+
+[[wave.test]]
+require = ["Call"]

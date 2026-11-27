@@ -1,0 +1,124 @@
+[level]
+id = "1-4"
+title = "Floating Truth"
+world = 1
+new_concepts = ["why 0.1 + 0.2 != 0.3", "comparison operators", "absolute and relative tolerance", "math.isclose() and abs()"]
+power_up = "approx"
+
+cutscene = '''
+# >> Two sensors agree, yet the comparison says they differ.
+import math
+total = 0.1 + 0.2
+print(total)                    # not quite 0.3
+print(total == 0.3)             # equal?
+print(total != 0.3)             # different?
+print(total > 0.3)
+gap = abs(total - 0.3)          # distance, never negative
+print(gap <= 0.001)             # absolute tolerance
+print(gap <= 0.001 * abs(0.3))  # relative tolerance
+print(math.isclose(total, 0.3))
+# >> Snek: "TRUST NO LAST DECIMAL, TECHNICIAN."
+'''
+
+tips = [
+  "A float is stored in binary, so 0.1 and 0.2 are a tiny bit off, and so is their sum.",
+  "== equal, != not equal, <, <=, >, >=. Each gives True or False.",
+  "Absolute: abs(a - b) <= 0.5. Relative: abs(a - b) <= 0.01 * abs(b), here within 1 %.",
+  "abs(x) drops the minus sign. After import math, math.isclose(a, b) allows tiny round-off.",
+]
+
+[[wave]]
+kind = "fill-in"
+brief = "Show that the exact comparison fails and the tolerant one succeeds."
+starter = '''
+import math
+total = 0.1 + 0.2
+print(total ___ 0.3)
+print(math.___(total, 0.3))
+'''
+reference = '''
+import math
+total = 0.1 + 0.2
+print(total == 0.3)
+print(math.isclose(total, 0.3))
+'''
+wrong = '''
+import math
+total = 0.1 + 0.2
+print(total != 0.3)
+print(math.isclose(total, 0.3))
+'''
+hints = [
+  "The first line asks whether the two are exactly equal.",
+  "The first blank is a comparison operator, the second a function in math.",
+  "The last line starts: print(math.isclose(",
+]
+
+[[wave.test]]
+expected_stdout = "False\nTrue\n"
+
+[[wave.test]]
+require = ["Compare"]
+
+[[wave]]
+kind = "build"
+brief = '''
+Compare reading_a with reading_b three ways and print True or False after each
+label: Exact: (are they equal?), Absolute: (at most 0.5 apart?) and Relative:
+(at most 1 % of reading_b apart?). Add a comment saying why == is a poor test.
+'''
+starter = '''
+reading_a = 20.0
+reading_b = 20.3
+'''
+reference = '''
+# == fails because measured floats are almost never exactly equal
+reading_a = 20.0
+reading_b = 20.3
+gap = abs(reading_a - reading_b)
+print("Exact:", reading_a == reading_b)
+print("Absolute:", gap <= 0.5)
+print("Relative:", gap <= 0.01 * abs(reading_b))
+'''
+wrong = '''
+# == fails because measured floats are almost never exactly equal
+reading_a = 20.0
+reading_b = 20.3
+gap = reading_a - reading_b
+print("Exact:", reading_a == reading_b)
+print("Absolute:", gap <= 0.5)
+print("Relative:", gap <= 0.01 * abs(reading_b))
+'''
+hints = [
+  "How far apart are the readings? A distance is never negative.",
+  "Store gap = abs(reading_a - reading_b). 1 % of reading_b is 0.01 * abs(reading_b).",
+  "The second printed line is: print(\"Absolute:\", gap <= 0.5)",
+]
+
+[[wave.test]]
+expected_stdout = "Exact: False\nAbsolute: True\nRelative: False\n"
+
+[[wave.test]]
+require = ["Compare"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+mode = "predict"
+brief = "What does this program print? Type the output exactly."
+code = '''
+x = 0.1 + 0.2
+print(x == 0.3)
+print(x > 0.3)
+print(abs(x - 0.3) < 0.000001)
+print(round(x, 2) == 0.3)
+'''
+answer = "False\nTrue\nTrue\nTrue"
+wrong = "True\nFalse\nTrue\nTrue"
+hints = [
+  "x is a tiny bit more than 0.3.",
+  "Exact tests see the tiny extra. A tolerance or rounding removes it.",
+  "The first line is False.",
+]

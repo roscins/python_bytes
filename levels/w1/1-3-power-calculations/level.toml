@@ -1,0 +1,143 @@
+[level]
+id = "1-3"
+title = "Power Calculations"
+world = 1
+new_concepts = ["arithmetic operators and precedence", "//, % and **", "converting between int, float and str", "round()"]
+power_up = "calc"
+
+cutscene = '''
+# >> The battery controller wants numbers before it will charge.
+capacity = 100
+used = 35
+print(capacity - used * 2)     # * goes before -
+print((capacity - used) * 2)   # brackets go first
+minutes = 135
+print(minutes // 60)           # whole hours
+print(minutes % 60)            # minutes left over
+print(2 ** 3)                  # 2 to the power 3
+reading = "12.5"               # text from an old sensor
+volts = float(reading)
+print(volts + 1)
+print(int(volts))
+print(str(capacity) + " Wh")
+print(round(volts / 3, 2))
+# >> Snek: "CALCULATOR CORE RESPONDING."
+'''
+
+tips = [
+  "+ - * / do arithmetic. ** goes first, then * / // %, then + -. Brackets go before all.",
+  "a // b is how many whole times b fits in a, a % b is what is left over, a ** b is a power.",
+  "int(), float() and str() make a new value of that type: float(\"12.5\") is 12.5.",
+  "round(x, 2) rounds x to 2 decimals. round(x) gives a whole number.",
+]
+
+[[wave]]
+kind = "fill-in"
+brief = "Split 130 minutes into whole hours and the minutes left over."
+starter = '''
+total_minutes = 130
+hours = total_minutes ___ 60
+minutes = total_minutes ___ 60
+print(hours)
+print(minutes)
+'''
+reference = '''
+total_minutes = 130
+hours = total_minutes // 60
+minutes = total_minutes % 60
+print(hours)
+print(minutes)
+'''
+wrong = '''
+total_minutes = 130
+hours = total_minutes / 60
+minutes = total_minutes % 60
+print(hours)
+print(minutes)
+'''
+hints = [
+  "One operator counts whole hours, another keeps the rest.",
+  "You need the two division operators that are not /.",
+  "The hours line is: hours = total_minutes // 60",
+]
+
+[[wave.test]]
+expected_stdout = "2\n10\n"
+
+[[wave.test]]
+require = ["BinOp"]
+
+[[wave]]
+kind = "build"
+brief = '''
+The battery holds capacity watt-hours and Snek draws power_draw watts, so it
+lasts capacity / power_draw hours. Work out that run time as whole hours and
+whole minutes. Print two lines, exactly like this form: Hours: 1 and Minutes: 30.
+'''
+starter = '''
+capacity = 250
+power_draw = 40
+'''
+reference = '''
+# Remaining run time of the battery
+capacity = 250
+power_draw = 40
+total_minutes = int(capacity / power_draw * 60)
+print("Hours:", total_minutes // 60)
+print("Minutes:", total_minutes % 60)
+'''
+wrong = '''
+# Remaining run time of the battery
+capacity = 250
+power_draw = 40
+run_time = capacity / power_draw
+print("Hours:", int(run_time))
+print("Minutes:", int(run_time % 60))
+'''
+hints = [
+  "First find the whole run time in minutes. How many minutes are in one hour?",
+  "Make total_minutes a whole number, then use // 60 and % 60.",
+  "Start with: total_minutes = int(capacity / power_draw * 60)",
+]
+
+[[wave.test]]
+expected_stdout = "Hours: 6\nMinutes: 15\n"
+
+[[wave.test]]
+require = ["BinOp"]
+
+[[wave]]
+kind = "debug"
+brief = "This should print the average of the two readings, but the number is wrong. Fix the bug."
+starter = '''
+# Average of two battery readings
+first = "71"
+second = "74.6"
+average = int(first) + float(second) / 2
+print("Average:", round(average, 1))
+'''
+reference = '''
+# Average of two battery readings
+first = "71"
+second = "74.6"
+average = (int(first) + float(second)) / 2
+print("Average:", round(average, 1))
+'''
+wrong = '''
+# Average of two battery readings
+first = "71"
+second = "74.6"
+average = int(first) / 2 + float(second)
+print("Average:", round(average, 1))
+'''
+hints = [
+  "Which operation does Python do first on the average line?",
+  "The two readings must be added before the division.",
+  "Put brackets around: int(first) + float(second)",
+]
+
+[[wave.test]]
+expected_stdout = "Average: 72.8\n"
+
+[[wave.test]]
+require = ["BinOp"]
