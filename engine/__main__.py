@@ -1,6 +1,7 @@
 """Start the game with: python play.py  (or python -m engine)"""
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -66,12 +67,16 @@ def choose_how_to_start(state, info, save_path, read_line, write, plain):
 def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
              workspace_root=WORKSPACE_FOLDER, concepts_file=CONCEPTS_FILE,
              read_line=input, write=write_line, plain=False, install_signals=True,
-             pause=time.sleep):
+             pause=time.sleep, color=None):
     """Load the levels, show the title screen, run the game, and return an exit code.
 
     levels/concepts.toml (`concepts_file`) lists every level of the game, so
     the map can show levels that are not written yet. Pass None to show only
     the level packs. `workspace_root` is only used by the :where command.
+
+    `plain` means no box characters. `color` colours the player's code; it is
+    on unless the game is plain or the NO_COLOR variable is set (see
+    no-color.org), and tests pass it explicitly.
 
     The game saves after every typed line. When the system asks the game to
     stop (Ctrl-C, kill, a closed terminal) the game saves and leaves with the
@@ -92,6 +97,9 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
         return 1
     state = GameState(levels, workspace_root, curriculum)
     state.plain = plain
+    if color is None:
+        color = not plain and "NO_COLOR" not in os.environ
+    state.color = color
     guard = ShutdownGuard()
     autosaver = AutoSaver(state, save_path)
     close_handler = None
@@ -107,6 +115,7 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
         return stop.code
     finally:
         guard.restore()
+        state.close()
         del close_handler
 
 

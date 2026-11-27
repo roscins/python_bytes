@@ -46,6 +46,20 @@ class TestParts(unittest.TestCase):
         self.assertEqual(numbered_code("a\n  b\n"), ["  1 │ a", "  2 │   b"])
         self.assertEqual(numbered_code("a\n", plain=True), ["  1 | a"])
 
+    def test_numbered_code_in_colour_keeps_the_text(self):
+        """Colour only adds codes: without them the lines are the same."""
+        import re
+
+        plain_lines = numbered_code("if x:\n    y = 1\n")
+        coloured = numbered_code("if x:\n    y = 1\n", color=True)
+        self.assertIn("\x1b[35mif\x1b[0m", coloured[0])
+        self.assertEqual([re.sub(r"\x1b\[[0-9;]*m", "", line) for line in coloured], plain_lines)
+
+    def test_wave_screen_colours_the_code_when_asked(self):
+        """The player's code and the code to read are highlighted."""
+        screen = wave_screen_text(make_intro_level(), 3, "print(1)\n", color=True)
+        self.assertIn("\x1b[96mprint\x1b[0m", screen)
+
     def test_wave_screen_shows_the_task_and_the_code_so_far(self):
         """A fill-in wave shows its brief, then its code with the blank."""
         level = make_intro_level()

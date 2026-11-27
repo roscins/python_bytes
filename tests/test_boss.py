@@ -156,7 +156,8 @@ class TestBossCommands(unittest.TestCase):
     def test_a_crash_is_explained(self):
         """A syntax error is shown, because it says nothing about the tests."""
         text = self.submit("def add(a, b)\n    return a + b\n")
-        self.assertIn("Your program stopped with an error: SyntaxError", text)
+        self.assertIn("Snek tripped on line 1: a colon : is missing", text)
+        self.assertIn("SyntaxError", text)
 
     def test_three_misses_restart_the_fight(self):
         """After the third failed submit, the fight starts again."""

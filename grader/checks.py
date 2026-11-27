@@ -147,7 +147,10 @@ def problem_with_run(result, time_limit=DEFAULT_TIME_LIMIT):
         return (f"Your program ran for more than {time_limit:g} seconds. "
                 "Is there a loop that never ends?")
     if result.exit_code != 0:
-        return f"Your program stopped with an error: {result.error_line()}"
+        number = result.error_line_number()
+        if number is None:
+            return f"Your program stopped with an error: {result.error_line()}"
+        return f"Your program stopped with an error on line {number}: {result.error_line()}"
     return ""
 
 

@@ -12,6 +12,7 @@ This protects the game against mistakes like infinite loops and crashes. It
 is not a security sandbox: players run their own code on their own machine.
 """
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,17 @@ class RunResult:
         if not lines:
             return ""
         return lines[-1]
+
+
+    def error_line_number(self):
+        """Return the line of the player's code where the error happened, or None.
+
+        It is the last "File "main.py", line N" in the traceback.
+        """
+        found = None
+        for match in re.finditer(r'File "(?:main|player)\.py", line (\d+)', self.stderr):
+            found = int(match.group(1))
+        return found
 
 
 def as_text(output):

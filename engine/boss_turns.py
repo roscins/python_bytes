@@ -8,6 +8,7 @@ unlocking work the same.
 """
 
 from engine.boss import RESTART, WON, BossFight
+from engine.friendly import friendly_message
 from engine.results_screen import reward_lines
 from engine.rewards import apply_submission
 from engine.submission import grade_text
@@ -92,6 +93,6 @@ def submit_to_boss(state, level):
                    f"You lost a life: {fight.lives} left.")
     problem = safe_problem(submission.result)
     if problem:
-        message = message + "\n" + problem
+        message = message + "\n" + friendly_message(problem)
     frames[-1] = frames[-1] + "\n\n" + message
     return frames

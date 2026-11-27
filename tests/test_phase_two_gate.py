@@ -121,10 +121,10 @@ class TestPhaseTwoGate(unittest.TestCase):
         lines = ["1", "play 1-1"] + typing_for(solutions(level_1_1(), "wrong")) + [":play 1-2", ":quit"]
         text = player.play(lines)
         self.assertNotIn("CLEARED", text)
-        self.assertIn("You need 70 % to clear this level.", text)
+        self.assertIn("Pass every wave to clear this level.", text)
         score = int(text.split("LEVEL SCORE ")[-1].split(" %")[0])
         self.assertLess(score, 70)
-        self.assertIn("Level 1-2 is locked. Clear 1-1 with at least 70 % first.", text)
+        self.assertIn("Level 1-2 is locked. Pass every wave of 1-1 first.", text)
 
 
 if __name__ == "__main__":

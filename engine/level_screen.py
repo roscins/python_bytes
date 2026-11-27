@@ -5,6 +5,8 @@ piece of text; wave_screen_text shows one wave with the code typed so far. Like 
 prints, so it is easy to test.
 """
 
+from render.highlight import highlight_lines
+
 # Story lines in a cutscene start with this; every other line is code.
 STORY_MARKER = "# >>"
 
@@ -35,10 +37,13 @@ def cutscene_lines(cutscene):
     return lines
 
 
-def code_lines(code):
-    """Return a piece of code as indented lines, without blank lines around it."""
+def code_lines(code, color=False):
+    """Return a piece of code as indented lines, without blank lines around it.
+
+    With `color` the code is syntax highlighted.
+    """
     lines = []
-    for line in code.strip().splitlines():
+    for line in highlight_lines(code.strip(), color):
         lines.append(CODE_INDENT + line)
     return lines
 
@@ -50,11 +55,14 @@ def separator(plain):
     return "│"
 
 
-def numbered_code(text, plain=False):
-    """Return a code text as numbered lines, for example "  1 │ print(1)"."""
+def numbered_code(text, plain=False, color=False):
+    """Return a code text as numbered lines, for example "  1 │ print(1)".
+
+    With `color` the code is syntax highlighted.
+    """
     lines = []
     number = 0
-    for line in text.splitlines():
+    for line in highlight_lines(text, color):
         number = number + 1
         lines.append(f"{number:>3} {separator(plain)} {line}")
     return lines
@@ -63,7 +71,7 @@ def numbered_code(text, plain=False):
 HELP_LINE = ":submit  :show  :undo  :clear  :edit n text  :ins n text  :del n  :hint  :map  :help"
 
 
-def wave_screen_text(level, number, buffer_text, plain=False):
+def wave_screen_text(level, number, buffer_text, plain=False, color=False):
     """Return the screen of one wave: its task and the numbered code typed so far."""
     wave = level.waves[number - 1]
     label = f"WAVE {number} of {len(level.waves)} · {wave.kind.upper()}"
@@ -76,7 +84,7 @@ def wave_screen_text(level, number, buffer_text, plain=False):
     if wave.mode == "predict" and wave.code is not None:
         lines.append("")
         lines.append("Read this code:")
-        lines.extend(code_lines(wave.code))
+        lines.extend(code_lines(wave.code, color))
         lines.append("")
         lines.append("YOUR ANSWER (what it prints):")
     else:
@@ -85,7 +93,7 @@ def wave_screen_text(level, number, buffer_text, plain=False):
     if buffer_text.strip() == "":
         lines.append("    (nothing yet: type your first line)")
     else:
-        lines.extend(numbered_code(buffer_text, plain))
+        lines.extend(numbered_code(buffer_text, plain, color))
     lines.append("")
     lines.append(HELP_LINE)
     return "\n".join(lines)

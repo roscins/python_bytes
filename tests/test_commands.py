@@ -271,7 +271,7 @@ class TestLocks(unittest.TestCase):
         """1-2 is locked until 1-1 is cleared."""
         state = GameState(make_levels("1-1", "1-2"))
         text = handle_line(state, "play 1-2")
-        self.assertEqual(text, "Level 1-2 is locked. Clear 1-1 with at least 70 % first.")
+        self.assertEqual(text, "Level 1-2 is locked. Pass every wave of 1-1 first.")
         self.assertIsNone(state.current_level)
 
     def test_map_shows_the_hud_and_stars(self):
@@ -315,7 +315,7 @@ class TestScoredSubmit(unittest.TestCase):
         type_code(self.state, 'print("NO")\n')
         text = handle_line(self.state, ":submit")
         self.assertIsInstance(text, str)
-        self.assertIn("You need 70 % to clear this level.", text)
+        self.assertIn("Pass every wave to clear this level.", text)
         self.assertEqual(self.state.cleared, [])
         self.assertTrue(self.state.coding)
 
