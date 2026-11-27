@@ -266,23 +266,23 @@ class TestRealTerminal(unittest.TestCase):
         """Type a line and press Enter."""
         os.write(master, text.encode() + b"\r")
 
+    def press(self, master, keys, expected):
+        """Press keys and wait for something printed after them."""
+        os.write(master, keys)
+        return self.read_until(master, expected)
+
     def test_playing_a_level_from_the_title_to_quit(self):
-        """New game, the map, Enter on 1-1, the story, type code, :run, :submit, :map, Quit button."""
+        """New game, the map, Enter on 1-1, type into the blank, ^R, ^S, ^O, the Quit button."""
         pid, master, save_path = self.start()
         self.read_until(master, "PRESS ENTER")
         self.press_enter_until(master, "NEW GAME")
         os.write(master, b"\r")                       # NEW GAME
         self.press_enter_until(master, "[1-1] ")       # the tutorial comes first
         self.press_enter_until(master, "WAVE 1 of 3")  # Enter plays; story and tips
-        self.type_line(master, ':edit 1 print("SNEK ONLINE")')
-        self.read_until(master, 'SNEK ONLINE")')
-        self.type_line(master, ":run")
-        self.read_until(master, "RUN (this is not graded)")
-        self.type_line(master, ":submit")
-        self.read_until(master, "tests passed")
-        self.press_enter_until(master, "WAVE 2 of 3")
-        self.type_line(master, ":map")
-        self.read_until(master, ": command")
+        self.press(master, b'"SNEK ONLINE"', "^S submit")
+        self.press(master, b"\x12", "RUN (not graded)")
+        self.press(master, b"\x13", "tests passed")
+        self.press(master, b"\x0f", ": command")       # Ctrl-O: the map
         os.write(master, b"\x1b[B\x1b[C\x1b[C\x1b[C\r")  # buttons, then Quit
         data = self.read_until(master, "\x1b[?1049l")
         _, status = os.waitpid(pid, 0)
@@ -292,6 +292,7 @@ class TestRealTerminal(unittest.TestCase):
             saved = json.load(save_file)
         self.assertEqual(saved["current_level"], "1-1")
         self.assertEqual(saved["levels"]["1-1"]["wave_best"][0], 1.0)
+        self.assertEqual(saved["buffers"]["1-1"]["1"], 'print("SNEK ONLINE")\n')
 
     def test_a_stop_signal_puts_the_terminal_back(self):
         """SIGTERM at the title: the alternate screen is left and the cursor shown."""

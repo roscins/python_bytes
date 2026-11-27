@@ -84,6 +84,11 @@ def do_help(state, arguments):
     for name in ALL_CODE_COMMANDS:
         _, description = ALL_CODE_COMMANDS[name]
         lines.append(f"  :{name:<7} {description}")
+    if state.keys:
+        # Waves are worked with keys and buttons, so only the map's words are listed.
+        lines = ["On the map press : and type one of these. In a wave, Help shows the keys."]
+        for name in ["map", "stats", "play", "quit"]:
+            lines.append(f"  {name:<8} {COMMANDS[name][1]}")
     lines.extend(earned_help_lines(state))
     return "\n".join(lines)
 
@@ -132,6 +137,13 @@ def do_map(state, arguments):
     return picture + gap + f"You are at [{current.id}] {current.title}."
 
 
+def see_the_map(state):
+    """Return the advice to look at the map, which only line mode needs to type."""
+    if state.keys:
+        return ""
+    return " Type map to see the levels."
+
+
 def do_play(state, arguments):
     """Start the level whose id is given, for example "play 1-1".
 
@@ -154,11 +166,11 @@ def do_play(state, arguments):
     level = state.find_level(level_id)
     if level is None:
         if state.find_slot(level_id) is not None:
-            return f"Level {level_id} is not written yet. Type map to see the levels."
+            return f"Level {level_id} is not written yet." + see_the_map(state)
         meant = level_id.replace(".", "-").replace("_", "-")
         if state.find_level(meant) is not None:
             return f"There is no level {level_id}. Did you mean play {meant}?"
-        return f"There is no level {level_id}. Type map to see the levels."
+        return f"There is no level {level_id}." + see_the_map(state)
     slots = state.slots()
     if not is_unlocked(slots, state.cleared, level):
         before = slots[slot_index(slots, level.id) - 1]
@@ -166,10 +178,10 @@ def do_play(state, arguments):
     previous = state.find_level(state.current_level)
     start_coding(state, level)
     if level.boss:
-        intro = join_screens([boss_intro_text(level), start_boss_fight(state, level),
+        intro = join_screens([boss_intro_text(level, state.keys), start_boss_fight(state, level),
                               show_wave(state)])
     else:
-        intro = join_screens([intro_text(level), show_wave(state)])
+        intro = join_screens([intro_text(level, state.keys), show_wave(state)])
     # The plain mode has no pictures, so Snek does not slither there.
     if state.plain or previous is None or previous.world != level.world or previous.id == level.id:
         return intro
@@ -249,18 +261,28 @@ def do_submit(state, arguments):
     reward = apply_submission(state, level, [submission])
     results = results_text(level, [submission], [], reward)
     results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)
-    # CLEARED is only said of a cleared level: when it is cleared now, or when
-    # a cleared level earns more stars.
-    more_stars = reward.is_cleared and reward.stars > reward.old_stars
-    if not reward.cleared_now and not more_stars:
+    if not has_earned_the_animation(reward):
         return results
     if state.plain:
         return level_clear_text(level.id, level.title, reward.best_score, reward.stars,
                                 reward.coins_gained, level.power_up) + "\n\n" + results
-    frames = level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
-                                reward.coins_gained, level.power_up, load_clear_art())
+    frames = clear_frames(state, level, reward)
     frames[-1] = frames[-1] + "\n\n" + results
     return frames
+
+
+def has_earned_the_animation(reward):
+    """Return True if the level is cleared now, or a cleared level earned more stars."""
+    more_stars = reward.is_cleared and reward.stars > reward.old_stars
+    return reward.cleared_now or more_stars
+
+
+def clear_frames(state, level, reward):
+    """Return the frames of the level-clear animation, or None if this submit did not earn it."""
+    if not has_earned_the_animation(reward):
+        return None
+    return level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
+                              reward.coins_gained, level.power_up, load_clear_art())
 
 
 def do_stats(state, arguments):

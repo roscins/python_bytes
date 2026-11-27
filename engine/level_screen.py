@@ -132,8 +132,8 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False, compa
     return "\n".join(lines)
 
 
-def intro_text(level):
-    """Return everything shown when the player starts `level`, as one text."""
+def intro_text(level, keys=False):
+    """Return everything shown when the player starts `level`; `keys` for the key-driven mode."""
     story = [title_card(level), ""]
     story.extend(cutscene_lines(level.cutscene))
     tips = ["TIPS"]
@@ -144,11 +144,14 @@ def intro_text(level):
     waves = f"{count} waves"
     if count == 1:
         waves = "1 wave"
-    tips.append(f"{waves}. Type your code one line at a time; commands start with a colon (:help).")
+    how = "Type your code one line at a time; commands start with a colon (:help)."
+    if keys:
+        how = "You type straight into the code; Ctrl-S hands it in."
+    tips.append(f"{waves}. {how}")
     return join_screens(["\n".join(story), "\n".join(tips)])
 
 
-def boss_intro_text(level):
+def boss_intro_text(level, keys=False):
     """Return what is shown when a boss fight starts: the cutscene and the task."""
     lines = []
     lines.extend(cutscene_lines(level.cutscene))
@@ -158,6 +161,9 @@ def boss_intro_text(level):
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
     minutes = level.time_limit // 60
+    submit = ":submit"
+    if keys:
+        submit = "Submit (Run is free)"
     lines.append(f"{len(wave.tests)} hidden tests, 3 tries, {minutes} minutes. "
-                 "Each failed :submit uses up a try.")
+                 f"Each failed {submit} uses up a try.")
     return "\n".join(lines)

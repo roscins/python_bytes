@@ -107,9 +107,11 @@ class CheckResult:
         passed: True if the code passed the check.
         name: what was checked, for example "prints the right output".
         message: why the check failed, to help the player; "" if it passed.
+        error_text: the traceback when the program crashed on the player's
+            own lines, or "". Its line numbers are those of the code.
     """
 
-    def __init__(self, passed, name, message="", expected=None, printed=None):
+    def __init__(self, passed, name, message="", expected=None, printed=None, error_text=""):
         """Remember the result, the name and the message.
 
         `expected` and `printed` are given when two outputs did not match.
@@ -119,6 +121,7 @@ class CheckResult:
         self.passed = passed
         self.name = name
         self.message = message
+        self.error_text = error_text
 
 
 def normalise_output(text):
@@ -161,6 +164,17 @@ def problem_with_run(result, time_limit=DEFAULT_TIME_LIMIT):
             return f"Your program stopped with an error: {result.error_line()}"
         return f"Your program stopped with an error on line {number}: {result.error_line()}"
     return ""
+
+
+def traceback_of(test, result):
+    """Return the traceback to keep for a crashed test.
+
+    A test that changes values runs rewritten code, whose line numbers are
+    not the player's, so nothing is kept for it.
+    """
+    if "values" in test:
+        return ""
+    return result.stderr
 
 
 def input_note(test):
@@ -223,7 +237,7 @@ def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
     result = run_code(code, test.get("stdin", ""), time_limit)
     problem = problem_with_run(result, time_limit)
     if problem:
-        return CheckResult(False, name, problem)
+        return CheckResult(False, name, problem, error_text=traceback_of(test, result))
     expected = normalise_output(test["expected_stdout"])
     printed = normalise_output(result.stdout)
     if printed == expected:
@@ -243,7 +257,7 @@ def check_expected_stdout_contains(test, code, time_limit=DEFAULT_TIME_LIMIT):
     result = run_code(code, test.get("stdin", ""), time_limit)
     problem = problem_with_run(result, time_limit)
     if problem:
-        return CheckResult(False, name, problem)
+        return CheckResult(False, name, problem, error_text=traceback_of(test, result))
     printed = normalise_output(result.stdout)
     missing = []
     for piece in pieces:
@@ -311,7 +325,7 @@ def check_call(test, code, time_limit=DEFAULT_TIME_LIMIT):
     result = run_files(files, CALL_SCRIPT_FILE, test.get("stdin", ""), time_limit)
     problem = problem_with_run(result, time_limit)
     if problem:
-        return CheckResult(False, name, problem)
+        return CheckResult(False, name, problem, error_text=traceback_of(test, result))
     found = find_result_line(result.stdout)
     if found is None or found == "MISSING":
         return CheckResult(False, name, f"Your code has no function named {test['call']}.")

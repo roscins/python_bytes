@@ -28,9 +28,24 @@ Stars show how well you did. A locked level opens when you clear the one before.
 Press Esc to skip this tutorial."""
 
 
+KEY_SCREENS = [
+    KEY_MAP_SCREEN,
+    """TUTORIAL 2 of 4 · TYPING CODE
+A level has three waves. The cursor starts in the code: move with the arrows
+and type. In a fill-in wave it starts on the blank, shown as ___.""",
+    """TUTORIAL 3 of 4 · CHECKING IT
+Ctrl-R runs your code. It is free and nothing is graded.
+Ctrl-S hands it in. Ctrl-Z takes back your last change.
+The buttons under the code do the same: press Down from the last line.""",
+    """TUTORIAL 4 of 4 · IF YOU ARE STUCK
+Ctrl-T buys a hint with coins. You earn coins by passing a wave on the first try.
+The combo counts first-try passes in a row. Ctrl-G shows every key.
+The line at the bottom always shows what you can press.""",
+]
+
+
 def tutorial_text(keys=False):
     """Return the whole tutorial, one screen after the other; `keys` for the key-driven mode."""
-    screens = list(SCREENS)
     if keys:
-        screens[0] = KEY_MAP_SCREEN
-    return join_screens(screens)
+        return join_screens(KEY_SCREENS)
+    return join_screens(SCREENS)

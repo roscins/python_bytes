@@ -15,6 +15,8 @@ line) into a FriendlyError. format_friendly() turns that into the text to
 show. The functions return text and never print.
 """
 
+import builtins
+import difflib
 import re
 
 # The files whose lines are the player's own code. A traceback also holds
@@ -188,6 +190,85 @@ def friendly_error(error_text):
     else:
         headline = f"Snek tripped on line {number}: {sentence}."
     return FriendlyError(headline, detail, number)
+
+
+# print(...) and print ... without brackets; a comment may follow.
+PRINT_CALL = re.compile(r"^\s*print\s*\((.*)\)\s*(?:#.*)?$")
+PRINT_WITHOUT_BRACKETS = re.compile(r"^\s*print\s+(?![=(.\[])(.*?)\s*$")
+
+# Text that is only words and punctuation: no quotes, =, brackets or operators.
+PLAIN_WORDS = re.compile(r"^[\w .,!?:'-]+$")
+
+# Signs that it is code after all: math.pi, a - b, or a ' that is not inside a word.
+CODE_SIGNS = re.compile(r"\w\.\w|(?<!\w)-|-(?!\w)|(?<![^\W\d])'|'(?![^\W\d])")
+
+# The places where code gives something a name.
+MADE_NAMES = re.compile(r"^\s*(?:(\w+)\s*[-+*/]?=(?!=)|(?:def|class|for|import)\s+(\w+))", re.MULTILINE)
+
+
+def names_in(code):
+    """Return the names the code creates, also when Python cannot read all of it."""
+    names = []
+    for match in MADE_NAMES.finditer(code):
+        names.append(match.group(1) or match.group(2))
+    return names
+
+
+def unquoted_text(line):
+    """Return (the words, has brackets) for a print of text without quotes, else None."""
+    match = PRINT_CALL.match(line)
+    brackets = match is not None
+    if match is None:
+        match = PRINT_WITHOUT_BRACKETS.match(line)
+    if match is None:
+        return None
+    words = match.group(1).strip()
+    if not PLAIN_WORDS.match(words) or CODE_SIGNS.search(words):
+        return None
+    if not any(character.isalpha() for character in words):
+        return None
+    return words, brackets
+
+
+def quote_sentence(type_name, line, code):
+    """Return what to say about missing quotes or a mistyped name on `line`, or None.
+
+    The suggestion only reuses the player's own words.
+    """
+    if type_name not in ("SyntaxError", "NameError"):
+        return None
+    found = unquoted_text(line)
+    if found is None:
+        return None
+    words, brackets = found
+    made = names_in(code)
+    used = re.findall(r"[^\W\d]\w*", words)
+    for word in used:
+        # A name the code creates: the problem is something else.
+        if word in made:
+            return None
+    if len(used) == 1 and words == used[0]:
+        close = difflib.get_close_matches(words, made + dir(builtins), n=1, cutoff=0.7)
+        if close and close[0] in made:
+            return f"I do not know the name {words}. Did you mean {close[0]}?"
+    needs = "quotes"
+    if not brackets:
+        needs = "quotes and brackets"
+    return f'Text needs {needs}: try print("{words}")'
+
+
+def friendly_for_source(error_text, code):
+    """Like friendly_error, but it also looks at the code, to suggest quotes."""
+    error = friendly_error(error_text)
+    lines = code.splitlines()
+    if error.line is None or not 1 <= error.line <= len(lines):
+        return error
+    match = ERROR_LINE.match(error.detail)
+    if match:
+        sentence = quote_sentence(match.group(1).split(".")[-1], lines[error.line - 1], code)
+        if sentence is not None:
+            error.headline = sentence
+    return error
 
 
 def friendly_timeout(seconds):

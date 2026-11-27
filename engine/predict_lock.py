@@ -26,5 +26,8 @@ def locked_message(state):
     if found is None:
         return ""
     level, number = found
+    if state.keys:
+        return (f"Snek will not run code while a prediction is open. First answer wave {number} "
+                f"of {level.id}.")
     return (f"Snek will not run code while a prediction is open. First answer wave {number} "
             f"of {level.id}: play {level.id}, then :wave {number}.")

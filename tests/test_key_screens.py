@@ -216,23 +216,25 @@ class TestWholeGameWithKeys(unittest.TestCase):
                                         display_factory=factory, concepts_file=None)
 
     def test_from_the_title_into_a_level_and_out_through_the_map(self):
-        """Title, tutorial (Esc), map, Enter, story (Esc), a typed line, :map, the Quit button."""
+        """Title, tutorial (Esc), map, Enter, story (Esc), a typed character, ^O, the Quit button."""
         keys = ["enter", "enter",              # title, NEW GAME
                 "escape", "enter",             # skip the tutorial, play 1-1
                 "escape",                      # skip the story
+                "7", "ctrl-o",                 # type on the blank, then the map
                 "down", "right", "right", "right", "enter"]
-        code = self.play(keys, [':edit 1 print("x")', ":map"])
+        code = self.play(keys)
         self.assertEqual(code, 0)
         self.assertEqual(self.keyboard.keys, [])
         self.assertFalse(self.keyboard.started)
         with open(self.save_path, encoding="utf-8") as save_file:
-            self.assertEqual(json.load(save_file)["buffers"]["1-1"]["1"], 'print("x")\n')
+            self.assertEqual(json.load(save_file)["buffers"]["1-1"]["1"], "print(7)\n")
         self.assertIn("Left and Right move Snek", strip_ansi(self.terminal.text()))
 
     def test_the_keyboard_is_put_back_after_an_error(self):
         """A crash inside the game."""
         with self.assertRaises(IndexError):
-            self.play(["enter", "enter", "escape", "enter", "escape"], [])
+            # Ctrl-E asks for a line, and there is none to give.
+            self.play(["enter", "enter", "escape", "enter", "escape", "ctrl-e"], [])
         self.assertFalse(self.keyboard.started)
 
 
