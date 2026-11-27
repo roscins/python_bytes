@@ -317,7 +317,7 @@ difficulty = 3
 outcomes = ["B8", "B9", "B12", "R5"]
 power_up = "test"
 story = "Repairs keep breaking older repairs."
-mission = "Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by choosing the right feedback for each fault."
+mission = "Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by marking each faulty line and choosing its feedback category."
 
 [[level]]
 id = "4-5"
@@ -340,8 +340,8 @@ boss = true
 constructs = []
 recycles = ["4-1", "4-2", "4-3", "4-4", "4-5"]
 difficulty = 5
-outcomes = ["B11", "B12", "R5"]
-mission = "Phase 1: timed mixed waves. Phase 2: a single-file sensor-warning project with tests; review a provided solution."
+outcomes = ["B11", "R5"]
+mission = "A single-file sensor-warning project with assert tests that reads data files and writes a report."
 
 # ---------------------------------------------------------------- World 5
 [[level]]
