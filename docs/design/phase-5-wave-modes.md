@@ -1,24 +1,35 @@
 # Phase 5 design: review waves, choice waves and wave data files
 
-Status: **waiting for approval**. No code is written yet.
+Status: **approved**, with key-driven answering and the console lock added.
 
 World 4 needs three engine features. Each gets its own branch and PR, in
 this order: choice waves, review waves (reuses the answer sheet), data files.
 
-## Shared: modes and the answer sheet
+## Shared: modes, key screens and the answer sheet
 
 `mode` already holds `"predict"`. It gains `"choice"` and `"review"`, allowed
 on `fill-in` and `debug` waves. Not on `build` (no code, so no quality score)
 and not on bosses (none needs it). Level order stays fill-in, build, debug.
 
-Both new modes are answered like predict: the text to read is above, and the
-player types an **answer sheet** in the editor, then presses Ctrl-S. This
-works the same in key mode and line mode and needs no new screen or keys.
+In key mode nothing is typed:
+
+- **Choice:** Up and Down move over the options, Enter picks one and moves to
+  the next question; Left and Right change question.
+- **Review:** Up and Down move over the code lines, Space marks the line and
+  opens the category list, Enter picks a category. Space on a marked line
+  removes the mark.
+- Ctrl-S submits, and the buttons work as in other waves.
+
+In `--plain` and line mode the player types an **answer sheet** (`1: b`, or
+`4: a`). The key screens write the same sheet as the wave's saved text, so
+grading and saving are shared.
 
 - A wave of either mode has `wrong` (a sheet that must not pass). The right
   sheet is built from the key, so it is never written twice.
-- Run is refused ("nothing to run here"). The console and power-ups stay
-  usable: unlike predict, there is no lock.
+- Run is refused ("nothing to run here").
+- A choice wave about code behaviour locks the console and power-ups like a
+  predict wave: any question with `code`, or `lock = true` on the wave. Other
+  choice waves and review waves do not lock.
 - Failed submits say how many answers are right, not which letter is correct.
 - After the third failed submit the key and explanations are shown and the
   wave is done, as for predict. This stops letter-by-letter guessing.
