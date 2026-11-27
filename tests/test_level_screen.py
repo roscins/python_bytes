@@ -3,7 +3,14 @@
 import unittest
 
 from engine.level_pack import Level, Wave
-from engine.level_screen import CODE_INDENT, cutscene_lines, intro_text, title_card, wave_lines
+from engine.level_screen import (
+    CODE_INDENT,
+    cutscene_lines,
+    intro_text,
+    numbered_code,
+    title_card,
+    wave_screen_text,
+)
 
 
 def make_intro_level():
@@ -34,37 +41,47 @@ class TestParts(unittest.TestCase):
             'Snek: "HELLO."',
         ])
 
-    def test_fill_in_wave_shows_its_starter(self):
-        """A fill-in wave shows the code with blanks."""
-        wave = make_intro_level().waves[0]
-        self.assertEqual(wave_lines(wave, 1), [
-            "WAVE 1 · FILL-IN · wave1.py",
-            "Fill in the blank.",
-            CODE_INDENT + "print(___)",
-        ])
+    def test_numbered_code(self):
+        """Code lines get a number and a bar; the plain look uses |."""
+        self.assertEqual(numbered_code("a\n  b\n"), ["  1 │ a", "  2 │   b"])
+        self.assertEqual(numbered_code("a\n", plain=True), ["  1 | a"])
 
-    def test_build_wave_shows_only_its_brief(self):
-        """A build wave has no code to show, only the brief."""
-        wave = make_intro_level().waves[1]
-        self.assertEqual(wave_lines(wave, 2), ["WAVE 2 · BUILD · wave2.py", "Print", "three lines."])
+    def test_wave_screen_shows_the_task_and_the_code_so_far(self):
+        """A fill-in wave shows its brief, then its code with the blank."""
+        level = make_intro_level()
+        text = wave_screen_text(level, 1, "print(___)\n")
+        self.assertIn("WAVE 1 of 3 · FILL-IN", text)
+        self.assertIn("Fill in the blank.", text)
+        self.assertIn("YOUR CODE:", text)
+        self.assertIn("  1 │ print(___)", text)
 
-    def test_predict_wave_shows_the_code_to_read(self):
-        """A predict wave shows the code, but never the answer."""
-        wave = make_intro_level().waves[2]
-        lines = wave_lines(wave, 3)
-        self.assertIn(CODE_INDENT + 'print("ONE")', lines)
-        self.assertNotIn("ONE", lines)
+    def test_empty_build_wave_invites_the_first_line(self):
+        """No code yet: a short hint instead of an empty list."""
+        text = wave_screen_text(make_intro_level(), 2, "")
+        self.assertIn("WAVE 2 of 3 · BUILD", text)
+        self.assertIn("Print", text)
+        self.assertIn("(nothing yet: type your first line)", text)
+
+    def test_predict_wave_shows_the_code_to_read_but_never_the_answer(self):
+        """The player types what the program prints."""
+        text = wave_screen_text(make_intro_level(), 3, "")
+        self.assertIn(CODE_INDENT + 'print("ONE")', text)
+        self.assertIn("YOUR ANSWER", text)
+        self.assertNotIn("TWO", text)
+
+    def test_wave_screen_ends_with_the_commands(self):
+        """The player always sees how to submit."""
+        self.assertIn(":submit", wave_screen_text(make_intro_level(), 2, ""))
 
 
 class TestIntroText(unittest.TestCase):
     """Check the whole intro, in order."""
 
     def test_parts_come_in_order(self):
-        """Title, then cutscene, then tips, then the three waves."""
+        """Title, then cutscene, then tips, then how many waves."""
         text = intro_text(make_intro_level())
         positions = []
-        for part in ["LEVEL 1-1", "The lab is dark.", "TIPS", "  • Tip one.",
-                     "WAVE 1", "WAVE 2", "WAVE 3"]:
+        for part in ["LEVEL 1-1", "The lab is dark.", "TIPS", "  • Tip one.", "3 waves"]:
             self.assertIn(part, text)
             positions.append(text.index(part))
         self.assertEqual(positions, sorted(positions))
@@ -75,6 +92,10 @@ class TestIntroText(unittest.TestCase):
         self.assertNotIn("print(OK)", text)
         self.assertNotIn('print("OK")', text)
         self.assertNotIn("TWO", text)
+
+    def test_no_file_names_any_more(self):
+        """The code is typed in the game."""
+        self.assertNotIn("wave1.py", intro_text(make_intro_level()))
 
 
 if __name__ == "__main__":

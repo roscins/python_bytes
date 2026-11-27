@@ -7,6 +7,7 @@ which checks passed, and for a build wave also the code-quality rules.
 
 from grader.checks import CheckResult, normalise_output, run_check
 from grader.style import style_checks
+from runner.process import DEFAULT_TIME_LIMIT
 
 # The blank that fill-in starters use for the parts the player fills in.
 BLANK = "___"
@@ -80,9 +81,12 @@ def grade_wave(wave, text):
                                  f"There is still a {BLANK} blank in your code. Replace it first.")
         return WaveResult([blank_left])
 
+    time_limit = DEFAULT_TIME_LIMIT
+    if wave.time_limit is not None:
+        time_limit = wave.time_limit
     checks = []
     for test in wave.tests:
-        checks.append(run_check(test, text))
+        checks.append(run_check(test, text, time_limit))
     quality = None
     if wave.kind == "build":
         quality = style_checks(text)

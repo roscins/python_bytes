@@ -222,5 +222,32 @@ class TestTestKind(unittest.TestCase):
         self.assertFalse(run_check({"stdin": "x"}, "print(1)").passed)
 
 
+
+class TestTimeLimit(unittest.TestCase):
+    """A wave may give its program more or less time than the default 2 seconds."""
+
+    SLEEPY = 'import time\ntime.sleep(0.6)\nprint("OK")\n'
+    TEST = {"expected_stdout": "OK\n"}
+
+    def test_default_limit_lets_a_short_sleep_pass(self):
+        """0.6 seconds is within the default."""
+        self.assertTrue(run_check(self.TEST, self.SLEEPY).passed)
+
+    def test_a_shorter_limit_is_used_and_named_in_the_message(self):
+        """With 0.2 seconds the same program times out, and the message says 0.2."""
+        result = run_check(self.TEST, self.SLEEPY, time_limit=0.2)
+        self.assertFalse(result.passed)
+        self.assertIn("0.2 seconds", result.message)
+
+    def test_every_kind_of_check_takes_the_limit(self):
+        """Output, contains and function-call checks all run the program."""
+        contains = {"expected_stdout_contains": ["OK"]}
+        call = {"call": "f", "args": [], "expected": 1}
+        function = "import time\ntime.sleep(0.6)\ndef f():\n    return 1\n"
+        self.assertFalse(run_check(contains, self.SLEEPY, time_limit=0.2).passed)
+        self.assertFalse(run_check(call, function, time_limit=0.2).passed)
+        self.assertTrue(run_check({"require": ["Call"]}, self.SLEEPY, time_limit=0.2).passed)
+
+
 if __name__ == "__main__":
     unittest.main()

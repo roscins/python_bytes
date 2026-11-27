@@ -78,5 +78,28 @@ class TestWaveResult(unittest.TestCase):
         self.assertEqual(WaveResult([], rules).quality_share(), 0.5)
 
 
+class TestWaveTimeLimit(unittest.TestCase):
+    """grade_wave runs the player's program with the wave's own limit."""
+
+    SLEEPY = 'import time\ntime.sleep(2.3)\nprint("OK")\n'
+
+    def make_wave(self, time_limit):
+        """Return a build wave with the given time limit."""
+        return Wave("build", "Wait, then print OK.", reference=self.SLEEPY, wrong="print(1)",
+                    tests=[{"expected_stdout": "OK\n"}], time_limit=time_limit)
+
+    def test_a_longer_limit_lets_a_slow_program_pass(self):
+        """2.3 seconds is over the default 2, but within a limit of 4."""
+        self.assertTrue(grade_wave(self.make_wave(4), self.SLEEPY).all_passed())
+
+    def test_a_wave_without_a_limit_uses_the_default(self):
+        """The same program fails with the default limit."""
+        self.assertFalse(grade_wave(self.make_wave(None), self.SLEEPY).all_passed())
+
+    def test_wave_has_no_limit_unless_given(self):
+        """Wave.time_limit is None by default."""
+        self.assertIsNone(FILL_IN.time_limit)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,7 @@ from tests.helpers import (
     make_boss_level,
     make_levels,
     make_temporary_folder,
+    type_code,
     write_level_pack,
 )
 
@@ -129,9 +130,9 @@ class TestBossCommands(unittest.TestCase):
         self.intro = handle_line(self.state, "play boss-1")
 
     def submit(self, code):
-        """Write the boss file, submit it, and return the last frame as text."""
-        (self.root / "boss-1" / "wave1.py").write_text(code, encoding="utf-8")
-        answer = handle_line(self.state, "submit")
+        """Type the boss code, submit it, and return the last frame as text."""
+        type_code(self.state, code)
+        answer = handle_line(self.state, ":submit")
         if isinstance(answer, list):
             return answer[-1]
         return answer
@@ -139,7 +140,7 @@ class TestBossCommands(unittest.TestCase):
     def test_play_shows_the_boss_screen(self):
         """play starts the fight and shows the cutscene, task and boss screen."""
         self.assertIn("The boss wakes.", self.intro)
-        self.assertIn("BOSS WAVE · wave1.py", self.intro)
+        self.assertIn("BOSS WAVE", self.intro)
         self.assertIn("3 hidden tests, 3 lives, 10 minutes", self.intro)
         self.assertIn("BOSS 1 · THE TEST BOSS", self.intro)
         self.assertIn("LIVES ♥ ♥ ♥", self.intro)
@@ -184,8 +185,8 @@ class TestBossCommands(unittest.TestCase):
         self.assertNotIn("boss-1", self.state.cleared)
 
     def test_empty_file(self):
-        """An empty boss file asks for code first."""
-        self.assertIn("Write your code in wave1.py first", self.submit(""))
+        """Submitting no code asks for code first."""
+        self.assertIn("Type your code first", self.submit(""))
 
     def test_fight_starts_again_after_a_restart_of_the_game(self):
         """With no fight in memory (after quitting), submit starts a new one."""

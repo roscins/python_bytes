@@ -47,6 +47,58 @@ def make_full_level(**build_changes):
                  "status", '# >> Hi.\nprint("a")', ["t1", "t2", "t3"], [fill_in, build, debug])
 
 
+def world_of(level_id):
+    """Return the world number of an id like "2-3" or "boss-2"."""
+    if level_id.startswith("boss-"):
+        return int(level_id.split("-")[1])
+    return int(level_id[0])
+
+
+def concepts_toml_text(*level_ids):
+    """Return the text of a small concepts.toml with one item for each id.
+
+    Every item adds one made-up construct, so it is a valid file for the
+    loader. An id like "boss-1" becomes a boss.
+    """
+    lines = ['[meta]', 'version = 2', 'levels_per_world = 5', 'outcome_codes = ["B1"]', ""]
+    for level_id in level_ids:
+        lines.append("[[level]]")
+        lines.append(f'id = "{level_id}"')
+        lines.append(f"world = {world_of(level_id)}")
+        lines.append(f'title = "Title {level_id}"')
+        if level_id.startswith("boss-"):
+            lines.append("boss = true")
+            lines.append("constructs = []")
+        else:
+            lines.append('concepts = ["one", "two"]')
+            lines.append(f'constructs = ["construct:{level_id}"]')
+            lines.append(f'power_up = "up-{level_id}"')
+        lines.append("recycles = []")
+        lines.append("difficulty = 1")
+        lines.append('outcomes = ["B1"]')
+        lines.append('mission = "Do something."')
+        lines.append("")
+    return "\n".join(lines)
+
+
+def make_curriculum_of(*level_ids):
+    """Return a Curriculum with one item for each id, in the order given."""
+    import tomllib
+
+    from grader.progression import parse_curriculum
+
+    return parse_curriculum(tomllib.loads(concepts_toml_text(*level_ids)))
+
+
+def type_code(state, code):
+    """Replace the code of the current wave by `code`, typed line by line as a player would."""
+    from engine.commands import handle_line
+
+    handle_line(state, ":clear")
+    for line in code.splitlines():
+        handle_line(state, line)
+
+
 def make_levels(*level_ids):
     """Return a list of small Levels, one for each id given."""
     levels = []

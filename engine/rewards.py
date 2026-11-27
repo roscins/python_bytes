@@ -5,6 +5,7 @@ progress. The rules themselves (weights, marks, prices) are in
 engine/scoring.py.
 """
 
+from engine.roadmap import is_written
 from engine.scoring import (
     FIRST_TRY_COINS,
     PASS_MARK,
@@ -56,10 +57,18 @@ def has_build_wave(level):
 
 
 def next_level(state, level):
-    """Return the level after `level` in map order, or None if it is the last."""
-    for index in range(len(state.levels) - 1):
-        if state.levels[index].id == level.id:
-            return state.levels[index + 1]
+    """Return the level after `level` in map order, or None if there is none to open.
+
+    A level that the curriculum lists but that has no pack yet does not
+    count: nothing opens.
+    """
+    slots = state.slots()
+    for index in range(len(slots) - 1):
+        if slots[index].id == level.id:
+            following = slots[index + 1]
+            if is_written(following):
+                return following
+            return None
     return None
 
 

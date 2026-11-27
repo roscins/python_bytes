@@ -20,7 +20,8 @@ from render.world_map import (
     slither_frames,
 )
 
-WORLD_1_IDS = ["1-1", "1-2", "1-3", "1-4", "boss-1"]
+WORLD_1_IDS = ["1-1", "1-2", "1-3", "1-4", "1-5", "boss-1"]
+NODE_COUNT = len(WORLD_1_IDS)
 
 # Header, blank line, label line, then two pixel rows per terminal line.
 FRAME_LINES = 3 + MAP_HEIGHT // 2
@@ -40,6 +41,16 @@ class TestLayout(unittest.TestCase):
         for index in range(5):
             centres.append(node_centre(index, 5))
         self.assertEqual(centres, [8, 24, 40, 56, 72])
+
+    def test_world_one_has_six_nodes_that_all_fit(self):
+        """Five levels and a boss: 13 columns each, and every label fits in its share."""
+        centres = []
+        for index in range(6):
+            centres.append(node_centre(index, 6))
+        self.assertEqual(centres, [6, 19, 32, 45, 58, 71])
+        labels = label_line(WORLD_1_IDS)
+        for level_id in WORLD_1_IDS:
+            self.assertIn(f"[{level_id}]", labels)
 
     def test_one_node_is_in_the_middle(self):
         """A world with one level has its node in the middle."""
@@ -63,7 +74,7 @@ class TestLayout(unittest.TestCase):
         """Each label's middle is at its node's centre."""
         line = label_line(WORLD_1_IDS)
         start = line.index("[1-3]")
-        self.assertEqual(start + len("[1-3]") // 2, node_centre(2, 5))
+        self.assertEqual(start + len("[1-3]") // 2, node_centre(2, NODE_COUNT))
         self.assertLessEqual(len(line), MAP_WIDTH)
 
 
@@ -99,10 +110,11 @@ class TestFrames(unittest.TestCase):
         self.assertEqual(frames[-1], map_screen(1, WORLD_1_IDS, 3, self.art))
 
     def test_slither_moves_a_few_pixels_per_frame(self):
-        """From node 1 to node 3 is 32 pixels: 8 steps of 4, so 9 frames."""
-        distance = snek_left(3, 5) - snek_left(1, 5)
+        """Snek moves 4 pixels per frame; a shorter last step still gets a frame."""
+        distance = snek_left(3, NODE_COUNT) - snek_left(1, NODE_COUNT)
+        steps = (distance + SLITHER_STEP - 1) // SLITHER_STEP
         frames = slither_frames(1, WORLD_1_IDS, 1, 3, self.art)
-        self.assertEqual(len(frames), distance // SLITHER_STEP + 1)
+        self.assertEqual(len(frames), steps + 1)
 
     def test_slither_can_go_left(self):
         """Slithering back to an earlier node also works."""
@@ -122,7 +134,7 @@ class TestMapStatus(unittest.TestCase):
         """Load the real art and make a status: 1-1 has 2 stars, 1-3 on are locked."""
         self.art = load_map_art()
         self.status = MapStatus("XP 1240   ★ 7/12   COINS 35",
-                                [False, False, True, True, True], [2, 0, 0, 0, 0])
+                                [False, False, True, True, True, True], [2, 0, 0, 0, 0, 0])
 
     def test_header_has_the_hud_at_the_right(self):
         """The HUD ends at the right edge of the 80-column map."""
@@ -137,11 +149,11 @@ class TestMapStatus(unittest.TestCase):
         self.assertEqual(star_row.count("★"), 2)
         self.assertEqual(star_row.count("☆"), 1 + 3)
         start = star_row.index("★★☆")
-        self.assertEqual(start + 1, node_centre(0, 5))
+        self.assertEqual(start + 1, node_centre(0, NODE_COUNT))
 
     def test_locked_nodes_use_the_locked_tile(self):
         """With locks, the picture differs from the same map without them."""
-        open_status = MapStatus("", [False] * 5, [0] * 5)
+        open_status = MapStatus("", [False] * NODE_COUNT, [0] * NODE_COUNT)
         locked = map_frame(1, WORLD_1_IDS, None, self.art, self.status).split("\n")[4:]
         unlocked = map_frame(1, WORLD_1_IDS, None, self.art, open_status).split("\n")[4:]
         self.assertNotEqual(locked, unlocked)

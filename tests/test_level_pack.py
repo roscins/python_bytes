@@ -3,7 +3,13 @@
 import unittest
 
 from engine.level_pack import LevelError, load_level, load_levels
-from tests.helpers import VALID_LEVEL_TOML, make_temporary_folder, write_level_pack
+from render.boss_screen import boss_name
+from tests.helpers import (
+    VALID_BOSS_TOML,
+    VALID_LEVEL_TOML,
+    make_temporary_folder,
+    write_level_pack,
+)
 
 
 class TestLoadLevel(unittest.TestCase):
@@ -44,6 +50,24 @@ class TestLoadLevel(unittest.TestCase):
         self.assertEqual(debug.answer, "ONE")
         self.assertIsNone(debug.reference)
         self.assertEqual(debug.tests, [])
+
+    def test_wave_time_limit_is_read(self):
+        """A wave may say how many seconds its program may run."""
+        text = self.broken('kind = "build"', 'kind = "build"\ntime_limit = 10')
+        level = self.load(text)
+        self.assertEqual(level.waves[0].time_limit, 10)
+        self.assertIsNone(level.waves[1].time_limit)
+
+    def test_wave_time_limit_must_be_a_whole_number_of_seconds(self):
+        """0, negative numbers, text, decimals and true are rejected."""
+        cases = [("0", "must be at least 1"), ("-5", "must be at least 1"),
+                 ('"ten"', "must be a whole number"), ("2.5", "must be a whole number"),
+                 ("true", "must be a whole number")]
+        for value, message in cases:
+            with self.subTest(value=value):
+                text = self.broken('kind = "build"', f'kind = "build"\ntime_limit = {value}')
+                with self.assertRaisesRegex(LevelError, f"time_limit {message}"):
+                    self.load(text)
 
     def test_not_toml_is_an_error(self):
         """A file that is not TOML is rejected, naming the file."""
@@ -253,6 +277,16 @@ class TestLoadLevels(unittest.TestCase):
         self.write("w1", "1-1-hello-again", "1-1")
         with self.assertRaisesRegex(LevelError, "1-1 is used twice"):
             load_levels(self.levels_folder)
+
+    def test_the_last_boss_is_boss_8_in_world_8(self):
+        """boss-8 loads from w8/, is a boss, and is shown as BOSS 8."""
+        text = VALID_BOSS_TOML.replace('id = "boss-1"', 'id = "boss-8"').replace("world = 1", "world = 8")
+        write_level_pack(self.levels_folder, "w8", "boss-8-factory-wakes", text)
+        levels = load_levels(self.levels_folder)
+        self.assertEqual(levels[0].id, "boss-8")
+        self.assertEqual(levels[0].world, 8)
+        self.assertTrue(levels[0].boss)
+        self.assertEqual(boss_name(levels[0].id), "BOSS 8")
 
     def test_folders_without_level_toml_are_skipped(self):
         """Only folders with a level.toml file are levels."""

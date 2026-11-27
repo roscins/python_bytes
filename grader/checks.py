@@ -141,10 +141,10 @@ def construct_name(node_type):
     return CONSTRUCT_NAMES.get(node_type, node_type)
 
 
-def problem_with_run(result):
+def problem_with_run(result, time_limit=DEFAULT_TIME_LIMIT):
     """Return a message if the program crashed or timed out, or "" if it ran fine."""
     if result.timed_out:
-        return (f"Your program ran for more than {DEFAULT_TIME_LIMIT:g} seconds. "
+        return (f"Your program ran for more than {time_limit:g} seconds. "
                 "Is there a loop that never ends?")
     if result.exit_code != 0:
         return f"Your program stopped with an error: {result.error_line()}"
@@ -158,11 +158,11 @@ def input_note(test):
     return ""
 
 
-def check_expected_stdout(test, code):
+def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """The program must print exactly test["expected_stdout"]."""
     name = "prints the right output" + input_note(test)
-    result = run_code(code, test.get("stdin", ""))
-    problem = problem_with_run(result)
+    result = run_code(code, test.get("stdin", ""), time_limit)
+    problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem)
     expected = normalise_output(test["expected_stdout"])
@@ -174,12 +174,12 @@ def check_expected_stdout(test, code):
     return CheckResult(False, name, message)
 
 
-def check_expected_stdout_contains(test, code):
+def check_expected_stdout_contains(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """Every text in test["expected_stdout_contains"] must appear in the output."""
     pieces = test["expected_stdout_contains"]
     name = "prints " + ", ".join(pieces) + input_note(test)
-    result = run_code(code, test.get("stdin", ""))
-    problem = problem_with_run(result)
+    result = run_code(code, test.get("stdin", ""), time_limit)
+    problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem)
     printed = normalise_output(result.stdout)
@@ -240,14 +240,14 @@ def find_result_line(stdout):
     return found
 
 
-def check_call(test, code):
+def check_call(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """Calling test["call"] with test["args"] must return test["expected"]."""
     call = call_text(test)
     name = f"{call} returns {test['expected']!r}"
     call_json = json.dumps({"name": test["call"], "args": test.get("args", [])})
     files = {PLAYER_FILE: code, CALL_FILE: call_json, CALL_SCRIPT_FILE: CALL_SCRIPT}
-    result = run_files(files, CALL_SCRIPT_FILE, test.get("stdin", ""))
-    problem = problem_with_run(result)
+    result = run_files(files, CALL_SCRIPT_FILE, test.get("stdin", ""), time_limit)
+    problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem)
     found = find_result_line(result.stdout)
@@ -365,10 +365,20 @@ def test_kind(test):
     return None
 
 
-def run_check(test, code):
-    """Run one [[wave.test]] table on the player's code and return a CheckResult."""
+# The kinds of test that run the player's program, and so have a time limit.
+RUNNING_KINDS = ["expected_stdout", "expected_stdout_contains", "call"]
+
+
+def run_check(test, code, time_limit=DEFAULT_TIME_LIMIT):
+    """Run one [[wave.test]] table on the player's code and return a CheckResult.
+
+    `time_limit` is how many seconds the program may run, for the kinds of
+    test that run it.
+    """
     kind = test_kind(test)
     if kind is None:
         return CheckResult(False, "unknown test", "This test has no kind the grader knows.")
     check_function = CHECK_FUNCTIONS[kind]
+    if kind in RUNNING_KINDS:
+        return check_function(test, code, time_limit)
     return check_function(test, code)
