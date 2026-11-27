@@ -14,7 +14,7 @@ from engine.tutorial import tutorial_text
 from engine.loop import run, start_text
 from engine.save_file import DEFAULT_SAVE_PATH, load_progress, set_aside_broken_save
 from engine.key_display import KeyDisplay
-from engine.key_screens import FULL, PLAIN, title_menu, wait_for_window_keys
+from engine.key_screens import PLAIN, title_menu, wait_for_window_keys
 from engine.keys import keyboard_available, make_keyboard
 from engine.shutdown import GameInterrupted, ShutdownGuard, install_windows_close_handler
 from engine.terminal import (

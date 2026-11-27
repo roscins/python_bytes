@@ -9,7 +9,6 @@ the middle, and the last frame says PRESS ENTER.
 from pathlib import Path
 
 from render.canvas import new_canvas, paste, set_pixel
-from render.palette import load_palette
 from render.reactions import load_reaction_art
 from render.sprite import render_sprite
 

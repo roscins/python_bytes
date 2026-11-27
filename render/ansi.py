@@ -82,6 +82,7 @@ def to_256(text):
     Everything else in the text is left as it is.
     """
     def replace(match):
+        """Return the 256-colour code for one 24-bit colour code."""
         number = nearest_256(int(match.group(2)), int(match.group(3)), int(match.group(4)))
         return f"\x1b[{match.group(1)}8;5;{number}m"
 

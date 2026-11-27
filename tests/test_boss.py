@@ -175,6 +175,14 @@ class TestBossCommands(unittest.TestCase):
         self.assertIn("boss-1", self.state.cleared)
         self.assertIsNone(self.state.boss_fight)
 
+    def test_after_a_win_the_next_line_is_a_command(self):
+        """Line mode: typing play after the win is not added to the boss code."""
+        self.submit(make_boss_level().waves[0].reference)
+        self.assertFalse(self.state.coding)
+        code = self.state.buffers["boss-1"][1]
+        handle_line(self.state, "map")
+        self.assertEqual(self.state.buffers["boss-1"][1], code)
+
     def test_time_up_restarts_without_grading(self):
         """When the time is up, submit restarts the fight and costs no life."""
         clock = FakeClock()

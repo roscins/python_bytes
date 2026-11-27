@@ -259,67 +259,17 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS, folder=None):
     if kind not in allowed_kinds:
         raise LevelError(f"{place}: kind must be one of {allowed_kinds}, got {kind!r}")
     brief = get_text(table, "brief", place)
-
-    mode = None
-    if "mode" in table:
-        mode = get_text(table, "mode", place)
-        if mode not in MODES:
-            raise LevelError(f"{place}: mode must be one of {MODES}, got {mode!r}")
-    if mode in QUIZ_MODES and kind not in QUIZ_KINDS:
-        raise LevelError(f"{place}: a {mode} wave must be one of {QUIZ_KINDS}")
-
-    # A predict wave shows code and asks for its output, so it has an
-    # answer instead of a reference solution. Every other wave has a
-    # reference solution. Both kinds have a wrong solution.
-    if mode == "predict":
-        needed = ["code", "answer", "wrong"]
-    elif mode in QUIZ_MODES:
-        needed = ["wrong"]
-    else:
-        needed = ["reference", "wrong"]
-    for key in needed:
-        get_text(table, key, place)
-
-    tests = table.get("test", [])
-    if not isinstance(tests, list):
-        raise LevelError(f"{place}: tests must be written as [[wave.test]] tables")
-    test_number = 0
-    for test in tests:
-        test_number = test_number + 1
-        check_test(test, f"{place}, test {test_number}")
-
-    files = get_data_files(table, place, folder)
-    for test in tests:
-        add_data(test, files, place, folder)
-
-    explanation = None
-    if "explanation" in table:
-        explanation = get_text(table, "explanation", place)
-
-    goal = None
-    if "goal" in table:
-        goal = get_text(table, "goal", place)
-
-    hints = []
-    if "hints" in table:
-        hints = get_list_of_text(table, "hints", place)
-        if len(hints) != HINT_COUNT:
-            raise LevelError(f"{place}: a wave has {HINT_COUNT} hints (nudge, outline, "
-                             f"partial solution), this one has {len(hints)}")
-
-    time_limit = None
-    if "time_limit" in table:
-        time_limit = get_whole_number(table, "time_limit", place)
-        if time_limit < 1:
-            raise LevelError(f"{place}: time_limit must be at least 1 second")
+    mode = get_mode(table, kind, place)
+    check_needed_parts(table, mode, place)
+    tests = get_tests(table, place, folder)
 
     answer = table.get("answer")
     questions = []
+    faults = []
+    categories = []
     if mode == "choice":
         questions = get_questions(table, place)
         answer = key_sheet(questions)
-    faults = []
-    categories = []
     if mode == "review":
         faults, categories = get_faults(table, place)
         answer = fault_sheet(faults)
@@ -337,16 +287,89 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS, folder=None):
         wrong=table.get("wrong"),
         answer=answer,
         tests=tests,
-        hints=hints,
-        time_limit=time_limit,
-        explanation=explanation,
-        goal=goal,
+        hints=get_hints(table, place),
+        time_limit=get_time_limit(table, place),
+        explanation=get_optional_text(table, "explanation", place),
+        goal=get_optional_text(table, "goal", place),
         questions=questions,
         lock=lock,
         faults=faults,
         categories=categories,
-        files=files,
+        files=get_data_files(table, place, folder),
     )
+
+
+def get_mode(table, kind, place):
+    """Return the wave's mode, or None for a wave the player answers with code."""
+    if "mode" not in table:
+        return None
+    mode = get_text(table, "mode", place)
+    if mode not in MODES:
+        raise LevelError(f"{place}: mode must be one of {MODES}, got {mode!r}")
+    if mode in QUIZ_MODES and kind not in QUIZ_KINDS:
+        raise LevelError(f"{place}: a {mode} wave must be one of {QUIZ_KINDS}")
+    return mode
+
+
+def check_needed_parts(table, mode, place):
+    """Raise LevelError if the wave lacks a part its mode needs.
+
+    A predict wave shows code and asks for its output, so it has an answer
+    instead of a reference solution. A quiz wave makes its answer from its
+    questions or faults. Every other wave has a reference solution. All of
+    them have a wrong solution.
+    """
+    if mode == "predict":
+        needed = ["code", "answer", "wrong"]
+    elif mode in QUIZ_MODES:
+        needed = ["wrong"]
+    else:
+        needed = ["reference", "wrong"]
+    for key in needed:
+        get_text(table, key, place)
+
+
+def get_tests(table, place, folder):
+    """Return the wave's checked [[wave.test]] tables, each with the data files it runs with."""
+    tests = table.get("test", [])
+    if not isinstance(tests, list):
+        raise LevelError(f"{place}: tests must be written as [[wave.test]] tables")
+    test_number = 0
+    for test in tests:
+        test_number = test_number + 1
+        check_test(test, f"{place}, test {test_number}")
+    files = get_data_files(table, place, folder)
+    for test in tests:
+        add_data(test, files, place, folder)
+    return tests
+
+
+def get_optional_text(table, key, place):
+    """Return table[key] if it is there (it must be text), or None."""
+    if key not in table:
+        return None
+    return get_text(table, key, place)
+
+
+def get_hints(table, place):
+    """Return the wave's three hints, or an empty list if it has none."""
+    if "hints" not in table:
+        return []
+    hints = get_list_of_text(table, "hints", place)
+    if len(hints) != HINT_COUNT:
+        raise LevelError(f"{place}: a wave has {HINT_COUNT} hints (nudge, outline, "
+                         f"partial solution), this one has {len(hints)}")
+    return hints
+
+
+def get_time_limit(table, place):
+    """Return the wave's time limit in seconds, or None for the runner's default."""
+    if "time_limit" not in table:
+        return None
+    time_limit = get_whole_number(table, "time_limit", place)
+    if time_limit < 1:
+        raise LevelError(f"{place}: time_limit must be at least 1 second")
+    return time_limit
 
 
 def read_data_file(name, place, folder):

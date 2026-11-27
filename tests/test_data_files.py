@@ -75,6 +75,15 @@ class TestDataFiles(unittest.TestCase):
         session.data = {"a.csv": "1,2\n"}
         self.assertIn("1,2", session.run('open("a.csv").read()').output)
 
+    def test_the_console_forgets_the_files_of_the_wave_before(self):
+        """A new wave's files replace the old ones."""
+        session = ReplSession()
+        self.addCleanup(session.close)
+        session.data = {"a.csv": "1\n"}
+        session.run("1")
+        session.data = {"b.csv": "2\n"}
+        self.assertIn("False", session.run('__import__("os").path.exists("a.csv")').output)
+
     def test_show_where_and_run(self):
         """The player can read the file, export it and see what was written."""
         level = load(self)

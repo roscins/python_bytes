@@ -9,6 +9,7 @@ unlocking work the same.
 
 from engine.boss import RESTART, WON, BossFight
 from engine.friendly import friendly_message
+from engine.progression_help import next_level_to_play
 from engine.results_screen import reward_lines
 from engine.rewards import apply_submission
 from engine.submission import grade_text
@@ -86,9 +87,14 @@ def submit_to_boss(state, level):
     if outcome == WON:
         reward = apply_submission(state, level, submissions)
         state.boss_fight = None
+        # The fight is over: the next typed line is a command, not boss code.
+        state.coding = False
         frames = drain_or_text(fight, hp_before, 0, lives_before, state.plain)
         lines = ["BOSS DEFEATED."]
         lines.extend(reward_lines(level, reward))
+        following = next_level_to_play(state)
+        if following is not None and not state.keys:
+            lines.append(f"Next: play {following.id}")
         frames[-1] = frames[-1] + "\n\n" + "\n".join(lines)
         return frames
 

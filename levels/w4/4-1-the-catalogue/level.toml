@@ -160,7 +160,7 @@ kind = "debug"
 mode = "choice"
 goal = "Choose list, tuple, set or dict for each job."
 brief = "Pick the best data structure for each job in the knowledge base."
-wrong = "1: b, 2: a, 3: a, 4: a"
+wrong = "1: b\n2: a\n3: a\n4: a"
 
 [[wave.question]]
 ask = "Part names in delivery order, repeats kept, more added later."

@@ -28,7 +28,7 @@ from engine.scoring import HINT_NAMES, HINT_PRICES, is_unlocked
 from engine.submission import grade_text
 from engine.wave_report import explain_error, run_report, submit_report, syntax_error_of
 from engine.workspace import starting_text
-from render.editor_view import GUTTER, View, code_rows, divider, frame
+from render.editor_view import View, code_rows, divider, frame
 from render.ansi import strip_ansi
 from render.highlight import highlight_lines
 from render.panel import wrap_lines

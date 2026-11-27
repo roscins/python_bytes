@@ -624,6 +624,7 @@ Phase 7 – Worlds 5–8 (content and art)
 [ ] Draw paths on the pixel map (Level 8-4)
 [ ] Optional time limit per wave (Level 8-2 timing missions); pdb in Level 7-4 is graded as a predict/explain wave, not run
 [ ] Draw the factory tileset and the remaining boss sprites
+[ ] Make the engine readable for World 7: split functions over ~40 lines
 Gate: Advanced tier playable end to end.
 Phase 8 – Playtest round 2 and balancing
 [ ] Full playthrough by student playtesters from both tiers
