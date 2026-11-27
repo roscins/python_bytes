@@ -11,10 +11,8 @@ from engine.game_state import GameState
 from engine.level_pack import LevelError, load_levels
 from engine.screens import join_screens
 from engine.tutorial import tutorial_text
-from render.screen import size_problem
 from engine.loop import run, start_text
 from engine.save_file import DEFAULT_SAVE_PATH, load_progress, set_aside_broken_save
-from engine.display import Display
 from engine.key_display import KeyDisplay
 from engine.key_screens import FULL, PLAIN, title_menu, wait_for_window_keys
 from engine.keys import keyboard_available, make_keyboard
@@ -59,7 +57,7 @@ def write_line(text):
 
 
 def make_real_display(state):
-    """Return a Display for the real terminal, or None if it cannot do full screen.
+    """Return a KeyDisplay for the real terminal, or None if it cannot do full screen.
 
     A Windows console that cannot be switched to colour codes, or input that
     is not a terminal, gets the plain mode.
@@ -72,25 +70,6 @@ def make_real_display(state):
                       truecolor=supports_truecolor())
 
 
-def wait_for_window(size, read_line, write):
-    """Before full screen: make sure the window is big enough.
-
-    Returns FULL when it is, PLAIN if the player chose the plain mode, or
-    QUIT at the end of input or Ctrl-C.
-    """
-    while True:
-        problem = size_problem(*size())
-        if not problem:
-            return FULL
-        write(problem)
-        try:
-            typed = read_line("> ")
-        except (EOFError, KeyboardInterrupt):
-            return QUIT
-        if typed.strip().lower() == "p":
-            return PLAIN
-
-
 def choose_how_to_start(state, info, save_path, read_line, write, plain, display=None):
     """Show the title screen and set the game up as the player chose.
 
@@ -98,7 +77,7 @@ def choose_how_to_start(state, info, save_path, read_line, write, plain, display
     be read is never deleted: it is set aside as .broken (or kept as .old
     for a new game over a good save).
     """
-    if getattr(display, "keys", None) is not None:
+    if display is not None:
         choice = title_menu(display, info)
     else:
         choice = ask_title(info, read_line, write, plain)
@@ -161,11 +140,7 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
     elif not plain:
         display = make_real_display(state)
     if display is not None:
-        keyboard = getattr(display, "keys", None)
-        if keyboard is None:
-            choice = wait_for_window(display.size, read_line, write)
-        else:
-            choice = wait_for_window_keys(keyboard, display.size, display.raw_write)
+        choice = wait_for_window_keys(display.keys, display.size, display.raw_write)
         if choice == QUIT:
             return 0
         if choice == PLAIN:
@@ -176,7 +151,7 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
         else:
             state.plain = False
             state.color = True
-            state.keys = keyboard is not None
+            state.keys = True
     guard = ShutdownGuard()
     autosaver = AutoSaver(state, save_path)
     close_handler = None
@@ -214,9 +189,8 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
         display.show_title()
         say = display.show
     try:
-        guarded_read = guard.read_input
         how = choose_how_to_start(
-            state, info, save_path, lambda prompt: reader_for(display, guarded_read, read_line, prompt),
+            state, info, save_path, lambda prompt: guard.read_input(read_line, prompt),
             say, plain, display)
     except EOFError:
         # Ctrl-D on a screen before the game starts.
@@ -238,8 +212,6 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
     if info.status == "none":
         first = join_screens([tutorial_text(state.keys), first])
     autosaver.save()
-    if display is not None:
-        display.show_footer = True
     run(state, read_line, write, pause=pause, guard=guard, autosaver=autosaver, display=display,
         first_answer=first)
     autosaver.save()
@@ -247,13 +219,6 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
         display.stop()
         write("Goodbye, technician.")
     return 0
-
-
-def reader_for(display, guarded_read, read_line, prompt):
-    """Read a line for the title screen: through the display when there is one."""
-    if display is None:
-        return guarded_read(read_line, prompt)
-    return guarded_read(lambda text: display.read(read_line, text), prompt)
 
 
 def parse_arguments(argv):

@@ -142,8 +142,9 @@ boxes 2 and 3 become one.
 - After a hit on the boss the health bar drains and you are straight back in
   the code. Waiting for Enter swallowed what was typed. A win still waits.
 - Restart level and Hint ask with [No] [Yes] in the button row.
-- The old full screen with a typing row is no longer reachable by a player.
-  Its code is still there, used by its tests; removing it is a cleanup.
+- The old full screen with a typing row was removed after the merge.
+- Open: Snek's face beside the results is no longer seen in a wave, because
+  the panel under the editor does not draw it.
 
 ## Decisions
 

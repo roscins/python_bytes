@@ -1,6 +1,6 @@
 """The whole game in full-screen mode, on a fake terminal, and on a real pseudo-terminal.
 
-The fake-terminal tests run run_game with a Display that collects what is
+The fake-terminal tests run run_game with a display that collects what is
 drawn. The last class starts the real game in a pseudo-terminal (POSIX only)
 and checks the terminal is put back on every way out.
 """
@@ -16,33 +16,31 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from engine import __main__ as engine_main
-from engine.display import Display
+from engine.key_display import KeyDisplay
 from engine.terminal import ENTER_FULLSCREEN, LEAVE_FULLSCREEN, supports_truecolor
 from render.ansi import strip_ansi
 from tests.helpers import make_temporary_folder
-from tests.test_display import FakeTerminal
+from tests.test_display import FakeKeyboard, FakeTerminal
 
 PROJECT_FOLDER = Path(__file__).parent.parent
 
 
 class TestRunGameFullScreen(unittest.TestCase):
-    """run_game with a Display on a fake terminal."""
+    """run_game with a KeyDisplay on a fake terminal and a scripted keyboard."""
 
     def setUp(self):
         """A save path and a fake terminal."""
         self.save_path = make_temporary_folder(self) / "save.json"
         self.terminal = FakeTerminal()
 
-    def play(self, typed_text, **options):
-        """Run the real game (real levels) with the typed text; return (exit code, printed text)."""
-        real_stdin = sys.stdin
-        self.addCleanup(setattr, sys, "stdin", real_stdin)
-        sys.stdin = io.StringIO(typed_text)
+    def play(self, keys):
+        """Run the real game (real levels) with the keys; return (exit code, printed text)."""
+        self.keyboard = keys if isinstance(keys, FakeKeyboard) else FakeKeyboard(keys)
         printed = io.StringIO()
 
         def factory(state):
-            return Display(state, self.terminal.write, size=self.terminal.size, sleep=self.terminal.sleep,
-                           skipped=self.terminal.skipped, **options)
+            return KeyDisplay(state, self.terminal.write, self.keyboard, size=self.terminal.size,
+                              sleep=self.terminal.sleep)
 
         with redirect_stdout(printed):
             code = engine_main.run_game(save_path=self.save_path, display_factory=factory, concepts_file=None)
@@ -50,76 +48,61 @@ class TestRunGameFullScreen(unittest.TestCase):
 
     def test_the_game_enters_full_screen_and_leaves_it_at_the_end(self):
         """And says goodbye on the player's own screen, after leaving."""
-        code, printed = self.play("\n1\nquit\n")
+        code, printed = self.play(["enter", "down", "enter"])
         self.assertEqual(code, 0)
         self.assertEqual(self.terminal.written[0], ENTER_FULLSCREEN)
         self.assertEqual(self.terminal.written[-1], LEAVE_FULLSCREEN)
+        self.assertFalse(self.keyboard.started)
         self.assertIn("Goodbye, technician.", printed)
 
     def test_the_title_has_the_logo_and_press_enter_before_the_menu(self):
         """The first screens."""
-        self.play("\n2\n")
+        self.play(["enter", "down", "enter"])
         text = strip_ansi(self.terminal.text())
         self.assertIn("PRESS ENTER", text)
         self.assertLess(text.index("PRESS ENTER"), text.index("NEW GAME"))
         self.assertIn("▀", self.terminal.text())
 
-    def test_quit_at_the_title_still_leaves_full_screen(self):
-        """No game was started."""
-        code, _ = self.play("\n2\n")
-        self.assertEqual(code, 0)
-        self.assertEqual(self.terminal.written[-1], LEAVE_FULLSCREEN)
-
     def test_a_stop_signal_leaves_full_screen_and_saves(self):
-        """SIGTERM while the game waits for typing."""
-        lines = ["", "1", "play 1-1", "", ':edit 1 print("x")']
+        """SIGTERM while the editor waits for a key."""
+        class SignalAtTheEnd(FakeKeyboard):
+            """Sends SIGTERM instead of running out of keys."""
 
-        def read_line(prompt):
-            if not lines:
-                signal.raise_signal(signal.SIGTERM)
-            return lines.pop(0)
+            def read_key(self, timeout=None):
+                """Return the next key, or raise the signal."""
+                if timeout != 0 and not self.keys:
+                    signal.raise_signal(signal.SIGTERM)
+                return super().read_key(timeout)
 
-        printed = io.StringIO()
-
-        def factory(state):
-            return Display(state, self.terminal.write, size=self.terminal.size, sleep=self.terminal.sleep,
-                           skipped=self.terminal.skipped)
-
-        with redirect_stdout(printed):
-            code = engine_main.run_game(save_path=self.save_path, read_line=read_line,
-                                        display_factory=factory, concepts_file=None)
+        keys = ["enter", "enter", "escape", "enter", "escape", "7"]
+        code, _ = self.play(SignalAtTheEnd(keys))
         self.assertEqual(code, 128 + signal.SIGTERM)
         self.assertEqual(self.terminal.written[-1], LEAVE_FULLSCREEN)
+        self.assertFalse(self.keyboard.started)
         with open(self.save_path, encoding="utf-8") as save_file:
-            self.assertEqual(json.load(save_file)["buffers"]["1-1"]["1"], 'print("x")\n')
+            self.assertEqual(json.load(save_file)["buffers"]["1-1"]["1"], "print(7)\n")
 
     def test_an_error_inside_the_game_leaves_full_screen_before_it_propagates(self):
         """The terminal is not left in the alternate screen."""
-        def read_line(prompt):
-            raise RuntimeError("boom")
+        class Broken(FakeKeyboard):
+            """A keyboard that fails."""
 
-        def factory(state):
-            return Display(state, self.terminal.write, size=self.terminal.size, sleep=self.terminal.sleep,
-                           skipped=self.terminal.skipped)
+            def read_key(self, timeout=None):
+                """Raise an error the game does not expect."""
+                raise RuntimeError("boom")
 
-        with redirect_stdout(io.StringIO()):
-            with self.assertRaises(RuntimeError):
-                engine_main.run_game(save_path=self.save_path, read_line=read_line,
-                                     display_factory=factory, concepts_file=None)
+        with self.assertRaises(RuntimeError):
+            self.play(Broken())
         self.assertEqual(self.terminal.written[-1], LEAVE_FULLSCREEN)
+        self.assertFalse(self.keyboard.started)
 
     def test_every_frame_of_a_session_has_the_hud(self):
         """On every screen drawn after the title."""
-        self.play("\n1\nplay 1-1\n\n:quit\n")
+        self.play(["enter", "enter", "escape", "enter", "escape", "ctrl-d"])
         frames = [chunk for chunk in self.terminal.written if chunk.startswith("\x1b[1;1H")]
         self.assertGreater(len(frames), 5)
         for frame in frames:
             self.assertIn("WORLD 1", strip_ansi(frame))
-
-    def test_the_wave_screen_follows_each_typed_line(self):
-        """The code typed appears on the screen."""
-        self.play('\n1\nplay 1-1\n\n:clear\nprint("typed")\n:quit\n')
-        self.assertIn('print("typed")', strip_ansi(self.terminal.text()))
 
     def test_plain_mode_never_uses_the_display(self):
         """--plain is the baseline: no escape codes at all."""

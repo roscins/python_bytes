@@ -1,7 +1,7 @@
-"""Tests for engine/display.py: every answer of the game as a full screen.
+"""Tests for engine/display.py and engine/key_display.py: answers drawn as full screens.
 
-The terminal is a fake: `write` collects what would be drawn, `sleep` records
-the pauses, `skipped` is a switch. No real terminal and no real time.
+The terminal and the keyboard are fakes: `write` collects what would be
+drawn and `sleep` records the pauses. No real terminal and no real time.
 """
 
 import re
@@ -9,9 +9,10 @@ import unittest
 
 from engine.screens import split_screens
 from engine.commands import handle_line
-from engine.display import Display, split_sections
+from engine.display import split_sections
 from engine.game_state import GameState
 from engine.hud import hud_info
+from engine.key_display import KeyDisplay
 from engine.terminal import ENTER_FULLSCREEN, LEAVE_FULLSCREEN
 from render.ansi import strip_ansi
 from render.reactions import load_reaction_art, reaction_lines
@@ -21,7 +22,7 @@ ROW = re.compile(r"\x1b\[(\d+);1H")
 
 
 class FakeTerminal:
-    """What the display writes to, how big the window is, and the player's Enter key."""
+    """What the display writes to, and how big the window is."""
 
     def __init__(self, columns=80, rows=24):
         """Start with an empty record."""
@@ -29,8 +30,6 @@ class FakeTerminal:
         self.rows = rows
         self.written = []
         self.slept = []
-        self.skip = False
-        self.typed = []
 
     def write(self, text):
         """Collect what is written."""
@@ -43,15 +42,6 @@ class FakeTerminal:
     def sleep(self, seconds):
         """Record a pause instead of waiting."""
         self.slept.append(seconds)
-
-    def skipped(self):
-        """Return the Enter switch."""
-        return self.skip
-
-    def read_line(self, prompt):
-        """Pretend to read a line; Enter by default."""
-        self.typed.append(prompt)
-        return ""
 
     def text(self):
         """Return everything written, as one text."""
@@ -71,12 +61,52 @@ class FakeTerminal:
         return rows
 
 
+class FakeKeyboard:
+    """Hands out the keys of a list; then `then` for ever, or the input ends.
+
+    Attributes:
+        started: True between start() and stop().
+        pressed: how many keys the game waited for and got.
+        skip: True to press Enter once during the next animation.
+    """
+
+    def __init__(self, keys=(), then=None):
+        """Remember the keys to press."""
+        self.keys = list(keys)
+        self.then = then
+        self.started = False
+        self.pressed = 0
+        self.skip = False
+
+    def start(self):
+        """Switch on."""
+        self.started = True
+
+    def stop(self):
+        """Switch off."""
+        self.started = False
+
+    def read_key(self, timeout=None):
+        """Return the next key; None for the look during an animation unless `skip` is set."""
+        if timeout == 0:
+            if self.skip:
+                self.skip = False
+                return "enter"
+            return None
+        self.pressed = self.pressed + 1
+        if self.keys:
+            return self.keys.pop(0)
+        if self.then is None:
+            raise EOFError
+        return self.then
+
+
 def make_display(**options):
-    """Return (display, terminal, state): a game with Level 1-1, and a display on a fake terminal."""
+    """Return (display, terminal, state): Level 1-1, a fake terminal, and Enter pressed when asked."""
     state = GameState([make_full_level()])
     terminal = FakeTerminal(options.pop("columns", 80), options.pop("rows", 24))
-    display = Display(state, terminal.write, size=terminal.size, sleep=terminal.sleep,
-                      skipped=terminal.skipped, read_line=terminal.read_line, **options)
+    display = KeyDisplay(state, terminal.write, FakeKeyboard(then="enter"), size=terminal.size,
+                         sleep=terminal.sleep, **options)
     return display, terminal, state
 
 
@@ -138,7 +168,9 @@ class TestStartAndStop(unittest.TestCase):
         """The alternate screen."""
         display, terminal, _ = make_display()
         display.start()
+        self.assertTrue(display.keys.started)
         display.stop()
+        self.assertFalse(display.keys.started)
         self.assertEqual(terminal.written[0], ENTER_FULLSCREEN)
         self.assertEqual(terminal.written[-1], LEAVE_FULLSCREEN)
 
@@ -158,35 +190,36 @@ class TestFrames(unittest.TestCase):
         self.display.start()
 
     def test_the_hud_is_on_the_first_two_rows_of_every_screen(self):
-        """Whatever is shown."""
-        for answer in ("Unknown command: x.", handle_line(self.state, "play 1-1"), handle_line(self.state, "map")):
+        """A note and the map at the map, and the intro on the way into a wave."""
+        for command in ("xyzzy", "map", "play 1-1"):
+            answer = handle_line(self.state, command)
             self.terminal.written.clear()
             self.display.show(answer)
             rows = self.terminal.last_frame_rows()
             self.assertIn("WORLD 1", rows[1])
             self.assertIn("COINS", rows[2])
 
-    def test_every_row_is_80_wide_and_the_last_row_is_left_for_typing(self):
-        """23 rows drawn in a 24-row window."""
+    def test_the_rows_are_80_wide_with_buttons_and_keys_at_the_bottom(self):
+        """The last row is not padded, so the window never scrolls."""
         self.display.show("hello")
         rows = self.terminal.last_frame_rows()
-        self.assertEqual(sorted(rows), list(range(1, 24)))
-        for text in rows.values():
-            self.assertEqual(len(text), 80)
+        self.assertEqual(sorted(rows), list(range(1, 25)))
+        for number in range(1, 24):
+            self.assertEqual(len(rows[number]), 80)
+        self.assertIn("[Continue]", rows[23])
+        self.assertIn("Enter continue", rows[24])
 
     def test_a_panel_does_not_repeat_its_heading_inside(self):
         """The heading is the title, once."""
         self.display.show(handle_line(self.state, "play 1-1"))
         text = strip_ansi(self.terminal.text())
         self.assertNotIn("│ TIPS", text)
-        self.assertNotIn("│ WAVE 1 of 3", text)
 
     def test_the_body_is_framed_in_a_titled_panel(self):
         """Box characters and a title."""
         self.display.show(handle_line(self.state, "play 1-1"))
         text = strip_ansi(self.terminal.text())
         self.assertIn("┌─ TIPS ", text)
-        self.assertIn("┌─ WAVE 1 of 3 · FILL-IN ", text)
         self.assertIn("└", text)
 
     def test_the_map_is_drawn_as_it_is_not_in_a_panel(self):
@@ -207,11 +240,11 @@ class TestFrames(unittest.TestCase):
         self.assertIn("at least 80 x 24", text)
 
     def test_a_bigger_window_uses_more_rows(self):
-        """The body grows, the frame has rows - 1 rows."""
+        """The body grows."""
         display, terminal, _ = make_display(rows=40)
         display.start()
         display.show("hello")
-        self.assertEqual(len(terminal.last_frame_rows()), 39)
+        self.assertEqual(len(terminal.last_frame_rows()), 40)
 
     def test_without_true_colour_the_codes_are_256_colour(self):
         """macOS Terminal."""
@@ -227,41 +260,8 @@ class TestFrames(unittest.TestCase):
         self.assertIn("38;2;", self.terminal.text())
 
 
-class TestCodeScreen(unittest.TestCase):
-    """While the player types, the screen follows."""
-
-    def setUp(self):
-        """A display on Level 1-1, in code mode."""
-        self.display, self.terminal, self.state = make_display()
-        self.display.start()
-        self.display.show(handle_line(self.state, "play 1-1"))
-        self.terminal.written.clear()
-
-    def test_an_empty_answer_while_coding_redraws_the_code_with_the_new_line(self):
-        """The line just typed is on the screen."""
-        handle_line(self.state, ":clear")
-        handle_line(self.state, 'print("typed line")')
-        self.display.show("")
-        text = "\n".join(self.terminal.last_frame_rows().values())
-        self.assertIn('print("typed line")', text)
-
-    def test_a_short_message_goes_to_the_status_line_and_the_code_stays(self):
-        """:undo with nothing to undo."""
-        self.display.show("There is nothing to undo.")
-        rows = self.terminal.last_frame_rows()
-        self.assertIn("There is nothing to undo.", rows[22])
-        self.assertIn("YOUR CODE", "\n".join(rows.values()))
-
-    def test_a_long_answer_replaces_the_code_view(self):
-        """Help text is a panel of its own."""
-        self.display.show(handle_line(self.state, ":help"))
-        text = strip_ansi(self.terminal.text())
-        self.assertIn("Commands", text)
-        self.assertIn(":submit", text)
-
-
 class TestResultsAndSnek(unittest.TestCase):
-    """Snek reacts to what the player did."""
+    """Snek reacts beside results shown at the map (:submit typed on the command row)."""
 
     def setUp(self):
         """A display on Level 1-1."""
@@ -277,6 +277,7 @@ class TestResultsAndSnek(unittest.TestCase):
 
     def shown_face(self, answer):
         """Show the answer; return the name of the Snek face drawn (all its 8 lines), or None."""
+        self.state.coding = False
         self.terminal.written.clear()
         self.display.show(answer)
         text = self.terminal.text()
@@ -309,8 +310,10 @@ class TestResultsAndSnek(unittest.TestCase):
 
     def test_the_results_are_in_a_results_panel_next_to_snek(self):
         """Text on the left."""
+        answer = self.submit('print("a")')
+        self.state.coding = False
         self.terminal.written.clear()
-        self.display.show(self.submit('print("a")'))
+        self.display.show(answer)
         text = strip_ansi(self.terminal.text())
         self.assertIn("┌─ LEVEL 1-1 · RESULTS", text)
         self.assertIn("tests passed", text)
@@ -333,7 +336,7 @@ class TestAnimations(unittest.TestCase):
         display2.start()
         answer2 = handle_line(state2, "play 1-1")
         terminal2.written.clear()
-        terminal2.skip = True
+        display2.keys.skip = True
         display2.show(answer2)
         self.assertLess(len(terminal2.written), slow)
         self.assertIn("Hi.", strip_ansi(terminal2.text()))
@@ -374,15 +377,6 @@ class TestAnimations(unittest.TestCase):
         display.after_command(5)
         self.assertEqual(terminal.slept, [])
 
-    def test_the_cursor_is_hidden_during_an_animation_and_shown_after(self):
-        """Never left hidden."""
-        display, terminal, state = make_display()
-        display.start()
-        display.show(handle_line(state, "play 1-1"))
-        text = terminal.text()
-        self.assertIn("\x1b[?25l", text)
-        self.assertLess(text.rindex("\x1b[?25l"), text.rindex("\x1b[?25h"))
-
     def test_level_clear_frames_are_animated_in_the_body(self):
         """The stars fill in: several frames and pauses."""
         display, terminal, state = make_display()
@@ -405,62 +399,53 @@ class TestAnimations(unittest.TestCase):
 
 
 class TestPagingAndReading(unittest.TestCase):
-    """Long answers and the typing row."""
+    """Screens one at a time, the title, and the command row."""
 
-    def test_the_story_is_a_page_of_its_own_so_the_wave_can_be_typed_at_once(self):
-        """Story, Enter, tips, Enter, and the wave: one thing at a time."""
+    def test_story_and_tips_are_one_screen_each_and_the_wave_is_left_to_the_editor(self):
+        """Two waits."""
         display, terminal, state = make_display()
         display.start()
         display.show(handle_line(state, "play 1-1"))
-        self.assertEqual(len(terminal.typed), 2)
-        rows = "\n".join(terminal.last_frame_rows().values())
-        self.assertNotIn("┌─ TIPS", rows)
-        self.assertIn("┌─ WAVE 1 of 3", rows)
+        self.assertEqual(display.keys.pressed, 2)
+        self.assertNotIn("WAVE 1 of 3", strip_ansi(terminal.text()))
 
     def test_enter_during_the_title_animation_is_the_enter_to_continue(self):
         """One press, not two."""
-        display, terminal, state = make_display()
+        display, terminal, _ = make_display()
         display.start()
-        terminal.skip = True
+        display.keys.skip = True
         display.show_title()
-        self.assertEqual(terminal.typed, [])
+        self.assertEqual(display.keys.pressed, 0)
         self.assertIn("PRESS ENTER", strip_ansi(terminal.text()))
 
     def test_the_title_waits_for_enter_when_nothing_was_pressed(self):
         """The last frame says PRESS ENTER and waits."""
-        display, terminal, state = make_display()
+        display, _, _ = make_display()
         display.start()
         display.show_title()
-        self.assertEqual(len(terminal.typed), 1)
+        self.assertEqual(display.keys.pressed, 1)
 
-    def test_a_long_answer_is_split_in_pages_with_enter_for_more(self):
-        """The player presses Enter between pages."""
+    def test_a_long_answer_is_split_in_pages(self):
+        """Enter turns them."""
         display, terminal, _ = make_display()
         display.start()
-        long_text = "\n".join(f"line {i}" for i in range(60))
-        display.show(long_text)
-        self.assertGreaterEqual(len(terminal.typed), 1)
+        display.show("\n".join(f"line {i}" for i in range(60)))
+        self.assertGreater(display.keys.pressed, 1)
         self.assertIn("line 59", strip_ansi(terminal.text()))
 
     def test_read_moves_to_the_bottom_row_and_redraws_afterwards(self):
-        """So the screen never scrolls when Enter is pressed."""
+        """With the keyboard back to normal while the line is typed."""
         display, terminal, _ = make_display()
         display.start()
         display.show("hello")
         terminal.written.clear()
-        line = display.read(lambda prompt: "typed", "> ")
-        self.assertEqual(line, "typed")
-        text = terminal.text()
-        self.assertTrue(text.startswith("\x1b[24;1H\x1b[K"))
-        self.assertIn("\x1b[1;1H", text)
-
-    def test_the_prompt_is_passed_to_the_reader(self):
-        """The real input() shows it."""
-        display, terminal, _ = make_display()
-        display.start()
         seen = []
-        display.read(lambda prompt: seen.append(prompt) or "", "  3 │ ")
-        self.assertEqual(seen, ["  3 │ "])
+        line = display.read(lambda prompt: seen.append((prompt, display.keys.started)) or "typed", ": ")
+        self.assertEqual(line, "typed")
+        self.assertEqual(seen, [(": ", False)])
+        self.assertTrue(display.keys.started)
+        self.assertTrue(terminal.text().startswith("\x1b[24;1H\x1b[K"))
+        self.assertIn("\x1b[1;1H", terminal.text())
 
 
 class TestHudInfo(unittest.TestCase):

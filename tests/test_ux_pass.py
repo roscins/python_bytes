@@ -3,9 +3,7 @@
 import unittest
 from pathlib import Path
 
-from engine.__main__ import FULL, PLAIN, wait_for_window
 from engine.commands import handle_line
-from engine.display import Display
 from engine.fill import fill_next_blank
 from engine.footer import footer_for
 from engine.game_state import GameState
@@ -13,7 +11,6 @@ from engine.level_pack import load_levels
 from engine.loop import show_answer
 from engine.screens import PAGE_BREAK, split_screens, wrap_text
 from engine.terminal import enable_line_editing
-from engine.title import QUIT
 from engine.tutorial import SCREENS, tutorial_text
 from render.ansi import strip_ansi
 from render.compare_view import compare_lines
@@ -98,34 +95,6 @@ class TestScreens(unittest.TestCase):
         self.assertLess(words, 200)          # about a minute of reading
 
 
-class TestRoomForTheCode(GameCase):
-    """At 80 x 24 the boss's whole program and the goal stay on one page while typing."""
-
-    def page(self):
-        """Return the page a full-screen display shows while the player types."""
-        display = Display(self.state, lambda text: None, size=lambda: (80, 24), delay=0)
-        self.state.plain = False
-        return strip_ansi("\n".join(display.typing_page()))
-
-    def test_boss_code_and_goal_fit_one_page(self):
-        """All 12 lines, and one more typed."""
-        self.type_lines("play boss-1", "# one more")
-        page = self.page()
-        self.assertIn("GOAL", page)
-        self.assertIn("# Boot report", page)
-        self.assertIn("# one more", page)
-        self.assertLessEqual(len(page.splitlines()), 18)
-
-    def test_a_very_long_code_shows_its_end(self):
-        """The goal stays, and the note says where the rest is."""
-        self.type_lines("play boss-1", *[f"x{n} = {n}" for n in range(20)])
-        page = self.page()
-        self.assertIn("GOAL", page)
-        self.assertIn("are above: :show", page)
-        self.assertIn("x19 = 19", page)
-        self.assertLessEqual(len(page.splitlines()), 18)
-
-
 class TestStartup(unittest.TestCase):
     """Window size and line editing."""
 
@@ -135,17 +104,6 @@ class TestStartup(unittest.TestCase):
         self.assertIn("80 x 24; yours is 70 x 20", message)
         self.assertIn("10 columns wider and 4 rows taller", message)
         self.assertEqual(size_problem(80, 24), "")
-
-    def test_waiting_for_the_window(self):
-        """Enter checks again; p chooses plain; end of input quits."""
-        sizes = iter([(70, 24), (80, 24)])
-        self.assertEqual(wait_for_window(lambda: next(sizes), lambda prompt: "", lambda text: None), FULL)
-        self.assertEqual(wait_for_window(lambda: (10, 10), lambda prompt: "p", lambda text: None), PLAIN)
-
-        def end(prompt):
-            raise EOFError
-
-        self.assertEqual(wait_for_window(lambda: (10, 10), end, lambda text: None), QUIT)
 
     def test_line_editing_is_used_where_python_has_it(self):
         """Without readline (Windows) the game goes on."""

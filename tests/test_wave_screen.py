@@ -16,8 +16,8 @@ from engine.level_pack import load_levels
 from engine.wave_screen import WaveScreen
 from render.ansi import strip_ansi, visible_length
 from tests.helpers import make_temporary_folder
-from tests.test_display import FakeTerminal
-from tests.test_key_screens import FakeKeyboard, screen_text
+from tests.test_display import FakeKeyboard, FakeTerminal
+from tests.test_key_screens import screen_text
 
 LEVELS = load_levels(engine_main.LEVELS_FOLDER)
 

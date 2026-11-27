@@ -74,22 +74,13 @@ def numbered_code(text, plain=False, color=False):
 # The width of the GOAL box; it also fits inside a panel of the full screen.
 GOAL_WIDTH = 66
 
-# Code lines the compact screen has room for: 18 rows of body, less the
-# panel's frame (2) and the GOAL box (3).
-COMPACT_CODE_LINES = 13
-
-
 def goal_box(goal, plain=False):
     """Return the GOAL box of a wave as lines."""
     return panel("GOAL", [goal], GOAL_WIDTH, ascii_only=plain)
 
 
-def wave_screen_text(level, number, buffer_text, plain=False, color=False, compact=False):
-    """Return the screen of one wave: its goal, its task and the numbered code typed so far.
-
-    `compact` is for a screen with little room: the goal and the code only,
-    and of a long code its end, where the player is typing.
-    """
+def wave_screen_text(level, number, buffer_text, plain=False, color=False):
+    """Return the screen of one wave: its goal, its task and the numbered code typed so far."""
     wave = level.waves[number - 1]
     label = f"WAVE {number} of {len(level.waves)} · {wave.kind.upper()}"
     if level.boss:
@@ -97,16 +88,8 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False, compa
     lines = [label]
     if wave.goal is not None:
         lines.extend(goal_box(wave.goal, plain))
-    if not compact:
-        for line in wave.brief.strip().splitlines():
-            lines.append(line.strip())
-    if compact and wave.mode != "predict":
-        code = numbered_code(buffer_text, plain, color)
-        if len(code) > COMPACT_CODE_LINES:
-            hidden = len(code) - COMPACT_CODE_LINES + 1
-            code = [f"    (lines 1-{hidden} are above: :show)"] + code[hidden:]
-        lines.extend(code)
-        return "\n".join(lines)
+    for line in wave.brief.strip().splitlines():
+        lines.append(line.strip())
     # A predict wave shows the code to read; the player types its output.
     if wave.mode == "predict" and wave.code is not None:
         lines.append("")
