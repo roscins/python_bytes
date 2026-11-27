@@ -1,6 +1,6 @@
 # Design: the code editor (step 2 of the key-driven interface)
 
-**Status: proposed.** Nothing here is built. It follows a playtest of step 1:
+**Status: approved** (see Decisions at the end). It follows a playtest of step 1:
 menus and map work well, the wave screen is the main blocker.
 
 It replaces the wave parts of docs/design/editor.md and takes in its step 3
@@ -14,7 +14,7 @@ rows 1-3    HUD and rule
 row  4      GOAL: Make Snek print SNEK ONLINE.
 rows 5-14   editor: "WAVE 1 of 3 · FILL-IN", 8 numbered lines
 rows 15-22  panel: TASK, RESULTS, RUN or HINT, 6 lines
-row  23     [Submit] [Run] [Hint] [Restart wave] [Map] [Help]
+row  23     [Submit] [Run] [Hint] [Restart level] [Map] [Help]
 row  24     ^S submit  ^R run  ^T hint  ^G help  ^O map  ^Z undo
 ```
 
@@ -46,7 +46,7 @@ Ctrl-Z undoes, one step per line worked on. Any printable letter works.
 **Blanks.** `___` is highlighted. Typing with the cursor on it replaces the
 whole blank, and Backspace or Delete there removes it whole. The rest of a
 fill-in wave is **freely editable** (this changes the earlier decision that
-only blanks could be edited). Restart wave puts the starter back.
+only blanks could be edited). Restart level puts the starter back.
 
 ## Buttons
 
@@ -58,11 +58,12 @@ Left and Right pick, Enter presses, Up or Esc goes back.
 | Submit | ^S | grade; results in the panel |
 | Run | ^R | run without grading; output in the panel. With `input()`, the panel first asks for the input lines |
 | Hint | ^T | asks before spending coins; hint in the panel |
-| Restart wave | none | asks (default No); starter code back. Score, coins, hints and guesses stay. In a boss it also restarts the fight |
+| Restart level | none | asks (default No); starter code back in every wave, then wave 1. Passed waves, score, stars, coins, hints and guesses stay. In a boss it also restarts the fight |
 | Map | ^O | to the map; the code is kept |
 | Help | ^G | the task and the keys, full screen |
 
-When a wave passes, **[Next wave]** is added first in the row and chosen;
+On a passed wave **[Next wave]** is added first in the row (chosen when it has
+just passed);
 after the last wave, **[Next level]**. The code and results stay until you
 press it. The level-clear animation plays first, as now.
 
@@ -136,13 +137,9 @@ Submit, Run and Hint call the same functions as line mode.
 One branch, `ui/editor`, one pull request, a commit per part. The roadmap
 boxes 2 and 3 become one.
 
-## Questions
+## Decisions
 
-1. **Tab.** You asked for both "Tab = 4 spaces" and "Tab moves focus to the
-   buttons". In one editor it cannot do both. *Recommend (assumed above):* Tab
-   indents in the editor; Down from the last line or Esc reaches the buttons,
-   and there Tab moves to the next button.
-2. **Power-ups, `where`, `wave 2` and the Python console** are typed words with
-   no button. *Recommend:* Ctrl-E opens a one-line prompt for them, typed
-   without a colon. Without it they work only in `--plain` and from the map's
-   `:`.
+1. The button is **Restart level**, not "Restart wave".
+2. Tab indents in the editor; Down from the last line or Esc reaches the
+   buttons, and there Tab moves to the next button.
+3. Ctrl-E opens a one-line prompt for typed words, without a colon.
