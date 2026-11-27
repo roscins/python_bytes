@@ -132,6 +132,13 @@ class GameState:
                 levels.append(level)
         return levels
 
+    def wave_files(self):
+        """Return the data files of the wave being played, as {name: text}."""
+        level = self.find_level(self.current_level)
+        if level is None:
+            return {}
+        return level.waves[self.current_wave - 1].files
+
     def wave_text(self, level, number):
         """Return the code typed so far for wave `number` of `level`.
 

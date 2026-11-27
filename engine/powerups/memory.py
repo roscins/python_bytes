@@ -18,6 +18,7 @@ def wave_memory(state, code):
     if BLANK in code:
         return f"There is still a {BLANK} blank in your code. Replace it first."
     session = ReplSession(DEFAULT_TIME_LIMIT)
+    session.data = state.wave_files()
     try:
         result = session.run(code, whole_program=True)
         if result.timed_out:

@@ -10,6 +10,7 @@ engine/loop.py), so nothing typed is lost if the game is closed or killed.
 Like the other command modules, this one returns text and never prints.
 """
 
+from engine.data_files import file_text
 from engine.fill import BLANK, fill_next_blank, is_filling
 from engine.level_screen import wave_screen_text
 
@@ -126,8 +127,14 @@ def check_line_number(lines, number, allow_end=False):
 
 
 def do_show(state, text):
-    """:show - the current wave and the code typed so far."""
-    return show_wave(state)
+    """:show - the current wave and the code; :show <file> - one of its data files."""
+    name = text.strip()
+    if name == "":
+        return show_wave(state)
+    files = state.wave_files()
+    if name not in files:
+        return f"This wave has no file {name}."
+    return file_text(name, files[name])
 
 
 def do_undo(state, text):

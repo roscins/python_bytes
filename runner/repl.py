@@ -70,6 +70,8 @@ class ReplSession:
     Attributes:
         timeout: seconds one line may run.
         process: the running worker (a subprocess.Popen), or None.
+        data: {name: text} of data files to put in the worker's folder.
+        copied: the data files already put there.
     """
 
     def __init__(self, timeout=DEFAULT_TIMEOUT):
@@ -78,10 +80,20 @@ class ReplSession:
         self.process = None
         self.replies = queue.Queue()
         self.folder = None
+        self.data = {}
+        self.copied = {}
+
+    def copy_data(self):
+        """Put new data files in the folder; a file already copied is left alone."""
+        for name, text in self.data.items():
+            if self.copied.get(name) != text:
+                (Path(self.folder) / name).write_text(text, encoding="utf-8")
+                self.copied[name] = text
 
     def start(self):
         """Start a worker process, in a temporary folder of its own."""
         self.folder = tempfile.mkdtemp(prefix="python-bytes-console-")
+        self.copied = {}
         self.replies = queue.Queue()
         self.process = subprocess.Popen(
             [sys.executable, "-I", "-u", str(WORKER_FILE)],
@@ -139,6 +151,7 @@ class ReplSession:
         """Send one request to the worker and return its answer as a ReplResult."""
         if self.process is None:
             self.start()
+        self.copy_data()
         try:
             self.process.stdin.write(json.dumps(request) + "\n")
             self.process.stdin.flush()

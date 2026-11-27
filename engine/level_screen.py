@@ -5,6 +5,7 @@ piece of text; wave_screen_text shows one wave with the code typed so far. Like 
 prints, so it is easy to test.
 """
 
+from engine.data_files import files_line
 from engine.fill import all_blanks_filled, blank_marker, is_filling
 from engine.screens import join_screens
 from grader.answer_sheet import LETTERS
@@ -104,6 +105,8 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False):
         lines.extend(goal_box(wave.goal, plain))
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
+    if wave.files:
+        lines.append(files_line(wave, keys=False))
     # A predict wave shows the code to read; the player types its output.
     if wave.mode == "predict" and wave.code is not None:
         lines.append("")
@@ -169,6 +172,8 @@ def boss_intro_text(level, keys=False):
     lines.append("BOSS WAVE")
     for line in wave.brief.strip().splitlines():
         lines.append(line.strip())
+    if wave.files:
+        lines.append(files_line(wave, keys))
     minutes = level.time_limit // 60
     submit = ":submit"
     if keys:

@@ -334,6 +334,8 @@ def do_where(state, arguments):
     if state.workspace_root is None:
         return "There is no workspace folder."
     path = export_wave(level, number, state.wave_text(level, number), state.workspace_root)
+    for name, text in level.waves[number - 1].files.items():
+        (path.parent / name).write_text(text, encoding="utf-8")
     return f"Saved the code of wave {number} to {path.resolve()}"
 
 
@@ -381,6 +383,9 @@ def run_command(state, text, colon):
         # the spaces in ":edit 2     print(x)" are the code's indentation.
         return function(state, text.lstrip()[len(name):])
     rest = text.lstrip()[len(name):]
+    # Key mode has no colon commands, but "show sensors.csv" reads a data file.
+    if name == "show" and rest.strip() in state.wave_files():
+        return ALL_CODE_COMMANDS["show"][0](state, rest)
     if name in POWER_UPS and not is_python_line(rest):
         return use_power_up(state, name, rest)
     # "stats = 5" is a player's own variable, not the command.

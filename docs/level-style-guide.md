@@ -54,7 +54,7 @@ Two scripts in `tools/` help while writing a level:
 
 ## Kinds of test
 
-Each `[[wave.test]]` table has exactly one of these keys:
+Each `[[wave.test]]` table has exactly one of these keys (`expected_file` is under Data files below):
 
 | Key | Passes when |
 | --- | --- |
@@ -205,3 +205,18 @@ explanation = "< leaves out the limit itself."
 ```
 
 The player may mark only as many lines as there are faults. After 3 failed submits the faults are shown. Review waves do not lock the console.
+
+## Data files
+
+A wave lists the files its code can open: `files = ["sensors.csv"]`. They live in the level's `files/` folder, have plain names (not `.py`), are UTF-8 and at most 100 KB. Every run gets fresh copies in a throwaway folder, which is not a security boundary. The player reads one with `show sensors.csv`. A boss wave may use them too.
+
+```toml
+[[wave.test]]
+expected_stdout = "..."
+files = { "sensors.csv" = "sensors-b.csv" }   # another dataset under the same name
+
+[[wave.test]]
+expected_file = { name = "summary.txt", contents = "..." }
+```
+
+Grade every program on at least two datasets, so that printing or writing fixed text cannot pass.
