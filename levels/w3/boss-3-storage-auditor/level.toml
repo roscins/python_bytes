@@ -1,0 +1,222 @@
+[level]
+id = "boss-3"
+title = "The Storage Auditor"
+world = 3
+boss = true
+time_limit = 1200
+sprite = "boss-storage-auditor"
+
+cutscene = '''
+# >> The vault doors grind shut. A tall machine unrolls a very long checklist.
+book = ["cell", "fuse"]
+copy_of_book = book
+copy_of_book.append("ghost")
+print(book)
+# >> The official record now lists a ghost. Nobody delivered one.
+# >> Snek: "AUDITOR DETECTED. THE BOOKS MUST BALANCE, TECHNICIAN."
+'''
+
+[[wave]]
+kind = "boss"
+goal = "Fix the delivery fault and write the audit report."
+brief = """
+Keep the data lines: the grader changes their values.
+
+add_delivery(items, item): fix it to return a new list, leaving items unchanged.
+audit(listed, seen): return three sorted lists without repeats, as a tuple: in both, only in listed, only in seen.
+low_items(names, amounts, limit): return the names whose amount (same position) is below limit, in order.
+fullest(names, amounts): return (name, amount) for the largest amount; the first one on a tie.
+
+Then call them on book, delivery, scanned, counts and minimum, and print:
+BOOK and book, then AFTER and the new list.
+BOTH, MISSING and EXTRA, each with its list.
+One line per low item: LOW, its number from 1, its name (LOW 1 fuse).
+TOP, the name and the amount (TOP cell 8).
+"""
+starter = '''
+# Storage audit
+book = ["cell", "fuse", "gear", "lens"]
+counts = [8, 2, 5, 1]
+scanned = ["gear", "cell", "coil", "cell"]
+delivery = "coil"
+minimum = 3
+
+
+def add_delivery(items, item):
+    """Return a new list: items with item at the end."""
+    new_items = items
+    new_items.append(item)
+    return new_items
+'''
+reference = '''
+# Storage audit
+book = ["cell", "fuse", "gear", "lens"]
+counts = [8, 2, 5, 1]
+scanned = ["gear", "cell", "coil", "cell"]
+delivery = "coil"
+minimum = 3
+
+
+def add_delivery(items, item):
+    """Return a new list: items with item at the end."""
+    new_items = items.copy()
+    new_items.append(item)
+    return new_items
+
+
+def audit(listed, seen):
+    """Return three sorted lists: in both, missing and extra."""
+    both = sorted(set(listed) & set(seen))
+    missing = sorted(set(listed) - set(seen))
+    extra = sorted(set(seen) - set(listed))
+    return both, missing, extra
+
+
+def low_items(names, amounts, limit):
+    """Return the names whose amount is below limit, in order."""
+    low = []
+    for name, amount in zip(names, amounts):
+        if amount < limit:
+            low.append(name)
+    return low
+
+
+def fullest(names, amounts):
+    """Return (name, amount) for the largest amount; first one on a tie."""
+    best = 0
+    for index, amount in enumerate(amounts):
+        if amount > amounts[best]:
+            best = index
+    return names[best], amounts[best]
+
+
+# The report
+after = add_delivery(book, delivery)
+print("BOOK", book)
+print("AFTER", after)
+both, missing, extra = audit(book, scanned)
+print("BOTH", both)
+print("MISSING", missing)
+print("EXTRA", extra)
+for number, name in enumerate(low_items(book, counts, minimum), start=1):
+    print(f"LOW {number} {name}")
+top_name, top_count = fullest(book, counts)
+print("TOP", top_name, top_count)
+'''
+wrong = '''
+# Storage audit
+book = ["cell", "fuse", "gear", "lens"]
+counts = [8, 2, 5, 1]
+scanned = ["gear", "cell", "coil", "cell"]
+delivery = "coil"
+minimum = 3
+
+
+def add_delivery(items, item):
+    """Return a new list: items with item at the end."""
+    new_items = items
+    new_items.append(item)
+    return new_items
+
+
+def audit(listed, seen):
+    """Return three sorted lists: in both, missing and extra."""
+    both = sorted(set(listed) & set(seen))
+    missing = sorted(set(listed) - set(seen))
+    extra = sorted(set(seen) - set(listed))
+    return both, missing, extra
+
+
+def low_items(names, amounts, limit):
+    """Return the names whose amount is below limit, in order."""
+    low = []
+    for name, amount in zip(names, amounts):
+        if amount < limit:
+            low.append(name)
+    return low
+
+
+def fullest(names, amounts):
+    """Return (name, amount) for the largest amount; first one on a tie."""
+    best = 0
+    for index, amount in enumerate(amounts):
+        if amount > amounts[best]:
+            best = index
+    return names[best], amounts[best]
+
+
+# The report
+after = add_delivery(book, delivery)
+print("BOOK", book)
+print("AFTER", after)
+both, missing, extra = audit(book, scanned)
+print("BOTH", both)
+print("MISSING", missing)
+print("EXTRA", extra)
+for number, name in enumerate(low_items(book, counts, minimum), start=1):
+    print(f"LOW {number} {name}")
+top_name, top_count = fullest(book, counts)
+print("TOP", top_name, top_count)
+'''
+hints = [
+  "Run the starter idea in your head: does new_items = items make a second list, or a second name?",
+  "Copy before appending. Use set - and & in audit, zip in low_items, and track the best position in fullest.",
+  "new_items = items.copy(), and in audit: missing = sorted(set(listed) - set(seen)).",
+]
+
+[[wave.test]]
+expected_stdout_contains = ["BOOK ['cell', 'fuse', 'gear', 'lens']\n"]
+values = { delivery = "coil", minimum = 3 }
+
+[[wave.test]]
+call = "add_delivery"
+args = [["nut"], "bolt"]
+expected = ["nut", "bolt"]
+
+[[wave.test]]
+call = "audit"
+args = [["b", "a", "d", "c"], ["e", "c", "a", "e"]]
+expected = [["a", "c"], ["b", "d"], ["e"]]
+
+[[wave.test]]
+call = "audit"
+args = [["x"], []]
+expected = [[], ["x"], []]
+
+[[wave.test]]
+call = "low_items"
+args = [["a", "b", "c"], [4, 7, 1], 5]
+expected = ["a", "c"]
+
+[[wave.test]]
+call = "low_items"
+args = [["a", "b"], [5, 6], 5]
+expected = []
+
+[[wave.test]]
+call = "fullest"
+args = [["a", "b", "c"], [3, 9, 9]]
+expected = ["b", 9]
+
+[[wave.test]]
+call = "fullest"
+args = [["z", "y"], [6, 2]]
+expected = ["z", 6]
+
+[[wave.test]]
+expected_stdout = "BOOK ['cell', 'fuse', 'gear', 'lens']\nAFTER ['cell', 'fuse', 'gear', 'lens', 'coil']\nBOTH ['cell', 'gear']\nMISSING ['fuse', 'lens']\nEXTRA ['coil']\nLOW 1 fuse\nLOW 2 lens\nTOP cell 8\n"
+values = { delivery = "coil", minimum = 3 }
+
+[[wave.test]]
+expected_stdout = "BOOK ['pipe', 'valve', 'seal']\nAFTER ['pipe', 'valve', 'seal', 'nut']\nBOTH ['pipe', 'valve']\nMISSING ['seal']\nEXTRA ['rivet']\nLOW 1 pipe\nTOP valve 9\n"
+values = { book = ["pipe", "valve", "seal"], counts = [2, 9, 9], scanned = ["valve", "rivet", "pipe"], delivery = "nut", minimum = 3 }
+
+[[wave.test]]
+expected_stdout = "BOOK ['rod', 'disc', 'pin', 'cap', 'key']\nAFTER ['rod', 'disc', 'pin', 'cap', 'key', 'bolt']\nBOTH ['key', 'rod']\nMISSING ['cap', 'disc', 'pin']\nEXTRA ['bit', 'tag']\nLOW 1 rod\nLOW 2 disc\nLOW 3 cap\nTOP pin 12\n"
+values = { book = ["rod", "disc", "pin", "cap", "key"], counts = [4, 1, 12, 0, 7], scanned = ["key", "rod", "tag", "bit", "tag"], delivery = "bolt", minimum = 5 }
+
+[[wave.test]]
+require = ["FunctionDef", "For", "Tuple"]
+
+[[wave.test]]
+require = ["BitAnd"]

@@ -1,0 +1,273 @@
+[level]
+id = "3-5"
+title = "Fixed Records"
+world = 3
+new_concepts = ["tuples in depth: immutability and unpacking", "sets and set algebra", "zip()", "enumerate()"]
+power_up = "compare"
+
+cutscene = '''
+# >> The sensor vault holds history. History is compared, never edited.
+record = (900, "heat")        # a tuple cannot be changed after it is made
+time, sensor = record         # unpacking: one name for each item
+print(time, sensor)
+monday = {"heat", "gas"}      # a set: no repeats, no fixed order
+tuesday = set(["gas", "tilt", "gas"])   # a set made from a list
+print(sorted(monday & tuesday))   # in both
+print(sorted(monday ^ tuesday))   # in only one
+print(sorted(monday | tuesday))   # in either
+print(sorted(monday - tuesday))   # in monday only
+alerts = set()                # an empty set ({} is not a set)
+alerts.add("gas")
+alerts.add("gas")             # already there, so nothing changes
+print(sorted(alerts))
+history = tuple(zip([900, 915], [21, 48]))   # pairs, frozen in a tuple
+print(history)
+for number, name in enumerate(["heat", "gas"]):          # counts from 0
+    print(number, name)
+for number, (time, reading) in enumerate(history, 1):    # counts from 1
+    print(number, time, reading)
+# >> Snek: "RECORDS SEALED. COMPARISON ONLINE."
+'''
+
+tips = [
+  "A tuple such as (900, 21) cannot be changed; a, b = pair unpacks it. tuple(items) makes a tuple.",
+  "A set ({1, 2}, set(items), empty: set()) has no repeats; add() adds. & both, ^ only one, | either, a - b only a.",
+  "zip(a, b) pairs the items of two lists by position, and stops at the end of the shorter one.",
+  "for n, item in enumerate(items, 1): gives each item with its number. Without the 1, n starts at 0.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Find sensors in both runs, in only one, and in either."
+brief = "Fill in each blank with one set operator: both gets the sensors in both runs, only_one those in exactly one run, either those in at least one."
+starter = '''
+extra = "gas"
+run_a = ["heat", "tilt", extra]
+run_b = ["gas", "sound", "heat"]
+both = set(run_a) ___ set(run_b)
+only_one = set(run_a) ___ set(run_b)
+either = set(run_a) ___ set(run_b)
+print(sorted(both))
+print(sorted(only_one))
+print(sorted(either))
+'''
+reference = '''
+extra = "gas"
+run_a = ["heat", "tilt", extra]
+run_b = ["gas", "sound", "heat"]
+both = set(run_a) & set(run_b)
+only_one = set(run_a) ^ set(run_b)
+either = set(run_a) | set(run_b)
+print(sorted(both))
+print(sorted(only_one))
+print(sorted(either))
+'''
+wrong = '''
+extra = "gas"
+run_a = ["heat", "tilt", extra]
+run_b = ["gas", "sound", "heat"]
+both = set(run_a) | set(run_b)
+only_one = set(run_a) ^ set(run_b)
+either = set(run_a) & set(run_b)
+print(sorted(both))
+print(sorted(only_one))
+print(sorted(either))
+'''
+hints = [
+  "The three set operators are &, ^ and |. Which one keeps only what the two sets share?",
+  "& is for both, ^ is for exactly one, and | is for everything from either set.",
+  "The first line is: both = set(run_a) & set(run_b)",
+]
+
+[[wave.test]]
+expected_stdout = "['gas', 'heat']\n['sound', 'tilt']\n['gas', 'heat', 'sound', 'tilt']\n"
+values = { extra = "gas" }
+
+[[wave.test]]
+expected_stdout = "['heat', 'sound']\n['gas', 'tilt']\n['gas', 'heat', 'sound', 'tilt']\n"
+values = { extra = "sound" }
+
+[[wave.test]]
+require = ["BitAnd", "BitXor", "BitOr"]
+
+[[wave]]
+kind = "build"
+goal = "Freeze the history, number it and collect alert times."
+brief = '''
+Set history to tuple(zip(times, readings)) and print it.
+Loop over enumerate(history, 1), unpack each record, and print one line per record in the form 1: 900 = 21 (number, time, reading).
+Add the time of every reading above limit (equal does not count) to a set named alerts, which starts as set(), so a repeated time is kept once.
+After the loop, print sorted(alerts).
+Keep the starter lines, and use no indexing, while, + or +=, because zip() and enumerate() do the pairing and counting.
+'''
+starter = '''
+first = 21
+limit = 40
+times = [900, 915, 915, 945]
+readings = [first, 48, 55, 40]
+'''
+reference = '''
+# Pair each reading with its time and collect the alerts
+first = 21
+limit = 40
+times = [900, 915, 915, 945]
+readings = [first, 48, 55, 40]
+history = tuple(zip(times, readings))
+print(history)
+alerts = set()
+for number, (time, reading) in enumerate(history, 1):
+    print(f"{number}: {time} = {reading}")
+    if reading > limit:
+        alerts.add(time)
+print(sorted(alerts))
+'''
+wrong = '''
+# Pair each reading with its time and collect the alerts
+first = 21
+limit = 40
+times = [900, 915, 915, 945]
+readings = [first, 48, 55, 40]
+history = tuple(zip(times, readings))
+print(history)
+alerts = []
+for number, (time, reading) in enumerate(history, 1):
+    print(f"{number}: {time} = {reading}")
+    if reading > limit:
+        alerts.append(time)
+print(sorted(alerts))
+'''
+hints = [
+  "Which function pairs two lists, and which one numbers the pairs while you loop?",
+  "Make history, print it, start an empty set, loop with enumerate, add alert times, then print sorted.",
+  "The loop starts like this: for number, (time, reading) in enumerate(history, 1):",
+]
+
+[[wave.test]]
+expected_stdout = "((900, 21), (915, 48), (915, 55), (945, 40))\n1: 900 = 21\n2: 915 = 48\n3: 915 = 55\n4: 945 = 40\n[915]\n"
+values = { first = 21, limit = 40 }
+
+[[wave.test]]
+expected_stdout = "((900, 70), (915, 48), (915, 55), (945, 40))\n1: 900 = 70\n2: 915 = 48\n3: 915 = 55\n4: 945 = 40\n[900, 915, 945]\n"
+values = { first = 70, limit = 30 }
+
+[[wave.test]]
+expected_stdout = "((900, 21), (915, 48), (915, 55), (945, 40))\n1: 900 = 21\n2: 915 = 48\n3: 915 = 55\n4: 945 = 40\n[]\n"
+values = { first = 21, limit = 90 }
+
+[[wave.test]]
+forbid = ["Subscript", "While", "Add", "AugAssign"]
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs without editing the sensor history."
+brief = '''
+compare_runs() must return three sorted lists (sensors in both runs, in only one run, in either run) from two runs of history, stored as tuples, which cannot be changed.
+numbered() must return lines such as "1. gas", counting from 1.
+There are three bugs; fix them and keep the lines below the functions.
+'''
+starter = '''
+def compare_runs(old_run, new_run):
+    """Return sensors in both runs, in only one, and in either."""
+    old_run.sort()
+    old = set(old_run)
+    new = set(new_run)
+    both = old & new
+    either = old | new
+    only_one = old ^ both
+    return sorted(both), sorted(only_one), sorted(either)
+
+
+def numbered(names):
+    """Return one numbered line for each name, counting from 1."""
+    lines = []
+    for number, name in enumerate(names):
+        lines.append(f"{number}. {name}")
+    return lines
+
+
+first_run = ("tilt", "gas", "heat")
+second_run = ("sound", "heat", "gas")
+both, only_one, either = compare_runs(first_run, second_run)
+print(both)
+print(numbered(only_one))
+print(either)
+print(first_run)
+'''
+reference = '''
+def compare_runs(old_run, new_run):
+    """Return sensors in both runs, in only one, and in either."""
+    # Sets are new objects, so the history lists stay as they are
+    old = set(old_run)
+    new = set(new_run)
+    both = old & new
+    either = old | new
+    only_one = old ^ new
+    return sorted(both), sorted(only_one), sorted(either)
+
+
+def numbered(names):
+    """Return one numbered line for each name, counting from 1."""
+    lines = []
+    for number, name in enumerate(names, 1):
+        lines.append(f"{number}. {name}")
+    return lines
+
+
+first_run = ("tilt", "gas", "heat")
+second_run = ("sound", "heat", "gas")
+both, only_one, either = compare_runs(first_run, second_run)
+print(both)
+print(numbered(only_one))
+print(either)
+print(first_run)
+'''
+wrong = '''
+def compare_runs(old_run, new_run):
+    """Return sensors in both runs, in only one, and in either."""
+    # Compare the two runs as sets
+    old_run.sort()
+    old = set(old_run)
+    new = set(new_run)
+    both = old & new
+    either = old | new
+    only_one = old ^ new
+    return sorted(both), sorted(only_one), sorted(either)
+
+
+def numbered(names):
+    """Return one numbered line for each name, counting from 1."""
+    lines = []
+    for number, name in enumerate(names, 1):
+        lines.append(f"{number}. {name}")
+    return lines
+
+
+first_run = ("tilt", "gas", "heat")
+second_run = ("sound", "heat", "gas")
+both, only_one, either = compare_runs(first_run, second_run)
+print(both)
+print(numbered(only_one))
+print(either)
+print(first_run)
+'''
+hints = [
+  "Check three things: can a tuple be sorted in place, is every sensor found, where does counting start?",
+  "One line tries to change a tuple, one set operation uses the wrong set, and one call is missing a start.",
+  "One fix is: only_one = old ^ new",
+]
+
+[[wave.test]]
+expected_stdout = "['gas', 'heat']\n['1. sound', '2. tilt']\n['gas', 'heat', 'sound', 'tilt']\n('tilt', 'gas', 'heat')\n"
+
+[[wave.test]]
+call = "compare_runs"
+args = [["light", "gas"], ["sound", "light", "dust"]]
+expected = [["light"], ["dust", "gas", "sound"], ["dust", "gas", "light", "sound"]]
+
+[[wave.test]]
+call = "numbered"
+args = [["dust", "light"]]
+expected = ["1. dust", "2. light"]
+
+[[wave.test]]
+require = ["BitAnd", "BitXor", "BitOr"]

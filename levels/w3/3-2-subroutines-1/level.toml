@@ -1,0 +1,293 @@
+[level]
+id = "3-2"
+title = "Subroutines I"
+world = 3
+new_concepts = ["def, parameters and return", "None", "docstrings", "local scope"]
+power_up = "define"
+
+cutscene = '''
+# >> The motor controller repeats the same moves, copied line by line.
+def turn_time(degrees, speed):             # two parameters
+    """Return the seconds a turn takes."""  # a docstring
+    seconds = degrees / speed              # seconds is local
+    return seconds                         # hand the result back
+print(turn_time(90, 45))                   # call it: 2.0
+for angle in [180, 270]:                   # reuse it in a loop
+    print(turn_time(angle, 45))
+def beep():                                # no parameters
+    """Show a beep."""
+    print("BEEP")
+answer = beep()                            # beep() has no return
+print(answer)                              # None: no value
+def find_motor(names, wanted):
+    """Return the index of wanted in names, or None."""
+    for index in range(len(names)):
+        if names[index] == wanted:
+            return index                   # leaves the function at once
+    return None
+print(find_motor(["arm", "leg"], "tail"))  # None
+def wave_arm():
+    """Wave the arm (not built yet)."""
+    pass                                   # do nothing for now
+# >> Snek: "NEW MOVES CAN BE TAUGHT ONCE AND USED AGAIN."
+'''
+
+tips = [
+  "def name(a, b): defines a function with parameters a and b; name(1, 2) calls it; return hands a value back.",
+  "None means \"no value\". A function that ends without return gives back None; pass does nothing.",
+  "A docstring is a string in \"\"\" quotes on the first line inside a function that says what it does.",
+  "Parameters and names assigned inside a function are local: they exist only while that call runs.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Finish celsius_to_kelvin() and use it in the loop."
+brief = '''
+Kelvin is Celsius plus 273.15. Fill in the blanks so that celsius_to_kelvin()
+hands back the temperature in kelvin and the loop uses it on every reading.
+'''
+starter = '''
+temperature = 25
+
+def celsius_to_kelvin(celsius):
+    """Return the temperature celsius in kelvin."""
+    ___ celsius + ___
+
+for reading in [temperature, 0, -40]:
+    print(round(___(reading), 2))
+'''
+reference = '''
+temperature = 25
+
+def celsius_to_kelvin(celsius):
+    """Return the temperature celsius in kelvin."""
+    return celsius + 273.15
+
+for reading in [temperature, 0, -40]:
+    print(round(celsius_to_kelvin(reading), 2))
+'''
+wrong = '''
+temperature = 25
+
+def celsius_to_kelvin(celsius):
+    """Return the temperature celsius in kelvin."""
+    return celsius + 273
+
+for reading in [temperature, 0, -40]:
+    print(round(celsius_to_kelvin(reading), 2))
+'''
+hints = [
+  "Which word hands a value back from a function? What is the function called?",
+  "Return celsius plus the offset, then call the function by its name inside round().",
+  "The line inside the function starts like this: return celsius +",
+]
+
+[[wave.test]]
+expected_stdout = "298.15\n273.15\n233.15\n"
+
+[[wave.test]]
+expected_stdout = "373.15\n273.15\n233.15\n"
+values = { temperature = 100 }
+
+[[wave.test]]
+call = "celsius_to_kelvin"
+args = [10]
+expected = 283.15
+
+[[wave.test]]
+call = "celsius_to_kelvin"
+args = [-273.15]
+expected = 0.0
+
+[[wave.test]]
+require = ["FunctionDef", "Return", "For"]
+
+[[wave]]
+kind = "build"
+goal = "Write distance() and add up every leg of the route."
+brief = '''
+Write distance(x1, y1, x2, y2) with a docstring; it returns ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5.
+The arm starts at x, y and visits each [x, y] point of route in order.
+In a loop, call distance() for each leg, print the leg as round(leg, 1), then set x and y to that point.
+After the loop, print TOTAL: and the total rounded the same way, like TOTAL: 12.0.
+Add a comment.
+'''
+starter = '''
+x = 0
+y = 0
+route = [[3, 4], [9, 12], [9, 17]]
+'''
+reference = '''
+x = 0
+y = 0
+route = [[3, 4], [9, 12], [9, 17]]
+
+def distance(x1, y1, x2, y2):
+    """Return the straight-line distance from x1, y1 to x2, y2."""
+    return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+# Drive the route leg by leg and add up the lengths
+total = 0
+for point in route:
+    leg = distance(x, y, point[0], point[1])
+    print(round(leg, 1))
+    total += leg
+    x = point[0]
+    y = point[1]
+print(f"TOTAL: {round(total, 1)}")
+'''
+wrong = '''
+x = 0
+y = 0
+route = [[3, 4], [9, 12], [9, 17]]
+
+def distance(x1, y1, x2, y2):
+    """Return the straight-line distance from x1, y1 to x2, y2."""
+    return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+# Drive the route leg by leg and add up the lengths
+total = 0
+for point in route:
+    leg = distance(x, y, point[0], point[1])
+    print(round(leg, 1))
+    total += leg
+print(f"TOTAL: {round(total, 1)}")
+'''
+hints = [
+  "What should distance() hand back? Where is the arm after it finishes a leg?",
+  "Define distance() with return. Start total at 0, loop over route, call, print, add, then move x and y.",
+  "Inside the loop: leg = distance(x, y, point[0], point[1])",
+]
+
+[[wave.test]]
+expected_stdout = "5.0\n10.0\n5.0\nTOTAL: 20.0\n"
+
+[[wave.test]]
+expected_stdout = "10.0\n10.0\n5.0\nTOTAL: 25.0\n"
+values = { x = -3, y = -4 }
+
+[[wave.test]]
+expected_stdout = "0.0\n10.0\n5.0\nTOTAL: 15.0\n"
+values = { x = 3, y = 4 }
+
+[[wave.test]]
+call = "distance"
+args = [1, 2, 7, 10]
+expected = 10.0
+
+[[wave.test]]
+call = "distance"
+args = [5, 5, 2, 1]
+expected = 5.0
+
+[[wave.test]]
+call = "distance"
+args = [2, 3, 2, 3]
+expected = 0.0
+
+[[wave.test]]
+require = ["FunctionDef", "Return", "For"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs in the obstacle report."
+brief = '''
+first_obstacle(line) should return the index of the first # in the line it is
+given, or None if that line has no #. describe(line) should return the report
+text, which the loop prints. There are three bugs: fix them all.
+'''
+starter = '''
+row = "...#."
+spare = "....."
+
+def first_obstacle(line):
+    """Return the index of the first # in line, or None."""
+    for index in range(len(line)):
+        if row[index] == "#":
+            return index
+        return None
+
+def describe(line):
+    """Return the report text for one line of the floor."""
+    print(f"FIRST #: {first_obstacle(line)}")
+
+# Report both rows of the floor
+for floor_row in [row, spare]:
+    print(describe(floor_row))
+'''
+reference = '''
+row = "...#."
+spare = "....."
+
+def first_obstacle(line):
+    """Return the index of the first # in line, or None."""
+    for index in range(len(line)):
+        if line[index] == "#":
+            return index
+    return None
+
+def describe(line):
+    """Return the report text for one line of the floor."""
+    return f"FIRST #: {first_obstacle(line)}"
+
+# Report both rows of the floor
+for floor_row in [row, spare]:
+    print(describe(floor_row))
+'''
+wrong = '''
+row = "...#."
+spare = "....."
+
+def first_obstacle(line):
+    """Return the index of the first # in line, or None."""
+    for index in range(len(line)):
+        if row[index] == "#":
+            return index
+    return None
+
+def describe(line):
+    """Return the report text for one line of the floor."""
+    return f"FIRST #: {first_obstacle(line)}"
+
+# Report both rows of the floor
+for floor_row in [row, spare]:
+    print(describe(floor_row))
+'''
+hints = [
+  "Which string does first_obstacle() really look at? When does it give up? What does describe() give back?",
+  "Use the parameter inside the function, return None only after the loop, and return the text in describe().",
+  "The test line should start: if line[index]",
+]
+
+[[wave.test]]
+expected_stdout = "FIRST #: 3\nFIRST #: None\n"
+
+[[wave.test]]
+expected_stdout = "FIRST #: 0\nFIRST #: 2\n"
+values = { row = "#....", spare = "..#.#" }
+
+[[wave.test]]
+call = "first_obstacle"
+args = [".#..."]
+expected = 1
+
+[[wave.test]]
+call = "first_obstacle"
+args = ["....#.."]
+expected = 4
+
+[[wave.test]]
+call = "describe"
+args = ["..#"]
+expected = "FIRST #: 2"
+
+[[wave.test]]
+call = "describe"
+args = ["..."]
+expected = "FIRST #: None"
+
+[[wave.test]]
+require = ["FunctionDef", "Return", "For"]

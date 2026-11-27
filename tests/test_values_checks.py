@@ -40,11 +40,16 @@ class TestChangedValues(unittest.TestCase):
         """The player sees which values were tried."""
         self.assertIn("when the grader sets size = 4", run_check(TEST, "size = 1\nprint(size)").name)
 
+    def test_a_list_value_replaces_the_line(self):
+        """A whole dataset can be swapped."""
+        check = {"expected_stdout": "['b', 'c']\n", "values": {"names": ["b", "c"]}}
+        self.assertTrue(run_check(check, 'names = ["a"]\nprint(names)\n').passed)
+
     def test_loader_rejects_values_on_other_tests(self):
         """values only makes sense when output is compared."""
         for bad in [{"require": ["Name"], "values": {"a": 1}},
                     {"expected_stdout": "", "values": {}},
-                    {"expected_stdout": "", "values": {"a": [1]}}]:
+                    {"expected_stdout": "", "values": {"a": [[1]]}}]:
             with self.subTest(bad=bad), self.assertRaises(LevelError):
                 check_test(bad, "here")
 
