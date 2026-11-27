@@ -252,5 +252,21 @@ class TestDefaultSavePath(unittest.TestCase):
         self.assertEqual(DEFAULT_SAVE_PATH.name, "save.json")
 
 
+class TestPlainWhenColourCodesFail(unittest.TestCase):
+    """A console that cannot show colour codes gets the plain mode."""
+
+    def wants(self, enabled):
+        """Ask wants_plain on a terminal with no flags, where enabling colour gives `enabled`."""
+        return engine_main.wants_plain(engine_main.parse_arguments([]), environment={}, is_terminal=True,
+                                       enable_colour_codes=lambda: enabled)
+
+    def test_falls_back_to_plain(self):
+        """Colour codes could not be enabled."""
+        self.assertTrue(self.wants(False))
+
+    def test_stays_in_colour(self):
+        """Colour codes work."""
+        self.assertFalse(self.wants(True))
+
 if __name__ == "__main__":
     unittest.main()

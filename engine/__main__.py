@@ -214,15 +214,21 @@ def parse_arguments(argv):
     return parser.parse_args(argv)
 
 
-def wants_plain(arguments, environment=os.environ, is_terminal=None):
+def wants_plain(arguments, environment=os.environ, is_terminal=None,
+                enable_colour_codes=enable_virtual_terminal):
     """Return True if the plain look is wanted: --plain, output that is not a terminal, or NO_COLOR.
+
+    It is also used when the terminal cannot understand colour codes (an old
+    Windows console that cannot be switched, see engine/terminal.py).
 
     NO_COLOR (see no-color.org) asks programs not to use colour; the full-screen
     game is built on colour, so it then runs in the plain mode.
     """
     if is_terminal is None:
         is_terminal = sys.stdout.isatty() and sys.stdin.isatty()
-    return arguments.plain or not is_terminal or "NO_COLOR" in environment
+    if arguments.plain or not is_terminal or "NO_COLOR" in environment:
+        return True
+    return not enable_colour_codes()
 
 
 def main(argv=None):
