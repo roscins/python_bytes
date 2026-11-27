@@ -1,0 +1,122 @@
+[level]
+id = "1-2"
+title = "Memory Cells"
+world = 1
+new_concepts = ["variables and assignment", "the types int, float, str and bool", "type()", "snake_case names"]
+power_up = "memory"
+
+cutscene = '''
+# >> Snek's memory banks flicker. Empty cells light up.
+unit_name = "Snek"       # str: text
+battery_level = 12       # int: a whole number
+core_temp = 36.5         # float: a number with a decimal point
+is_online = True         # bool: True or False
+print(unit_name)
+print(battery_level)
+# >> You patch in more power...
+battery_level = 13
+print(battery_level)
+print(type(core_temp))
+# >> Snek: "MEMORY CELL UPDATED. THANK YOU, TECHNICIAN."
+'''
+
+tips = [
+  "name = value stores a value under a name. Assigning again gives the name a new value.",
+  "The basic types: int (12), float (36.5), str (\"Snek\") and bool (True or False).",
+  "type(x) tells you which type x has: print(type(36.5)) shows <class 'float'>.",
+  "Write names in snake_case: lower-case words joined by _, like battery_level.",
+]
+
+[[wave]]
+kind = "fill-in"
+brief = "Store the whole number 12 in battery_level, then print the value it holds."
+starter = '''
+unit_name = "Snek"
+battery_level = ___
+print(unit_name)
+print(___)
+'''
+reference = '''
+unit_name = "Snek"
+battery_level = 12
+print(unit_name)
+print(battery_level)
+'''
+wrong = '''
+unit_name = "Snek"
+battery_level = 12
+print(unit_name)
+print("battery_level")
+'''
+hints = [
+  "Does quoting a name give you its value, or just the letters?",
+  "The first blank is a number. The second is the name of a variable, without quotes.",
+  "The second line is: battery_level = 12",
+]
+
+[[wave.test]]
+expected_stdout = "Snek\n12\n"
+
+[[wave.test]]
+require = ["Assign"]
+
+[[wave]]
+kind = "build"
+brief = '''
+Store "SN-7" in serial_number, 87.5 in battery_level and False in is_online.
+Then Snek wakes: give is_online the new value True.
+Print serial_number, battery_level and is_online, one per line.
+On a fourth line, print the type of battery_level.
+'''
+reference = '''
+# Snek's memory cells
+serial_number = "SN-7"
+battery_level = 87.5
+is_online = False
+is_online = True
+print(serial_number)
+print(battery_level)
+print(is_online)
+print(type(battery_level))
+'''
+wrong = '''
+# Snek's memory cells
+serial_number = "SN-7"
+battery_level = "87.5"
+is_online = True
+print(serial_number)
+print(battery_level)
+print(is_online)
+print(type(battery_level))
+'''
+hints = [
+  "Quotes make text. Which of the three values is text?",
+  "Four assignments (is_online gets two), then four print() lines.",
+  "The last line is: print(type(battery_level))",
+]
+
+[[wave.test]]
+expected_stdout = "SN-7\n87.5\nTrue\n<class 'float'>\n"
+
+[[wave.test]]
+require = ["Assign"]
+
+[[wave]]
+kind = "debug"
+mode = "predict"
+brief = "What does this program print? Type the output exactly."
+code = '''
+power = 5
+backup = power
+power = 9
+print(power)
+print(backup)
+print(type("9"))
+'''
+answer = "9\n5\n<class 'str'>"
+wrong = "9\n9\n<class 'int'>"
+hints = [
+  "When backup = power ran, which value did power have?",
+  "Giving power a new value does not change backup. Quotes decide the type of \"9\".",
+  "The first line of the output is 9, and the second is not.",
+]
