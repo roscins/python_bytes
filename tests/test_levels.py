@@ -149,6 +149,18 @@ class TestRealLevels(unittest.TestCase):
                         self.assertIsNone(re.search(rf"\b{word}\b", text, re.IGNORECASE))
 
 
+class TestPredictExplanations(unittest.TestCase):
+    """Every predict wave can say why its answer is right."""
+
+    def test_every_predict_wave_has_an_explanation(self):
+        """Needed when the answer is revealed."""
+        for level in load_levels(LEVELS_FOLDER):
+            for wave in level.waves:
+                if wave.mode == "predict":
+                    with self.subTest(level=level.id):
+                        self.assertTrue(wave.explanation and wave.explanation.strip())
+
+
 class TestRealLevelsKeepEveryLimit(unittest.TestCase):
     """The same limits, through check_limits, and the progression rules."""
 

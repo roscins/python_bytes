@@ -23,7 +23,8 @@ from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
 from engine.powerups import POWER_UPS, earned_help_lines, is_python_line, use_power_up
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
-from engine.scoring import is_unlocked
+from engine.scoring import GUESSES_BEFORE_REVEAL, is_unlocked
+from engine.stats import stats_text
 from engine.submission import grade_text
 from engine.workspace import export_wave
 from render.level_clear import level_clear_frames, level_clear_text, load_clear_art
@@ -158,15 +159,40 @@ def do_play(state, arguments):
     return frames
 
 
+def reveal_text(wave):
+    """Return the right output of a predict wave and why, for after the last guess."""
+    lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The program prints:"]
+    for line in wave.answer.rstrip("\n").split("\n"):
+        lines.append("    " + line)
+    if wave.explanation:
+        lines.append("Why:")
+        for line in wave.explanation.strip().split("\n"):
+            lines.append("  " + line)
+    lines.append("The wave counts as done, at half of its score.")
+    return "\n".join(lines)
+
+
 def advance_after_submit(state, level, number, result):
-    """Move to the next wave if wave `number` passed; return what to show under the results."""
-    if not result.all_passed():
+    """Move on if wave `number` passed or was revealed; return what to show under the results."""
+    wave = level.waves[number - 1]
+    progress = state.progress_for(level)
+    revealed = progress.revealed[number - 1]
+    if not result.all_passed() and not revealed:
+        if wave.mode == "predict":
+            left = GUESSES_BEFORE_REVEAL - progress.wave_attempts[number - 1]
+            return (f"Not yet. Change your answer and :submit again, or buy a :hint.\n"
+                    f"Wrong guesses left before Snek shows the output: {left}")
         return "Not yet. Change your code and :submit again, or buy a :hint."
+    start = f"Wave {number} passed"
+    before = ""
+    if revealed:
+        start = f"Wave {number} is done"
+        before = reveal_text(wave) + "\n\n"
     if number < len(level.waves):
         state.current_wave = number + 1
-        return f"Wave {number} passed! Next:\n\n" + show_wave(state)
+        return before + f"{start}! Next:\n\n" + show_wave(state)
     state.coding = False
-    return f"Wave {number} passed, and that was the last wave. Type map to see where to go next."
+    return before + f"{start}, and that was the last wave. Type map to see where to go next."
 
 
 def do_submit(state, arguments):
@@ -203,6 +229,13 @@ def do_submit(state, arguments):
                                 reward.coins_gained, level.power_up, load_clear_art())
     frames[-1] = frames[-1] + "\n\n" + results
     return frames
+
+
+def do_stats(state, arguments):
+    """Return levels cleared and stars, world by world."""
+    if arguments:
+        return extra_words_message("stats")
+    return stats_text(state)
 
 
 def do_hint(state, arguments):
@@ -249,6 +282,7 @@ def do_quit(state, arguments):
 COMMANDS = {
     "help": (do_help, "show this list of commands"),
     "map": (do_map, "show the world map"),
+    "stats": (do_stats, "show levels cleared and stars, world by world"),
     "play": (do_play, "start a level, for example: play 1-1"),
     "submit": (do_submit, "hand in the code of the wave you are on"),
     "hint": (do_hint, "buy a hint with coins, for example: hint 2 (or :hint)"),
@@ -281,7 +315,8 @@ def run_command(state, text, colon):
     rest = text.lstrip()[len(name):]
     if name in POWER_UPS and not is_python_line(rest):
         return use_power_up(state, name, rest)
-    if name not in COMMANDS:
+    # "stats = 5" is a player's own variable, not the command.
+    if name not in COMMANDS or (name == "stats" and is_python_line(rest)):
         if colon:
             return f"Unknown command: :{name}. Type :help to see the commands."
         return run_python_line(state, text)

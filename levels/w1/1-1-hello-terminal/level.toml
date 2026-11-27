@@ -76,6 +76,10 @@ print("THREE")
 '''
 answer = "ONE\nTHREE"
 wrong = "ONE\nTWO\nTHREE"
+explanation = '''
+The first and third lines call print(), so ONE and THREE appear.
+The second line starts with #: it is a comment, and Python skips it.
+'''
 hints = [
   "Look at the start of each line. Does Python run all of them?",
   "Python skips a line that starts with #. Only two lines run.",
