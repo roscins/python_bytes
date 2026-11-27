@@ -2,7 +2,7 @@
 
 Starting a boss level begins a BossFight (engine/boss.py). Each submit
 grades the player's file against the boss's hidden tests, drains the health
-bar, and costs a life if any test still fails. Winning clears the boss
+bar, and uses up a try if any test still fails. Winning clears the boss
 level through the same apply_submission as normal levels, so XP, coins and
 unlocking work the same.
 """
@@ -60,7 +60,7 @@ def submit_to_boss(state, level):
     if fight.time_is_up():
         fight.restart()
         return (current_screen(fight)
-                + "\n\nTIME'S UP. The fight starts again: 3 lives, full health and a new timer.")
+                + "\n\nTIME'S UP. The fight starts again: 3 tries, full health and a new timer.")
 
     submission = grade_text(level.waves[0], 1, state.wave_text(level, 1))
     submissions = [submission]
@@ -84,13 +84,13 @@ def submit_to_boss(state, level):
 
     # Otherwise the outcome is HIT (a life lost) or RESTART (the last life lost).
     if outcome == RESTART:
-        message = "The boss knocked you out. The fight starts again: 3 lives, full health."
+        message = "The boss knocked you out. The fight starts again: 3 tries, full health."
         frames = [current_screen(fight)]
     else:
         frames = hp_drain_frames(level.id, level.title, hp_before, fight.hp_left,
                                  fight.hp_total, fight.lives, fight.time_left(), art)
         message = (f"HIT! {fight.hp_left} hidden tests still failing. "
-                   f"You lost a life: {fight.lives} left.")
+                   f"One try is used up: {fight.lives} left.")
     problem = safe_problem(submission.result)
     if problem:
         message = message + "\n" + friendly_message(problem)

@@ -189,8 +189,7 @@ def do_submit(state, arguments):
     if not reward.cleared_now and reward.stars <= reward.old_stars:
         return results
     frames = level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
-                                reward.xp_gained, reward.coins_gained, level.power_up,
-                                load_clear_art())
+                                reward.coins_gained, level.power_up, load_clear_art())
     frames[-1] = frames[-1] + "\n\n" + results
     return frames
 

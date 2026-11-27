@@ -11,7 +11,6 @@ from render.boss_screen import (
     header,
     health_bar,
     hp_drain_frames,
-    lives_text,
     load_boss_art,
     timer_text,
 )
@@ -30,15 +29,14 @@ class TestLevelClear(unittest.TestCase):
         """Load the real icons."""
         self.art = load_clear_art()
 
-    def frames(self, stars, power_up="status"):
+    def frames(self, stars, power_up="status", coins=10):
         """Return the frames for level 1-1 with `stars` stars."""
-        return level_clear_frames("1-1", "Hello, Terminal", 100, stars, 1000, 10, power_up,
-                                  self.art)
+        return level_clear_frames("1-1", "Hello, Terminal", 100, stars, coins, power_up, self.art)
 
-    def test_one_frame_per_star_plus_start_and_end(self):
-        """3 stars: no stars, 1, 2, 3, then the final frame."""
-        self.assertEqual(len(self.frames(3)), 5)
-        self.assertEqual(len(self.frames(1)), 3)
+    def test_stars_then_coins_then_the_power_up(self):
+        """3 stars: 0, 1, 2, 3 stars and the green bar (5), 6 coin steps, one frame per letter."""
+        self.assertEqual(len(self.frames(3)), 5 + 6 + len("status"))
+        self.assertEqual(len(self.frames(1, power_up="", coins=0)), 3)
 
     def test_every_frame_has_the_same_height(self):
         """Frames are drawn over each other, so they must be the same size."""
@@ -47,22 +45,43 @@ class TestLevelClear(unittest.TestCase):
             heights.append(len(frame.split("\n")))
         self.assertEqual(len(set(heights)), 1)
 
-    def test_frames_show_the_banner_and_rewards(self):
-        """Each frame has the banner, the score, XP, coins and the power-up."""
+    def test_the_last_frame_has_the_banner_score_coins_and_the_new_command(self):
+        """No XP anywhere."""
         text = without_colours(self.frames(2)[-1])
         self.assertTrue(text.startswith("LEVEL 1-1 CLEARED · HELLO, TERMINAL"))
         self.assertIn("SCORE 100 %", text)
-        self.assertIn("+1000 XP   +10 COINS", text)
-        self.assertIn("POWER-UP: status", text)
+        self.assertIn("COINS +10", text)
+        self.assertIn("NEW COMMAND: status", text)
+        self.assertNotIn("XP", text)
 
-    def test_no_power_up_line_without_a_power_up(self):
-        """A level without a power-up has no power-up line."""
-        self.assertNotIn("POWER-UP", self.frames(1, power_up="")[-1])
+    def test_coins_count_up_and_never_go_down(self):
+        """The counter rises to the total."""
+        shown = []
+        for frame in self.frames(1, power_up=""):
+            line = [row for row in without_colours(frame).split("\n") if row.startswith("COINS +")][0]
+            shown.append(int(line.split("+")[1]))
+        self.assertEqual(shown, sorted(shown))
+        self.assertEqual(shown[0], 0)
+        self.assertEqual(shown[-1], 10)
+
+    def test_the_power_up_is_revealed_one_letter_at_a_time(self):
+        """NEW COMMAND: s, st, sta ..."""
+        texts = [without_colours(frame) for frame in self.frames(1)]
+        for letters in range(1, len("status") + 1):
+            self.assertIn("NEW COMMAND: " + "status"[:letters], texts[-(len("status") - letters + 1)])
+
+    def test_no_new_command_line_without_a_power_up(self):
+        """A level without a power-up has none."""
+        self.assertNotIn("NEW COMMAND", "".join(self.frames(1, power_up="")))
+
+    def test_no_coin_frames_without_coins(self):
+        """Nothing to count."""
+        self.assertEqual(len(self.frames(1, power_up="", coins=0)), 3)
 
     def test_the_picture_changes_as_stars_fill_in(self):
-        """Each frame differs from the one before it."""
+        """Each star frame differs from the one before it."""
         frames = self.frames(3)
-        for index in range(1, len(frames) - 1):
+        for index in range(1, 4):
             self.assertNotEqual(frames[index], frames[index - 1])
 
     def test_last_frame_has_a_green_bar(self):
@@ -82,17 +101,12 @@ class TestBossScreen(unittest.TestCase):
         """boss-1 is shown as BOSS 1."""
         self.assertEqual(boss_name("boss-1"), "BOSS 1")
 
-    def test_header_has_lives_at_the_right(self):
-        """The lives end at the right edge of the 80-column screen."""
+    def test_header_has_the_tries_at_the_right(self):
+        """The tries end at the right edge of the 80-column screen."""
         line = header("boss-1", "The Corrupted Bootloader", 2)
         self.assertTrue(line.startswith("BOSS 1 · THE CORRUPTED BOOTLOADER"))
-        self.assertTrue(line.endswith("LIVES ♥ ♥ ♡"))
+        self.assertTrue(line.endswith("TRIES 2 of 3"))
         self.assertEqual(len(line), SCREEN_WIDTH)
-
-    def test_lives_text(self):
-        """Lives left are full hearts, lost lives are empty hearts."""
-        self.assertEqual(lives_text(3), "♥ ♥ ♥")
-        self.assertEqual(lives_text(0), "♡ ♡ ♡")
 
     def test_health_bar_matches_the_plan(self):
         """5 of 10 failing fills half the 20 blocks, as in the plan's mock-up."""
@@ -115,7 +129,7 @@ class TestBossScreen(unittest.TestCase):
         text = boss_screen("boss-1", "The Test Boss", 1, 3, 2, 90, self.art)
         lines = text.split("\n")
         self.assertEqual(len(lines), 1 + 8 + 2)
-        self.assertIn("LIVES ♥ ♥ ♡", lines[0])
+        self.assertIn("TRIES 2 of 3", lines[0])
         self.assertIn("1 of 3 hidden tests", lines[-2])
         self.assertEqual(lines[-1], "TIME 01:30")
 

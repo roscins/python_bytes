@@ -244,7 +244,7 @@ class TestHud(unittest.TestCase):
         state = GameState(levels)
         state.xp = 50
         state.progress_for(levels[0]).stars = 3
-        self.assertEqual(hud_text(state, levels), f"XP 50   ★ 3/6   COINS {STARTING_COINS}")
+        self.assertEqual(hud_text(state, levels), f"★ 3/6   COINS {STARTING_COINS}")
 
     def test_map_status_locks(self):
         """Only the first level is open in a new game."""

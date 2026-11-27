@@ -141,16 +141,16 @@ class TestBossCommands(unittest.TestCase):
         """play starts the fight and shows the cutscene, task and boss screen."""
         self.assertIn("The boss wakes.", self.intro)
         self.assertIn("BOSS WAVE", self.intro)
-        self.assertIn("3 hidden tests, 3 lives, 10 minutes", self.intro)
+        self.assertIn("3 hidden tests, 3 tries, 10 minutes", self.intro)
         self.assertIn("BOSS 1 · THE TEST BOSS", self.intro)
-        self.assertIn("LIVES ♥ ♥ ♥", self.intro)
+        self.assertIn("TRIES 3 of 3", self.intro)
         self.assertIsNotNone(self.state.boss_fight)
 
     def test_wrong_code_is_a_hit_without_revealing_tests(self):
         """The wrong solution passes 1 of 3: a life is lost, the tests stay hidden."""
         text = self.submit(make_boss_level().waves[0].wrong)
-        self.assertIn("HIT! 2 hidden tests still failing. You lost a life: 2 left.", text)
-        self.assertIn("LIVES ♥ ♥ ♡", text)
+        self.assertIn("HIT! 2 hidden tests still failing. One try is used up: 2 left.", text)
+        self.assertIn("TRIES 2 of 3", text)
         self.assertNotIn("should return", text)
 
     def test_a_crash_is_explained(self):
@@ -193,7 +193,7 @@ class TestBossCommands(unittest.TestCase):
         """With no fight in memory (after quitting), submit starts a new one."""
         self.state.boss_fight = None
         text = self.submit(make_boss_level().waves[0].wrong)
-        self.assertIn("You lost a life: 2 left.", text)
+        self.assertIn("One try is used up: 2 left.", text)
 
 
 if __name__ == "__main__":

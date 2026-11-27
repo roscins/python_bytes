@@ -1,6 +1,6 @@
 """The text submit shows: which tests of each wave passed, and why others failed.
 
-After the waves comes the score line: the level score, stars, XP and coins
+After the waves comes the score line: the level score, stars and coins
 earned, and whether the level was cleared. Like the other screens, this
 module returns text and never prints.
 """
@@ -50,20 +50,10 @@ def wave_result_lines(submission):
     return lines
 
 
-def multiplier_text(multiplier):
-    """Return an XP multiplier as text: "×1.5", or "×2" without a needless ".0"."""
-    if multiplier == int(multiplier):
-        return f"×{int(multiplier)}"
-    return f"×{multiplier}"
-
-
 def reward_lines(level, reward):
     """Return the score lines shown after the waves."""
     lines = [f"LEVEL SCORE {reward.best_score} %  {star_text(reward.stars)}"]
-    gains = f"+{reward.xp_gained} XP · +{reward.coins_gained} coins · combo {reward.combo}"
-    if reward.multiplier > 1:
-        gains = gains + f" (XP {multiplier_text(reward.multiplier)})"
-    lines.append(gains)
+    lines.append(f"+{reward.coins_gained} coins · combo {reward.combo}")
     if reward.cleared_now:
         cleared = f"LEVEL {level.id} CLEARED."
         if reward.opened_level is not None:

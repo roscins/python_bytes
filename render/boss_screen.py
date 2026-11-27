@@ -1,8 +1,8 @@
-"""Draw the boss fight screen: the boss, the lives, the health bar and the timer.
+"""Draw the boss fight screen: the boss, the tries left, the health bar and the timer.
 
 It follows the mock-up in docs/plan.md:
 
-    BOSS 1 · THE CORRUPTED BOOTLOADER              LIVES ♥ ♥ ♡
+    BOSS 1 · THE CORRUPTED BOOTLOADER              TRIES 2 of 3
     (pixel picture: a heart per life on the left, the boss in the middle)
     BOSS HP [██████████░░░░░░░░░░]  5 of 10 hidden tests still failing
     TIME 07:42
@@ -64,21 +64,10 @@ def boss_name(level_id):
     return level_id.upper().replace("-", " ")
 
 
-def lives_text(lives_left):
-    """Return the lives as text hearts, for example "♥ ♥ ♡" for 2 of 3."""
-    hearts = []
-    for index in range(LIVES_TOTAL):
-        if index < lives_left:
-            hearts.append(FULL_HEART)
-        else:
-            hearts.append(EMPTY_HEART)
-    return " ".join(hearts)
-
-
 def header(level_id, title, lives_left):
-    """Return the header: the boss's name on the left, the lives on the right."""
+    """Return the header: the boss's name on the left, the tries left on the right."""
     left = f"{boss_name(level_id)} · {title.upper()}"
-    right = f"LIVES {lives_text(lives_left)}"
+    right = f"TRIES {lives_left} of {LIVES_TOTAL}"
     gap = SCREEN_WIDTH - len(left) - len(right)
     if gap < 2:
         gap = 2
