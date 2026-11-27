@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from engine.level_pack import load_levels
-from grader.checks import normalise_output
+from grader.checks import normalise_output, run_check
 from grader.wave_grader import grade_wave
 from runner.process import run_code
 
@@ -38,6 +38,19 @@ class TestWorldThree(unittest.TestCase):
                         self.assertEqual(normalise_output(printed), normalise_output(wave.answer))
                     else:
                         self.assertFalse(grade_wave(wave, wave.starter).all_passed())
+
+    def test_boss_cannot_be_passed_by_printing_the_expected_text(self):
+        """The output tests use different stock data, so fixed text fails."""
+        wave = self.levels[-1].waves[0]
+        output_tests = [test for test in wave.tests if "expected_stdout" in test]
+        books = {tuple(test["values"].get("book", [])) for test in output_tests}
+        self.assertGreaterEqual(len(books - {()}), 2)
+        self.assertTrue(grade_wave(wave, wave.reference).all_passed())
+        data_lines = wave.starter.split("def add_delivery")[0]
+        for test in output_tests:
+            cheat = data_lines + f"print({test['expected_stdout']!r}, end='')\n"
+            passed = [run_check(other, cheat).passed for other in output_tests]
+            self.assertLess(passed.count(True), len(output_tests))
 
     def test_boss_has_its_own_sprite(self):
         """The Storage Auditor uses a 16 x 16 sprite."""

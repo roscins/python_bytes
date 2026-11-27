@@ -303,8 +303,18 @@ def check_test(test, place):
         if not isinstance(test["values"], dict) or not test["values"]:
             raise LevelError(f"{place}: values must be a table, like {{ capacity = 400 }}")
         for value in test["values"].values():
-            if not isinstance(value, (str, int, float, bool)):
-                raise LevelError(f"{place}: a value must be text, a number, true or false")
+            if not is_test_value(value):
+                raise LevelError(
+                    f"{place}: a value must be text, a number, true, false or a list of these")
+
+
+def is_test_value(value):
+    """Return True if a test may give a variable this value."""
+    items = value if isinstance(value, list) else [value]
+    for item in items:
+        if not isinstance(item, (str, int, float, bool)):
+            return False
+    return True
 
 
 def get_text(table, key, place):

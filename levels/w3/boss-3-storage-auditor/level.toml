@@ -20,7 +20,7 @@ print(book)
 kind = "boss"
 goal = "Fix the delivery fault and write the audit report."
 brief = """
-Keep the data lines and the names delivery and minimum.
+Keep the data lines: the grader changes their values.
 
 add_delivery(items, item): fix it to return a new list, leaving items unchanged.
 audit(listed, seen): return three sorted lists without repeats, as a tuple: in both, only in listed, only in seen.
@@ -208,12 +208,12 @@ expected_stdout = "BOOK ['cell', 'fuse', 'gear', 'lens']\nAFTER ['cell', 'fuse',
 values = { delivery = "coil", minimum = 3 }
 
 [[wave.test]]
-expected_stdout = "BOOK ['cell', 'fuse', 'gear', 'lens']\nAFTER ['cell', 'fuse', 'gear', 'lens', 'bolt']\nBOTH ['cell', 'gear']\nMISSING ['fuse', 'lens']\nEXTRA ['coil']\nLOW 1 fuse\nLOW 2 gear\nLOW 3 lens\nTOP cell 8\n"
-values = { delivery = "bolt", minimum = 6 }
+expected_stdout = "BOOK ['pipe', 'valve', 'seal']\nAFTER ['pipe', 'valve', 'seal', 'nut']\nBOTH ['pipe', 'valve']\nMISSING ['seal']\nEXTRA ['rivet']\nLOW 1 pipe\nTOP valve 9\n"
+values = { book = ["pipe", "valve", "seal"], counts = [2, 9, 9], scanned = ["valve", "rivet", "pipe"], delivery = "nut", minimum = 3 }
 
 [[wave.test]]
-expected_stdout = "BOOK ['cell', 'fuse', 'gear', 'lens']\nAFTER ['cell', 'fuse', 'gear', 'lens', 'chip']\nBOTH ['cell', 'gear']\nMISSING ['fuse', 'lens']\nEXTRA ['coil']\nTOP cell 8\n"
-values = { delivery = "chip", minimum = 1 }
+expected_stdout = "BOOK ['rod', 'disc', 'pin', 'cap', 'key']\nAFTER ['rod', 'disc', 'pin', 'cap', 'key', 'bolt']\nBOTH ['key', 'rod']\nMISSING ['cap', 'disc', 'pin']\nEXTRA ['bit', 'tag']\nLOW 1 rod\nLOW 2 disc\nLOW 3 cap\nTOP pin 12\n"
+values = { book = ["rod", "disc", "pin", "cap", "key"], counts = [4, 1, 12, 0, 7], scanned = ["key", "rod", "tag", "bit", "tag"], delivery = "bolt", minimum = 5 }
 
 [[wave.test]]
 require = ["FunctionDef", "For", "Tuple"]
