@@ -14,7 +14,7 @@ rows 1-3    HUD and rule
 row  4      GOAL: Make Snek print SNEK ONLINE.
 rows 5-14   editor: "WAVE 1 of 3 · FILL-IN", 8 numbered lines
 rows 15-22  panel: TASK, RESULTS, RUN or HINT, 6 lines
-row  23     [Submit] [Run] [Hint] [Restart level] [Map] [Help]
+row  23     [Submit] [Run] [Hint] [Restart wave] [Map] [Help]
 row  24     ^S submit  ^R run  ^T hint  ^G help  ^O map  ^Z undo
 ```
 
@@ -46,7 +46,7 @@ Ctrl-Z undoes, one step per line worked on. Any printable letter works.
 **Blanks.** `___` is highlighted. Typing with the cursor on it replaces the
 whole blank, and Backspace or Delete there removes it whole. The rest of a
 fill-in wave is **freely editable** (this changes the earlier decision that
-only blanks could be edited). Restart level puts the starter back.
+only blanks could be edited). Restart wave puts the starter back.
 
 ## Buttons
 
@@ -58,7 +58,7 @@ Left and Right pick, Enter presses, Up or Esc goes back.
 | Submit | ^S | grade; results in the panel |
 | Run | ^R | run without grading; output in the panel. With `input()`, the panel first asks for the input lines |
 | Hint | ^T | asks before spending coins; hint in the panel |
-| Restart level | none | asks (default No); starter code back in every wave, then wave 1. Passed waves, score, stars, coins, hints and guesses stay. In a boss it also restarts the fight |
+| Restart wave | none | asks (default No); starter code back in this wave only. Passed waves, score, stars, coins, hints and guesses stay. In a boss it also restarts the fight |
 | Map | ^O | to the map; the code is kept |
 | Help | ^G | the task and the keys, full screen |
 
@@ -151,3 +151,13 @@ boxes 2 and 3 become one.
 2. Tab indents in the editor; Down from the last line or Esc reaches the
    buttons, and there Tab moves to the next button.
 3. Ctrl-E opens a one-line prompt for typed words, without a colon.
+
+## After the first playtest of the editor
+
+1. The button is **Restart wave** (this replaces decision 1). `restart level`
+   typed after Ctrl-E still restarts every wave and goes to wave 1.
+2. Results and run output whose code has changed are dimmed and headed
+   "edited since last check". Undoing the change makes them current again.
+3. Typing in the code shrinks the panel to at most 3 lines of text. Esc hides
+   it. F1, or the [Panel] button that then appears, shows it in full. Some
+   terminals keep F1 for their own help; the button always works.

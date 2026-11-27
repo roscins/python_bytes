@@ -65,7 +65,7 @@ class TestOpening(unittest.TestCase):
         text = shown(screen, terminal)
         self.assertIn("GOAL: Make Snek print SNEK ONLINE.", text)
         self.assertIn("TASK", text)
-        self.assertIn("[Submit]  [Run]  [Hint]  [Restart level]  [Map]  [Help]", text)
+        self.assertIn("[Submit]  [Run]  [Hint]  [Restart wave]  [Map]  [Help]", text)
 
     def test_predict_shows_the_code_above_the_answer(self):
         """Both in one frame."""
@@ -137,15 +137,25 @@ class TestKeys(unittest.TestCase):
         self.assertLess(state.coins, 10)
         self.assertIn("HINT 1 of 3", shown(screen, terminal))
 
-    def test_restart_level_puts_the_starters_back_and_keeps_progress(self):
-        """Every wave, then wave 1."""
+    def test_restart_wave_touches_only_this_wave(self):
+        """The button; the passed wave 1 keeps its code."""
+        screen, state, _, _ = make_screen()
+        press(screen, *typed('"SNEK ONLINE"'), "ctrl-s", "enter")
+        press(screen, "x")
+        screen.do("Restart wave")
+        press(screen, "right", "enter")
+        self.assertEqual(state.current_wave, 2)
+        self.assertEqual(state.buffers["1-1"], {1: 'print("SNEK ONLINE")\n', 2: ""})
+
+    def test_restart_level_typed_after_ctrl_e(self):
+        """Every wave, then wave 1; progress stays."""
         screen, state, _, _ = make_screen()
         press(screen, *typed('"SNEK ONLINE"'), "ctrl-s", "enter")      # passed; Next wave
-        press(screen, "x", "escape", "escape")                         # close the panel, buttons
+        press(screen, "x", "escape", "escape")                         # hide the panel, buttons
         self.assertEqual(state.current_wave, 2)
         coins = state.coins
-        screen.do("Restart level")
-        press(screen, "right", "enter")
+        screen.display.read_line = lambda prompt: "restart level"
+        press(screen, "ctrl-e", "right", "enter")
         self.assertEqual(state.current_wave, 1)
         self.assertEqual(state.buffers["1-1"], {1: "print(___)\n", 2: ""})
         self.assertEqual(state.coins, coins)
@@ -175,6 +185,79 @@ class TestKeys(unittest.TestCase):
         screen.display.read_line = lambda prompt: "stats"
         press(screen, "ctrl-e")
         self.assertIn("STATS", shown(screen, terminal))
+
+
+class TestPanel(unittest.TestCase):
+    """Outdated results, and the panel making room while typing."""
+
+    def submitted(self):
+        """Return (screen, terminal) after a wrong Submit."""
+        screen, _, terminal, _ = make_screen()
+        press(screen, *typed("SNEK ONLINE"), "ctrl-s")
+        return screen, terminal
+
+    def test_editing_marks_the_results_as_outdated_and_dims_them(self):
+        """Until the next check."""
+        screen, terminal = self.submitted()
+        self.assertNotIn("edited since", shown(screen, terminal))
+        press(screen, "left", "x")
+        self.assertIn("RESULTS · edited since last check", shown(screen, terminal))
+        self.assertIn("\x1b[2mNot yet.", terminal.text())
+        press(screen, "ctrl-s")
+        self.assertNotIn("edited since", shown(screen, terminal))
+
+    def test_undoing_the_edit_makes_them_current_again(self):
+        """The code is what was checked."""
+        screen, terminal = self.submitted()
+        press(screen, "x", "backspace")
+        self.assertNotIn("edited since", shown(screen, terminal))
+
+    def test_a_task_panel_is_never_outdated(self):
+        """It is not about the code."""
+        screen, _, terminal, _ = make_screen()
+        press(screen, "x")
+        self.assertNotIn("edited since", shown(screen, terminal))
+
+    def panel_text_rows(self, screen):
+        """Return how many rows of text are inside the panel."""
+        lines = [strip_ansi(line) for line in screen.lines(19)]
+        top = next(index for index, line in enumerate(lines) if "RESULTS" in line)
+        bottom = next(index for index in range(top, len(lines)) if lines[index].startswith("└"))
+        return bottom - top - 1
+
+    def test_typing_shrinks_the_panel_to_three_lines(self):
+        """Moving the cursor does not; the code gets the room."""
+        screen, _ = self.submitted()
+        press(screen, "left")
+        self.assertEqual(self.panel_text_rows(screen), 6)
+        press(screen, "x")
+        self.assertEqual(self.panel_text_rows(screen), 3)
+        self.assertEqual(screen.editor_rows(19), 11)
+        self.assertEqual(len(screen.lines(19)), 19)
+
+    def test_escape_hides_it_and_f1_or_the_button_shows_it(self):
+        """Full size again."""
+        screen, terminal = self.submitted()
+        press(screen, "escape")
+        self.assertNotIn("RESULTS", shown(screen, terminal))
+        self.assertIn("[Panel]", screen_text(terminal))
+        press(screen, "f1")
+        self.assertIn("RESULTS", shown(screen, terminal))
+        press(screen, "escape")
+        screen.do("Panel")
+        self.assertIn("RESULTS", shown(screen, terminal))
+        self.assertNotIn("[Panel]", screen_text(terminal))
+
+    def test_the_longest_button_row_fits(self):
+        """[Next level], six buttons and [Panel] in 80 columns."""
+        screen, state, terminal, _ = make_screen(wave=3)
+        state.progress_for(screen.level).wave_best = [1.0, 1.0, 1.0]
+        state.cleared = ["1-1"]
+        press(screen, "x")
+        screen.focus_buttons()
+        text = shown(screen, terminal)
+        self.assertIn("[Next level]", text)
+        self.assertIn("[Panel]", text)
 
 
 class TestAutosave(unittest.TestCase):

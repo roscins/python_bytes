@@ -26,19 +26,29 @@ from engine.submission import grade_text
 from engine.wave_report import explain_error, run_report, submit_report, syntax_error_of
 from engine.workspace import starting_text
 from render.editor_view import GUTTER, View, code_rows, divider, frame
+from render.ansi import strip_ansi
 from render.highlight import highlight_lines
 from render.panel import wrap_lines
 from render.screen import WIDTH
 
+DIM = "\x1b[2m"
+NORMAL = "\x1b[0m"
+
 # The width of the text inside a frame.
 INNER = WIDTH - 4
 
-# Rows of code shown while the panel is open, and the fewest rows of answer.
-EDITOR_ROWS_WITH_PANEL = 8
+# Rows of text in the panel: when it opens, and while the player is typing.
+PANEL_ROWS = 6
+SMALL_PANEL_ROWS = 3
+
+# The editor's rows beside a full panel in the smallest window.
+TALLEST_EDITOR = 8
+
+# The fewest rows of answer in a predict wave, and of text in its panel.
 ANSWER_ROWS = 4
 SMALLEST_PANEL = 3
 
-BUTTONS = ["Submit", "Run", "Hint", "Restart level", "Map", "Help"]
+BUTTONS = ["Submit", "Run", "Hint", "Restart wave", "Map", "Help"]
 
 # The shortcut of each button that has one.
 SHORTCUTS = {"ctrl-s": "Submit", "ctrl-r": "Run", "ctrl-t": "Hint", "ctrl-o": "Map", "ctrl-g": "Help"}
@@ -53,9 +63,16 @@ HELP_KEYS = [
     "Down from the last line, or Esc, goes to the buttons.",
     "Ctrl-S submit      Ctrl-R run (not graded)   Ctrl-T hint",
     "Ctrl-Z undo        Ctrl-O map                Ctrl-G this help",
-    "Ctrl-E one command: power-ups, stats, where, wave 2, or a line of Python",
-    "PgUp and PgDn turn the panel under the code; Esc closes it.",
+    "Ctrl-E one command: power-ups, stats, where, wave 2, restart level,",
+    "       or a line of Python",
+    "PgUp and PgDn turn the panel under the code. Esc hides it; F1 or the",
+    "[Panel] button shows it again.",
 ]
+
+
+def dimmed(text):
+    """Return `text` in dim letters, without its own colours."""
+    return f"{DIM}{strip_ansi(text)}{NORMAL}"
 
 
 class Panel:
@@ -65,6 +82,8 @@ class Panel:
         title: what it holds, for example "RESULTS".
         lines: its text.
         top: the first line shown.
+        checked: for results and run output, the code lines they are about,
+            or None.
     """
 
     def __init__(self, title, lines):
@@ -72,6 +91,11 @@ class Panel:
         self.title = title
         self.lines = wrap_lines(lines, INNER)
         self.top = 0
+        self.checked = None
+
+    def is_outdated(self, code_lines):
+        """Return True if the code is no longer what these results are about."""
+        return self.checked is not None and self.checked != code_lines
 
     def shown(self, height):
         """Return the `height` rows to show, with a note if there is more."""
@@ -96,7 +120,9 @@ class WaveScreen:
         editor: its code, with the cursor.
         input_editor: the input lines being typed for Run, or None.
         mark: where the last error is, or None.
-        panel: the Panel, or None when closed.
+        panel: the Panel, or None if there is nothing to show.
+        hidden: True after Esc put the panel away.
+        small: True while the player types, so the code gets more room.
         on_buttons: True while the buttons have the focus.
         buttons: the Choice among the buttons.
         question: (Choice of No and Yes, what Yes does), or None.
@@ -133,12 +159,27 @@ class WaveScreen:
         self.leave = None
         self.panel = None
         self.shown_time = None
+        self.hidden = False
+        self.small = False
         # A boss gave its task on the screens before; its code needs the room.
         if not self.level.boss:
             self.panel = Panel("TASK", wave.brief.strip().splitlines())
         elif self.state.boss_fight is None and not self.passed():
             self.state.boss_fight = BossFight(self.level)
         self.buttons = Choice(self.labels())
+
+    def show_panel(self):
+        """Show the panel at its full size; with none, show the task."""
+        if self.panel is None:
+            self.panel = Panel("TASK", self.wave().brief.strip().splitlines())
+        self.hidden = False
+        self.small = False
+
+    def new_panel(self, title, lines):
+        """Put a new panel under the editor, at its full size."""
+        self.panel = Panel(title, lines)
+        self.hidden = False
+        self.small = False
 
     def place_cursor(self):
         """Fill-in: the first blank. Debug and boss: line 1. Build: a new line. Predict: the end."""
@@ -172,23 +213,38 @@ class WaveScreen:
 
     def labels(self):
         """Return the buttons, with the way onward first once the wave is passed."""
+        labels = list(BUTTONS)
         onward = self.next_label()
-        if onward is None:
-            return list(BUTTONS)
-        return [onward] + BUTTONS
+        if onward is not None:
+            labels.insert(0, onward)
+        if self.panel is not None and (self.hidden or self.small):
+            labels.append("Panel")
+        return labels
 
     # ---- drawing
+
+    def panel_open(self):
+        """Return True if the panel is on screen."""
+        return self.panel is not None and not self.hidden
+
+    def panel_rows(self):
+        """Return how many rows of text the panel gets."""
+        if self.small and self.input_editor is None:
+            return max(1, min(SMALL_PANEL_ROWS, len(self.panel.lines)))
+        return PANEL_ROWS
 
     def editor_rows(self, total):
         """Return how many rows of text the editor frame gets out of `total` screen rows."""
         # The GOAL line and the two borders of the frame.
         room = total - 3
-        if self.panel is None:
+        if not self.panel_open():
             return room
         if self.wave().mode == "predict":
             wanted = len(self.code_to_read()) + 1 + max(ANSWER_ROWS, len(self.editor.lines))
-            return min(wanted, room - 2 - SMALLEST_PANEL)
-        return EDITOR_ROWS_WITH_PANEL
+            smallest = min(SMALLEST_PANEL, self.panel_rows())
+            return min(wanted, room - 2 - smallest)
+        # A taller window gives its extra rows to the panel.
+        return min(room - 2 - self.panel_rows(), TALLEST_EDITOR + PANEL_ROWS - self.panel_rows())
 
     def code_to_read(self):
         """Return the lines a predict wave asks about."""
@@ -229,15 +285,23 @@ class WaveScreen:
         height = self.editor_rows(total)
         lines = [f" GOAL: {goal}"] + self.editor_frame(height)
         room = total - len(lines) - 2
-        if self.panel is None:
-            return lines
+        if not self.panel_open():
+            return lines + [""] * (total - len(lines))
         if self.input_editor is not None:
             cursor = None
             if not self.on_buttons:
                 cursor = (self.input_editor.row, self.input_editor.column)
             rows = code_rows(self.input_editor.lines, View(), room, INNER, cursor)
             return lines + frame("INPUT the program will read", rows, WIDTH)
-        return lines + frame(self.panel.heading(room), self.panel.shown(room), WIDTH)
+        if self.small:
+            room = min(room, self.panel_rows())
+        rows = self.panel.shown(room)
+        heading = self.panel.heading(room)
+        if self.panel.is_outdated(self.editor.lines):
+            heading = f"{self.panel.title} · edited since last check"
+            rows = [dimmed(row) for row in rows]
+        lines = lines + frame(heading, rows, WIDTH)
+        return lines + [""] * (total - len(lines))
 
     def draw(self):
         """Draw the whole screen."""
@@ -306,6 +370,8 @@ class WaveScreen:
             self.leave = ":quit"
         elif key in SHORTCUTS:
             self.do(SHORTCUTS[key])
+        elif key == "f1":
+            self.show_panel()
         elif key == "ctrl-e":
             self.typed_command()
         elif key in ("page-up", "page-down"):
@@ -332,6 +398,8 @@ class WaveScreen:
             editor.press(key)
         if editor is self.editor:
             self.forget_mark(before, min(row, editor.row))
+            if before != editor.lines:
+                self.small = True
 
     def forget_mark(self, before, first_row):
         """Remove the mark when its line was changed or moved."""
@@ -351,15 +419,15 @@ class WaveScreen:
         self.buttons = Choice(self.labels())
 
     def escape(self):
-        """Cancel the input, close the panel, or go between editor and buttons."""
+        """Cancel the input, hide the panel, or go between editor and buttons."""
         if self.input_editor is not None:
             self.input_editor = None
             self.panel = None
             self.on_buttons = False
         elif self.on_buttons:
             self.on_buttons = False
-        elif self.panel is not None:
-            self.panel = None
+        elif self.panel_open():
+            self.hidden = True
         else:
             self.focus_buttons()
 
@@ -386,7 +454,7 @@ class WaveScreen:
     def ask(self, question, on_yes):
         """Put a yes-or-no question in the panel; No is chosen."""
         lines = [] if self.panel is None or self.panel.title != "HINT" else self.panel.lines
-        self.panel = Panel(self.panel.title if lines else "SNEK", lines + [question])
+        self.new_panel(self.panel.title if lines else "SNEK", lines + [question])
         self.panel.top = len(self.panel.lines)
         self.question = (Choice(["No", "Yes"]), on_yes)
 
@@ -418,8 +486,10 @@ class WaveScreen:
             self.run_code()
         elif label == "Hint":
             self.hint()
-        elif label == "Restart level":
-            self.ask("Restart the level? The starter code comes back in every wave.", self.restart)
+        elif label == "Restart wave":
+            self.ask("Restart this wave? Its starter code comes back.", self.restart_wave)
+        elif label == "Panel":
+            self.show_panel()
         elif label == "Map":
             self.leave = ":map"
         elif label == "Help":
@@ -434,12 +504,13 @@ class WaveScreen:
     def say(self, title, text):
         """Put a text in the panel."""
         self.input_editor = None
-        self.panel = Panel(title, text.split("\n"))
+        self.new_panel(title, text.split("\n"))
 
     def show_result(self, title, lines, mark):
         """Put a result in the panel and mark the failing line, if there is one."""
         self.input_editor = None
-        self.panel = Panel(title, lines)
+        self.new_panel(title, lines)
+        self.panel.checked = list(self.editor.lines)
         self.mark = mark
         self.show_mark = True
         self.on_buttons = False
@@ -524,7 +595,7 @@ class WaveScreen:
         if "input(" in code:
             if self.input_editor is None:
                 self.input_editor = Editor()
-                self.panel = Panel("INPUT", [])
+                self.new_panel("INPUT", [])
                 self.on_buttons = False
                 return
             stdin_text = self.input_editor.text()
@@ -548,7 +619,17 @@ class WaveScreen:
         self.say("HINT", ask_for_hint(self.state, self.level, self.number))
         self.panel.top = len(self.panel.lines)
 
-    def restart(self):
+    def restart_wave(self):
+        """Put the starter code back in this wave only. Progress stays."""
+        self.state.buffers[self.level.id][self.number] = starting_text(self.wave())
+        self.state.undo_stack = []
+        self.state.coding = True
+        if self.level.boss:
+            self.state.boss_fight = BossFight(self.level)
+        self.open()
+        self.say("SNEK", "Wave restarted: the starter code is back.\n" + self.wave().brief.strip())
+
+    def restart_level(self):
         """Put the starter code back in every wave and go to wave 1. Progress stays."""
         for number in self.state.buffers.get(self.level.id, {}):
             self.state.buffers[self.level.id][number] = starting_text(self.level.waves[number - 1])
@@ -579,6 +660,11 @@ class WaveScreen:
             self.do(shortcuts[name])
         elif name == "quit":
             self.leave = ":quit"
+        elif [word.lower() for word in words] == ["restart", "wave"]:
+            self.do("Restart wave")
+        elif [word.lower() for word in words] == ["restart", "level"]:
+            self.ask("Restart the level? The starter code comes back in every wave.",
+                     self.restart_level)
         elif name == "play" and len(words) == 2 and self.can_play(words[1]):
             self.leave = f":{line}"
         elif name == "wave":

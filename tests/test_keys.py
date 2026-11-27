@@ -28,6 +28,10 @@ class TestParseKeys(unittest.TestCase):
         self.assertEqual(parse_keys("\r\n\t\x1b[Z\x7f\x1b[3~\x1b[5~\x1b[6~"),
                          ["enter", "enter", "tab", "shift-tab", "backspace", "delete", "page-up", "page-down"])
 
+    def test_f1_in_the_forms_terminals_send(self):
+        """xterm, the older form and the Linux console."""
+        self.assertEqual(parse_keys("\x1bOP\x1b[11~\x1b[[Ax"), ["f1", "f1", "f1", "x"])
+
     def test_control_keys(self):
         """Ctrl-D, Ctrl-E and Ctrl-S."""
         self.assertEqual(parse_keys("\x04\x05\x13"), ["ctrl-d", "ctrl-e", "ctrl-s"])

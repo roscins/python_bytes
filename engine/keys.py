@@ -38,6 +38,8 @@ SEQUENCES = {
     "\x1b[1~": "home", "\x1b[4~": "end", "\x1b[7~": "home", "\x1b[8~": "end",
     "\x1b[3~": "delete", "\x1b[5~": "page-up", "\x1b[6~": "page-down",
     "\x1b[Z": "shift-tab",
+    # F1, as different terminals send it.
+    "\x1bOP": "f1", "\x1b[11~": "f1", "\x1b[[A": "f1",
 }
 
 SINGLE_KEYS = {"\r": "enter", "\n": "enter", "\t": "tab", "\x7f": "backspace", "\x08": "backspace"}
@@ -45,7 +47,7 @@ SINGLE_KEYS = {"\r": "enter", "\n": "enter", "\t": "tab", "\x7f": "backspace", "
 # The second character Windows sends after "\x00" or "\xe0".
 WINDOWS_CODES = {
     "H": "up", "P": "down", "K": "left", "M": "right", "G": "home", "O": "end",
-    "I": "page-up", "Q": "page-down", "S": "delete", "\x0f": "shift-tab",
+    "I": "page-up", "Q": "page-down", "S": "delete", "\x0f": "shift-tab", ";": "f1",
 }
 
 
@@ -71,6 +73,11 @@ def sequence_end(text, start):
         return None
     if text[start + 1] != "[":
         return start + 1
+    if text[start + 2:start + 3] == "[":
+        # The Linux console sends F1 as Esc [ [ A.
+        if start + 3 < len(text):
+            return start + 4
+        return None
     for index in range(start + 2, len(text)):
         # A sequence ends with a letter or "~".
         if "@" <= text[index] <= "~":
