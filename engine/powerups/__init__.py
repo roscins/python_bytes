@@ -6,7 +6,9 @@ level that names it (power_up in level.toml). It is typed at the map as
 here; the table of tools is below.
 """
 
+from engine.powerups.approx import do_approx
 from engine.powerups.calc import do_calc
+from engine.powerups.explain import do_explain
 from engine.powerups.memory import do_memory
 from engine.powerups.read import do_read
 from engine.predict_lock import locked_message
@@ -44,13 +46,15 @@ def inside_a_wave(state):
 
 
 def always(state):
-    """Return True: calc works out code wherever it is used."""
+    """Return True: calc and approx work out code wherever they are used."""
     return True
 
 
 POWER_UPS = {
-    "calc": PowerUp(do_calc, "shows the order of working out, for example: calc 2 + 3 * 4", always),
+    "explain": PowerUp(do_explain, 'marks the parts of a line, for example: explain print("HI")', never),
     "memory": PowerUp(do_memory, "draws which names point to which values", inside_a_wave),
+    "calc": PowerUp(do_calc, "shows the order of working out, for example: calc 2 + 3 * 4", always),
+    "approx": PowerUp(do_approx, "shows the digits a float stores, for example: approx 0.1 + 0.2", always),
     "read": PowerUp(do_read, 'index numbers under a text, for example: read "ABC" [0:2]', never),
 }
 
