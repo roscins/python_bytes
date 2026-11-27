@@ -120,6 +120,10 @@ class Wave:
         """Return the lines of the code the player reads, numbered from 1 in a review."""
         return (self.code or "").strip().splitlines()
 
+    def takes_comments(self):
+        """Return True if the player may comment on the lines of this review wave."""
+        return any("model_comment" in fault for fault in self.faults)
+
     def is_quiz(self):
         """Return True if the wave is answered with an answer sheet."""
         return self.mode in QUIZ_MODES
@@ -435,6 +439,7 @@ def get_faults(table, place):
             raise LevelError(f"{where}: line must be a line of the code, one fault per line")
         lines.append(line)
         get_text(fault, "explanation", where)
+        get_optional_text(fault, "model_comment", where)
         if get_text(fault, "category", where) not in list(LETTERS[:len(categories)]):
             raise LevelError(f"{where}: category must be the letter of one of the categories")
     return faults, categories
@@ -487,6 +492,10 @@ def check_test(test, place):
             raise LevelError(f"{place}: a call test needs an expected value")
         if "args" in test and not isinstance(test["args"], list):
             raise LevelError(f"{place}: args must be a list, like [1, 2]")
+    if kind == "require_call":
+        get_list_of_text(test, "require_call", place)
+    if kind == "require_plan" and get_whole_number(test, "require_plan", place) < 1:
+        raise LevelError(f"{place}: require_plan must be at least 1")
     if kind == "catches":
         check_catches_table(test["catches"], place)
     if kind == "expected_file":

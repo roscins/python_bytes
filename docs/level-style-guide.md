@@ -54,7 +54,7 @@ Two scripts in `tools/` help while writing a level:
 
 ## Kinds of test
 
-Each `[[wave.test]]` table has exactly one of these keys (`expected_file` is under Data files and `catches` under Testing the player's tests, below):
+Each `[[wave.test]]` table has exactly one of these keys (`expected_file` is under Data files and `catches` under Testing the player's tests, below). Two more: `require_call = ["csv.reader"]` passes when the code calls those names, and `require_plan = 3` when at least 3 comment lines come before the first statement (say so in the brief):
 
 | Key | Passes when |
 | --- | --- |
@@ -237,3 +237,9 @@ def is_low(value):
 ```
 
 The player's `test_is_low()` (no parameters) runs twice, with `is_low` swapped for each version. It must pass with `correct` and fail an `assert` with `broken`. Add one test per fault the player should catch. The brief must name both functions.
+
+A level may have extra review waves after its three waves (3-4 does). A fault may have `model_comment = "..."`: the player can then comment on each marked line (in plain mode `4: a # why`), and sees the model comments once the wave is done. Comments are not graded.
+
+## Code quality and clearing
+
+From World 3, a level with a build wave is cleared only when build code that passes every test also meets at least 50 % of the code-quality rules. Three stars always need full quality.

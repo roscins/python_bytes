@@ -130,7 +130,7 @@ Without loops, write recursive is_palindrome(text), returning True or False, plu
 Both Fibonacci functions add 1 to calls[0] every time they are called, and fib_memo returns a stored memo[n] if there is one, otherwise stores each result it adds up.
 Keep word = "LEVEL" and n = 10 as the top lines, then print Palindrome: and is_palindrome(word).
 Call fib(n, calls) with calls = [0] and print Plain:, the result and calls[0]; then do the same with fib_memo, an empty dict and a new counter, printing Memo:.
-Keep the docstrings and a # comment.
+Start the file with at least 3 comment lines of plan, and keep the docstrings.
 """
 starter = '''
 word = "LEVEL"
@@ -151,6 +151,9 @@ def fib_memo(n, memo, calls):
 # Print the three result lines below.
 '''
 reference = '''
+# Plan: check each function's base case
+# Then: shrink the input in each call
+# Last: print the results and call counts
 word = "LEVEL"
 n = 10
 
@@ -275,6 +278,9 @@ require = ["FunctionDef", "Return", "Dict"]
 
 [[wave.test]]
 require_comment = true
+
+[[wave.test]]
+require_plan = 3
 
 [[wave]]
 kind = "debug"

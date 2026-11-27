@@ -5,6 +5,8 @@ earned, and whether the level was cleared. Like the other screens, this
 module returns text and never prints.
 """
 
+from engine.rewards import build_wave_number, has_build_wave
+from engine.scoring import QUALITY_GATE_SHARE, QUALITY_GATE_WORLD
 from engine.friendly import format_friendly, friendly_for_source, friendly_message
 from engine.scoring import star_text
 from render.compare_view import compare_lines
@@ -100,6 +102,14 @@ def reward_lines(level, reward):
         lines.append(cleared)
     elif not reward.is_cleared:
         lines.append("Pass every wave to clear this level.")
+    if has_build_wave(level):
+        if level.world >= QUALITY_GATE_WORLD:
+            lines.append(f"Clearing needs code quality {QUALITY_GATE_SHARE:.0%} or more; "
+                         "★★★ needs full quality.")
+            if reward.quality_blocked and not reward.is_cleared:
+                lines.append(f"Quality is too low: improve wave {build_wave_number(level)}.")
+        else:
+            lines.append("★★★ needs full code quality.")
     return lines
 
 

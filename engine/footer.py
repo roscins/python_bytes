@@ -28,6 +28,8 @@ def footer_for(state):
     if wave.mode == "predict":
         return "ANSWER · one printed line per Enter · :submit check · :hint · :help"
     if wave.mode == "review":
+        if wave.takes_comments():
+            return "REVIEW · line: letter # comment, for example 4: a # why · :submit · :help"
         return "REVIEW · line: letter, for example 4: a · :submit check · :hint · :help"
     if wave.is_quiz():
         return "ANSWER · number: letter, for example 1: a · :submit check · :hint · :help"

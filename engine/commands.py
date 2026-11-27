@@ -27,14 +27,14 @@ from engine.level_screen import boss_intro_text, intro_text
 from engine.powerups import POWER_UPS, earned_help_lines, is_python_line, use_power_up
 from engine.progression_help import next_level_to_play
 from engine.results_screen import results_text
-from engine.rewards import apply_submission
+from engine.rewards import apply_submission, build_wave_number, quality_blocks_clear
 from engine.scoring import GUESSES_BEFORE_REVEAL, is_unlocked
 from engine.screens import join_screens
 from engine.stats import stats_text
 from engine.submission import grade_text
 from engine.suggest import CODE_WORDS, closest, did_you_mean
 from engine.workspace import export_wave
-from grader.answer_sheet import LETTERS
+from grader.answer_sheet import LETTERS, comparison_lines
 from render.level_clear import level_clear_frames, level_clear_text, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames, text_map
 
@@ -239,12 +239,18 @@ def advance_after_submit(state, level, number, result):
     if revealed:
         start = f"Wave {number} is done"
         before = reveal_text(wave) + "\n\n"
+    compared = comparison_lines(wave, state.wave_text(level, number))
+    if compared:
+        before = before + "\n".join(compared) + "\n\n"
     if number < len(level.waves):
         state.current_wave = number + 1
         return before + f"{start}! Next:\n\n" + show_wave(state)
     state.coding = False
     following = next_level_to_play(state)
     where = "Type map to see where to go next."
+    if quality_blocks_clear(level, progress) and level.id not in state.cleared:
+        number_of_build = build_wave_number(level)
+        where = f"To clear the level, improve the code quality: :wave {number_of_build}"
     if following is not None and level.id in state.cleared:
         where = f"Next: play {following.id}"
     return before + f"{start}, and that was the last wave. {where}"

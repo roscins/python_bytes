@@ -236,10 +236,10 @@ concepts = ["mutability and aliasing", "is versus ==", "cloning with slices and 
 constructs = ["Compare:Is", "call:id", "import:copy", "method:copy"]
 recycles = ["3-1", "3-3"]
 difficulty = 3
-outcomes = ["B6", "R4"]
+outcomes = ["B6", "B12", "R4"]
 power_up = "clone"
 story = "Changing one robot's settings mysteriously changes another's."
-mission = "Find and fix three aliasing bugs, including a mutable default argument."
+mission = "Find and fix three aliasing bugs, including a mutable default argument. Then review a provided solution for aliasing faults."
 
 [[level]]
 id = "3-5"
@@ -340,7 +340,7 @@ boss = true
 constructs = []
 recycles = ["4-1", "4-2", "4-3", "4-4", "4-5"]
 difficulty = 5
-outcomes = ["B11", "R5"]
+outcomes = ["B7", "B11", "R5"]
 mission = "A single-file sensor-warning project with assert tests that reads data files and writes a report."
 
 # ---------------------------------------------------------------- World 5

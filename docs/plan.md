@@ -93,28 +93,28 @@ Loops (for, while)
 Wave 2 in 2-3 and 2-4, Boss 2
 Define and call functions, pass arguments
 3-2, 3-3
-Wave 2 in 3-2 and 3-3, Boss 3
+Wave 2 in 3-2, 3-3 and 4-5, Boss 3
 Lists, tuples, sets, dictionaries
 3-1, 3-5, 4-1
-Multiple-choice "choose the structure" wave in 4-1
+Wave 2 in 3-1, 3-5 and 4-1, "choose the structure" wave in 4-1, Boss 3
 Algorithmic thinking
 2-2 onwards, 2-5
-Plan-first missions, Boss 2, Boss 4
+Plan-first build waves in 2-5 and 4-5, Boss 2, Boss 4
 Best practice: indentation, naming, documentation
 1-1, 1-2, 3-2 (then continuous)
-Code-quality score on every Wave 2
+Code-quality score on every Wave 2; from World 3, 50 % is needed to clear
 Error handling with try/except
 4-2
-Wave 2 in 4-2, Boss 4
+Waves 2 and 3 in 4-2, debugging in 4-4
 File input and output
 4-3
-Wave 2 in 4-3, Boss 4
+Waves 2 and 3 in 4-3, Boss 4
 Break real problems into sub-tasks
 3-3, 4-3, Boss 4
-Boss 4 (project)
+Wave 2 in 3-3, Boss 4 (project)
 Collaborate, review code, give feedback
-4-4
-Review of a provided solution in 4-4
+3-4, 4-4
+Review waves in 3-4 and 4-4
 Advanced tier – Advanced Python Programming for Engineers
 Outcome (from course description)
 Taught in
@@ -315,7 +315,7 @@ refactor
 3-4
 Echoes and Aliases
 mutability and aliasing, is versus ==, cloning with slices and copy, the mutable default argument trap
-Find and fix three aliasing bugs, including a mutable default argument.
+Find and fix three aliasing bugs, including a mutable default argument. Then review a provided solution for aliasing faults.
 clone
 3-5
 Fixed Records

@@ -13,6 +13,8 @@ class LevelProgress:
         wave_attempts: how many times each wave has been graded.
         hints_bought: how many hints (0 to 3) were bought for each wave.
         best_quality: the best code-quality share of the build wave.
+        passed_quality: the best code-quality share of build code that passed
+            every test.
         quality_rewarded: True once the coins for full quality were given.
         best_score: the best level score, a whole percent.
         stars: the most stars earned (0 to 3).
@@ -25,6 +27,7 @@ class LevelProgress:
         self.wave_attempts = [0] * wave_count
         self.hints_bought = [0] * wave_count
         self.best_quality = 0.0
+        self.passed_quality = 0.0
         self.quality_rewarded = False
         self.best_score = 0
         self.stars = 0
@@ -63,6 +66,7 @@ class LevelProgress:
             "wave_attempts": self.wave_attempts,
             "hints_bought": self.hints_bought,
             "best_quality": self.best_quality,
+            "passed_quality": self.passed_quality,
             "quality_rewarded": self.quality_rewarded,
             "best_score": self.best_score,
             "stars": self.stars,
@@ -111,6 +115,11 @@ def progress_from_dict(data, wave_count):
     progress.wave_attempts = fit_list(data["wave_attempts"], wave_count)
     progress.hints_bought = fit_list(data["hints_bought"], wave_count)
     progress.best_quality = data["best_quality"]
+    # Older saves have no "passed_quality": their best quality stands in.
+    passed_quality = data.get("passed_quality", data["best_quality"])
+    if not is_number(passed_quality):
+        raise ValueError("passed_quality must be a number")
+    progress.passed_quality = passed_quality
     progress.quality_rewarded = data["quality_rewarded"]
     progress.best_score = data["best_score"]
     progress.stars = data["stars"]

@@ -312,3 +312,57 @@ expected = ["scan"]
 call = "log_event"
 args = ["scan", ["boot"]]
 expected = ["boot", "scan"]
+
+[[wave]]
+kind = "debug"
+mode = "review"
+goal = "Mark each faulty line and name its fault."
+brief = """
+Review this solution. add_part() without a list must start a new one, upgrade() must
+leave robot unchanged, and spare_racks() must share no list with racks.
+After naming a fault you may write a comment for its author.
+"""
+code = '''
+def add_part(part, parts=[]):
+    """Add part to parts, or to a new list."""
+    parts.append(part)
+    return parts
+
+
+def upgrade(robot, tool):
+    """Return a copy of robot with tool added."""
+    clone = robot
+    clone.append(tool)
+    return clone
+
+
+def spare_racks(racks):
+    """Return racks that share no list with the original."""
+    return racks.copy()
+'''
+categories = ["a default list is shared between calls", "two names mean one list",
+              "only the outer list is cloned", "== is needed instead of is"]
+wrong = "9: a"
+hints = [
+  "For each function ask: which lists exist after the call, and who else can see them?",
+  "Look at a parameter default, at an assignment that should clone, and at how deep a clone goes.",
+  "One fault is on line 9.",
+]
+
+[[wave.fault]]
+line = 1
+category = "a"
+explanation = "[] is made once, so every call without a list adds to the same one."
+model_comment = "Use parts=None and make the new list inside."
+
+[[wave.fault]]
+line = 9
+category = "b"
+explanation = "clone = robot copies nothing: both names mean one list."
+model_comment = "Clone first, with robot.copy(), then append."
+
+[[wave.fault]]
+line = 16
+category = "c"
+explanation = "copy() clones the outer list only; the inner lists are shared."
+model_comment = "Use copy.deepcopy(racks) to clone inner lists too."

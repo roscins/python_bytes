@@ -111,7 +111,7 @@ This replaces the earlier 29-level layout in `docs/plan.md` (worlds had 2–4 le
 | 3-1 | Inventory | lists: literals, indexing and slicing; adding, removing and sorting items; searching with in; lists of lists | 2 | B6 | `inventory` |
 | 3-2 | Subroutines I | def, parameters and return; None; docstrings; local scope | 2 | B5, B8 | `define` |
 | 3-3 | Subroutines II | default and keyword arguments; returning several values; min, max, sum and sorted; decomposition, specifications and Newton-Raphson | 3 | B5, B11, R5, R7 | `refactor` |
-| 3-4 | Echoes and Aliases | mutability and aliasing; is versus ==; cloning with slices and copy; the mutable default argument trap | 3 | B6, R4 | `clone` |
+| 3-4 | Echoes and Aliases | mutability and aliasing; is versus ==; cloning with slices and copy; the mutable default argument trap | 3 | B6, B12, R4 | `clone` |
 | 3-5 | Fixed Records | tuples in depth: immutability and unpacking; sets and set algebra; zip(); enumerate() | 3 | B6 | `compare` |
 | Boss 3 | The Storage Auditor | No new concepts. Audit the inventory with functions, lists, tuples and sets; fix an aliasing fault. | 4 | B5, B6, R4 | – |
 
@@ -124,13 +124,15 @@ This replaces the earlier 29-level layout in `docs/plan.md` (worlds had 2–4 le
 | 4-3 | The Archive | reading and writing files with open() and with; the csv module; pathlib.Path; validating input data | 3 | B10, B11 | `save` |
 | 4-4 | The Test Bench | black-box and glass-box test design; boundary cases; assert-based test functions; systematic debugging and reviewing a provided solution | 3 | B8, B9, B12, R5 | `test` |
 | 4-5 | Echo Chamber | recursion: base case and recursive case; inductive reasoning; recursion on lists and strings; memoisation with a dictionary | 4 | B5, B7, R3 | `echo` |
-| Boss 4 | Systems Online | No new concepts. A single-file sensor-warning project with assert tests that reads data files and writes a report. | 5 | B11, R5 | – |
+| Boss 4 | Systems Online | No new concepts. A single-file sensor-warning project with assert tests that reads data files and writes a report. | 5 | B7, B11, R5 | – |
 
 Notes on the Basic tier:
 
 - **1-5** uses `split()` before lists exist. The result is only indexed (`parts[0]`) or passed to `join()`; list literals come in 3-1.
 - **3-3** holds the first tuples (returning and unpacking several values). 3-5 then teaches tuples properly, together with sets, `zip()` and `enumerate()`.
 - **4-1** is where timing (`time`) and the first Big-O words come in, because "choose the right structure" needs a measurement to argue with. The "justify" waves are multiple choice; written answers belong to Worlds 7–8.
+- **3-4** first practises B12 with a review wave on aliasing faults; its comments are compared with a model, not graded.
+- **Plan first:** the build waves of 2-5, 4-5 and Boss 4 must start with at least 3 comment lines of plan.
 - **4-4** teaches B12 without written answers: the player reviews a provided solution by choosing the right feedback for each fault and marking the line that holds it.
 - **4-5** (recursion) is the last level of the world on purpose. Call counts are kept through return values or a mutable counter, because `global` is never taught (see the level style guide). There is no nested-list flattening: it needs `isinstance`, which comes in 6-1.
 - **Boss 4** is one project wave using data files. It is one file. The player cannot import their own modules before 5-1.

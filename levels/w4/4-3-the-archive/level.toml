@@ -104,7 +104,7 @@ files = { "temps.csv" = "temps-b.csv" }
 kind = "build"
 goal = "Report bad rows, save a summary, draw a bar chart."
 brief = '''
-If Path(log_name) does not exist(), print NO LOG and stop there. It has a header, then sensor,value rows,
+Use with, csv.reader and Path: if Path(log_name) does not exist(), print NO LOG and stop there. It has a header, then sensor,value rows,
 valid with exactly 2 fields and a whole number from 0 to 100 (isdigit() helps).
 For each invalid row print SKIP and its line number, such as SKIP 3 (the header is line 1).
 Then print a chart line for each valid row, in file order: the sensor left-aligned
@@ -201,6 +201,12 @@ files = { "readings.csv" = "readings-b.csv" }
 [[wave.test]]
 expected_stdout = "NO LOG\n"
 values = { log_name = "missing.csv" }
+
+[[wave.test]]
+require = ["With"]
+
+[[wave.test]]
+require_call = ["open", "csv.reader", "Path"]
 
 [[wave]]
 kind = "debug"

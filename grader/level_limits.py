@@ -84,7 +84,8 @@ def player_texts(level):
         for question in wave.questions:
             for text in [question["ask"], question["explanation"]] + question["options"]:
                 texts.append((place + " question", text))
-        for text in wave.categories + [fault["explanation"] for fault in wave.faults]:
+        comments = [fault.get("model_comment", "") for fault in wave.faults]
+        for text in wave.categories + comments + [fault["explanation"] for fault in wave.faults]:
             texts.append((place + " review", text))
     return texts
 
@@ -233,8 +234,11 @@ def check_limits(level):
     kinds = []
     for wave in level.waves:
         kinds.append(wave.kind)
-    if not level.boss and kinds != WAVE_ORDER:
-        problems.append("waves must be fill-in, build, debug, in that order")
+    extra_waves = level.waves[len(WAVE_ORDER):]
+    extra_are_reviews = all(wave.kind == "debug" and wave.mode == "review" for wave in extra_waves)
+    if not level.boss and (kinds[:len(WAVE_ORDER)] != WAVE_ORDER or not extra_are_reviews):
+        problems.append("waves must be fill-in, build, debug, in that order "
+                        "(then only review waves)")
 
     number = 0
     for wave in level.waves:
