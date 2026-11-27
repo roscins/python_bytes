@@ -20,6 +20,7 @@ from engine.console import continue_pending, do_cancel, do_run, run_python_line
 from engine.hints import ask_for_hint
 from engine.hud import map_status
 from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
+from engine.powerups import POWER_UPS, earned_help_lines, is_python_line, use_power_up
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
 from engine.scoring import is_unlocked
@@ -72,6 +73,7 @@ def do_help(state, arguments):
     for name in ALL_CODE_COMMANDS:
         _, description = ALL_CODE_COMMANDS[name]
         lines.append(f"  :{name:<7} {description}")
+    lines.extend(earned_help_lines(state))
     return "\n".join(lines)
 
 
@@ -276,6 +278,9 @@ def run_command(state, text, colon):
         # They want the text after the command name exactly as typed, because
         # the spaces in ":edit 2     print(x)" are the code's indentation.
         return function(state, text.lstrip()[len(name):])
+    rest = text.lstrip()[len(name):]
+    if name in POWER_UPS and not is_python_line(rest):
+        return use_power_up(state, name, rest)
     if name not in COMMANDS:
         if colon:
             return f"Unknown command: :{name}. Type :help to see the commands."

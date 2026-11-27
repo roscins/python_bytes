@@ -118,7 +118,7 @@ class TestFailing(unittest.TestCase):
 
     def test_level_file_differs_from_concepts_toml(self):
         """A different power-up is reported."""
-        self.fails_with([('power_up = "status"', 'power_up = "other"')], "power")
+        self.fails_with([('power_up = "explain"', 'power_up = "other"')], "power")
 
     def test_style_limit(self):
         """The word "easy" in a brief breaks the style guide."""
@@ -128,7 +128,7 @@ class TestFailing(unittest.TestCase):
 
     def test_loader_error_is_one_line_without_a_traceback(self):
         """A missing power_up is reported by the loader."""
-        path = write_level(self, [('power_up = "status"\n', "")])
+        path = write_level(self, [('power_up = "explain"\n', "")])
         code, lines = run_tool([str(path)])
         self.assertEqual(code, 1)
         self.assertEqual(len(lines), 2)

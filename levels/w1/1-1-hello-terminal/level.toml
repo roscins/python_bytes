@@ -3,7 +3,7 @@ id = "1-1"
 title = "Hello, Terminal"
 world = 1
 new_concepts = ["print()", "string literals", "comments"]
-power_up = "status"
+power_up = "explain"
 
 cutscene = '''
 # >> The lab is dark. One terminal blinks. Snek's voice module is offline.

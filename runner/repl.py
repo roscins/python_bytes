@@ -50,15 +50,18 @@ class ReplResult:
         timed_out: True if the line ran too long and the console was stopped.
         was_reset: True if the worker had to be replaced, so variables are gone.
         output_cut: True if the output was too long and was cut.
+        variables: the console's variables, if they were asked for.
     """
 
-    def __init__(self, output="", error="", timed_out=False, was_reset=False, output_cut=False):
+    def __init__(self, output="", error="", timed_out=False, was_reset=False, output_cut=False,
+                 variables=None):
         """Remember every part of the result."""
         self.output = output
         self.error = error
         self.timed_out = timed_out
         self.was_reset = was_reset
         self.output_cut = output_cut
+        self.variables = variables if variables is not None else []
 
 
 class ReplSession:
@@ -119,10 +122,20 @@ class ReplSession:
 
     def run(self, source):
         """Run `source` in the console and return a ReplResult."""
+        return self.send({"source": source})
+
+    def variables(self):
+        """Return the console's variables, as the worker describes them (see repl_worker.py)."""
+        if self.process is None:
+            return []
+        return self.send({"variables": True}).variables
+
+    def send(self, request):
+        """Send one request to the worker and return its answer as a ReplResult."""
         if self.process is None:
             self.start()
         try:
-            self.process.stdin.write(json.dumps({"source": source}) + "\n")
+            self.process.stdin.write(json.dumps(request) + "\n")
             self.process.stdin.flush()
         except OSError:
             return self.reset(ReplResult())
@@ -134,7 +147,8 @@ class ReplSession:
             # The worker ended by itself, for example after exit().
             return self.reset(ReplResult())
         reply = json.loads(line)
-        return ReplResult(reply["output"], reply["error"], output_cut=reply.get("output_cut", False))
+        return ReplResult(reply["output"], reply["error"], output_cut=reply.get("output_cut", False),
+                          variables=reply.get("variables"))
 
     def reset(self, result):
         """Replace the worker after a time-out or a crash; mark the result as a reset."""

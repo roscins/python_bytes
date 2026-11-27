@@ -90,7 +90,7 @@ class TestPhaseTwoGate(unittest.TestCase):
         lines = ["1", "play 1-1"] + typing_for(solutions(level_1_1(), "reference")) + ["map", "quit"]
         text = player.play(lines)
         self.assertIn("LEVEL 1-1 CLEARED · HELLO, TERMINAL", text)
-        self.assertIn("NEW COMMAND: status", text)
+        self.assertIn("NEW COMMAND: explain", text)
         self.assertIn("WAVE 1 · FILL-IN  2/2 tests passed ✓", text)
         self.assertIn("WAVE 2 · BUILD  2/2 tests passed ✓", text)
         self.assertIn("Code quality 4/4", text)
