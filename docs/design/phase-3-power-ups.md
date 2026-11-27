@@ -119,7 +119,12 @@ Blocked meanwhile: Python in the quick console, `:run`, `calc`, `approx` and
 `memory` inside a wave. Still allowed: `explain`, `read` and `memory` at the
 map, which run nothing. The message names the wave to answer.
 
-Not covered: `:submit` of another code wave still runs that code.
+**Accepted loophole:** `:submit` of another code wave still runs that code, so
+a player can try the predict code there. Closing it would mean refusing to
+grade other waves, which costs honest players more than it stops others.
+
+After 3 wrong guesses the answer is shown and the lock ends (see
+phase-3-step-2.md).
 
 ## Build plan
 

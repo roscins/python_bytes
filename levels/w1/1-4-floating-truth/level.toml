@@ -125,6 +125,10 @@ print(round(x, 2) == 0.3)
 '''
 answer = "False\nTrue\nTrue\nTrue"
 wrong = "True\nFalse\nTrue\nTrue"
+explanation = '''
+x is stored as a tiny bit more than 0.3, so == is False and > is True.
+The gap is far below 0.000001, and rounding to 2 decimals removes it.
+'''
 hints = [
   "x is a tiny bit more than 0.3.",
   "Exact tests see the tiny extra. A tolerance or rounding removes it.",
