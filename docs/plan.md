@@ -602,11 +602,14 @@ Phase 4 – Playtest round 1
 [ ] Rewrite the levels where most students stalled
 Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
-[ ] Write Levels 3-1 to 4-5 and Bosses 3 and 4 (both phases)
+[ ] Write Levels 3-1 to 3-5 and Boss 3
+[ ] Add the peer-review mode, just before World 4
+[ ] Write Levels 4-1 to 4-5 and Boss 4 (both phases)
 [ ] Data files for waves (the sensor CSVs of Level 4-3 and Boss 4)
-[ ] Add the shop, badges, the Codex screen and the peer-review mode
-[ ] Add tier grades and a printable progress report
 Gate: Basic tier complete; every Basic outcome in the mapping table is tested.
+Postponed until after World 4
+[ ] Add the shop, badges and the Codex screen
+[ ] Add tier grades and a printable progress report
 Phase 6 – Engine features for the Advanced tier
 [ ] Multi-file projects: a mission can provide a folder of starter files
 [ ] Grading with hidden unittest suites

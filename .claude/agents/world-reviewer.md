@@ -2,7 +2,7 @@
 name: world-reviewer
 description: Reviews a finished world for teaching quality. Read-only.
 model: opus
-tools: Read
+tools: Read, Glob, Grep
 ---
 Read this world's section of docs/curriculum.md and the world's level
 files. Do not edit. Return at most 10 findings, most serious first:
