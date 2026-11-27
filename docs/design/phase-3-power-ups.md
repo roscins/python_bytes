@@ -81,11 +81,16 @@ itself, so it shows Python's real order. Huge powers are refused.
     stored       0.3000000000000000444089209850062616169452667236328125
 
     > approx 0.1 + 0.2, 0.3
-    left stored  0.3000000000000000444089209850062616169452667236328125
-    right stored 0.299999999999999988897769753748434595763683319091796875
-                 same up to here: 0.3000000000000000
-    ==           False
-    math.isclose True
+    left you see   0.30000000000000004
+    left stored    0.3000000000000000444089209850062616169452667236328125
+    right you see  0.3
+    right stored   0.299999999999999988897769753748434595763683319091796875
+    ==             False
+    math.isclose   True
+    difference     5.551115123125783e-17
+
+(The first draft said the two agree "up to 0.3000000000000000". They do not:
+one starts 0.3000 and the other 0.2999, so the difference is shown instead.)
 
 The exact digits come from `decimal.Decimal(x)`.
 
@@ -128,6 +133,7 @@ Small PRs, each with tests:
 5. `approx` and `explain`.
 
 `engine/powerups/` holds one module per tool; `render/` holds the drawings.
+`explain` takes lines of at most 40 characters.
 The level-clear screen already announces the new command. `help` lists the
 ones you have earned.
 
