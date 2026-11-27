@@ -16,6 +16,11 @@ TWO_STAR_MARK = 85
 THREE_STAR_MARK = 100
 MAX_STARS = 3
 
+# From this world on, a level with a build wave also needs this share of the
+# code-quality rules to be cleared.
+QUALITY_GATE_WORLD = 3
+QUALITY_GATE_SHARE = 0.5
+
 # XP for each score point gained over the player's best.
 XP_PER_POINT = 10
 
@@ -62,12 +67,13 @@ def level_score(waves, wave_shares, quality_share):
     return round(100 * points / total_weight)
 
 
-def stars_for(score, hints_used):
+def stars_for(score, hints_used, full_quality=True):
     """Return the stars (0 to 3) for a level score.
 
-    1 star at 70 %, 2 stars at 85 %, 3 stars only at 100 % with no hints.
+    1 star at 70 %, 2 stars at 85 %, 3 stars only at 100 % with no hints and
+    full code quality.
     """
-    if score >= THREE_STAR_MARK and not hints_used:
+    if score >= THREE_STAR_MARK and not hints_used and full_quality:
         return 3
     if score >= TWO_STAR_MARK:
         return 2

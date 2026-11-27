@@ -3,6 +3,7 @@
 A sheet is text with one answer per line, "number: letter", for example
 "2: b". The number is a question (choice waves) or a code line (review
 waves). The key screens write the sheet; in plain mode the player types it.
+A line may end with "# a comment", which is never graded.
 """
 
 import re
@@ -12,7 +13,7 @@ from grader.checks import CheckResult
 # The letters of the options, in order.
 LETTERS = "abcde"
 
-SHEET_LINE = re.compile(r"\s*(\d+)\s*:\s*([a-zA-Z]?)\s*")
+SHEET_LINE = re.compile(r"\s*(\d+)\s*:\s*([a-zA-Z]?)\s*(?:#.*)?")
 
 
 def read_sheet(text):
@@ -36,11 +37,31 @@ def read_sheet(text):
     return answers, ""
 
 
-def write_sheet(answers):
+def read_comments(text):
+    """Return {number: comment} for the sheet lines that have a comment."""
+    comments = {}
+    for line in text.splitlines():
+        match = SHEET_LINE.fullmatch(line)
+        if match is None:
+            continue
+        comment = line.partition("#")[2].strip()
+        number = int(match.group(1))
+        if match.group(2) and comment:
+            comments[number] = comment
+        else:
+            comments.pop(number, None)
+    return comments
+
+
+def write_sheet(answers, comments=None):
     """Return {number: letter} as the text of a sheet, in number order."""
+    comments = comments or {}
     lines = []
     for number in sorted(answers):
-        lines.append(f"{number}: {answers[number]}\n")
+        comment = ""
+        if comments.get(number):
+            comment = f"  # {comments[number]}"
+        lines.append(f"{number}: {answers[number]}{comment}\n")
     return "".join(lines)
 
 
@@ -123,3 +144,22 @@ def grade_sheet(wave, text):
         checks.append(check(answers.get(number) == question["answer"],
                             f"answers question {number}", f"Question {number} is not right yet."))
     return checks
+
+
+def comparison_lines(wave, text):
+    """Return the lines that set the player's comments beside the model comments.
+
+    They are for after a review wave is done, and are empty if the wave has
+    no model comments.
+    """
+    comments = read_comments(text)
+    lines = []
+    for fault in wave.faults:
+        if "model_comment" not in fault:
+            continue
+        line = fault["line"]
+        lines.append(f"Line {line}, yours: {comments.get(line, '(no comment)')}")
+        lines.append(f"Line {line}, model: {fault['model_comment']}")
+    if lines:
+        lines.insert(0, "COMPARE YOUR COMMENTS (not graded)")
+    return lines

@@ -28,6 +28,7 @@ from engine.scoring import HINT_NAMES, HINT_PRICES, is_unlocked
 from engine.submission import grade_text
 from engine.wave_report import explain_error, run_report, submit_report, syntax_error_of
 from engine.workspace import starting_text
+from grader.answer_sheet import comparison_lines
 from render.editor_view import View, code_rows, divider, frame
 from render.ansi import strip_ansi
 from render.highlight import highlight_lines
@@ -581,6 +582,8 @@ class WaveScreen:
         lines, mark = submit_report(self.level, submission, reward, progress)
         if progress.revealed[self.number - 1]:
             lines = lines[:1] + reveal_text(self.wave()).split("\n") + lines[1:]
+        if self.passed():
+            lines = lines + comparison_lines(self.wave(), self.editor.text())
         self.show_result("RESULTS", lines, mark)
         if self.passed():
             if self.number == len(self.level.waves):

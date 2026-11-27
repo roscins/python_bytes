@@ -10,6 +10,8 @@ from engine.scoring import (
     FIRST_TRY_COINS,
     GUESSES_BEFORE_REVEAL,
     QUALITY_COINS,
+    QUALITY_GATE_SHARE,
+    QUALITY_GATE_WORLD,
     combo_multiplier,
     level_score,
     stars_for,
@@ -32,10 +34,12 @@ class Reward:
         cleared_now: True if this submit cleared the level for the first time.
         is_cleared: True if the level is cleared now (this time or earlier).
         opened_level: the Level that opened because of it, or None.
+        quality_blocked: True if low code quality keeps the level from clearing.
     """
 
     def __init__(self, best_score, old_best, stars, xp_gained, coins_gained, combo,
-                 multiplier, cleared_now, opened_level, old_stars=0, is_cleared=False):
+                 multiplier, cleared_now, opened_level, old_stars=0, is_cleared=False,
+                 quality_blocked=False):
         """Remember every part of the reward."""
         self.best_score = best_score
         self.old_best = old_best
@@ -48,6 +52,7 @@ class Reward:
         self.cleared_now = cleared_now
         self.opened_level = opened_level
         self.is_cleared = is_cleared
+        self.quality_blocked = quality_blocked
 
 
 def has_build_wave(level):
@@ -56,6 +61,21 @@ def has_build_wave(level):
         if wave.kind == "build":
             return True
     return False
+
+
+def build_wave_number(level):
+    """Return the number of the build wave (counting from 1), or 0 if there is none."""
+    for number, wave in enumerate(level.waves, start=1):
+        if wave.kind == "build":
+            return number
+    return 0
+
+
+def quality_blocks_clear(level, progress):
+    """Return True if the code quality is too low to clear this level."""
+    if level.world < QUALITY_GATE_WORLD or not has_build_wave(level):
+        return False
+    return progress.passed_quality < QUALITY_GATE_SHARE
 
 
 def next_level(state, level):
@@ -117,6 +137,8 @@ def update_wave(state, progress, submission):
     if quality is not None:
         if quality > progress.best_quality:
             progress.best_quality = quality
+        if result.all_passed() and quality > progress.passed_quality:
+            progress.passed_quality = quality
         if progress.best_quality == 1.0 and not progress.quality_rewarded:
             progress.quality_rewarded = True
             coins = coins + QUALITY_COINS
@@ -147,14 +169,16 @@ def apply_submission(state, level, submissions):
 
     multiplier = combo_multiplier(state.combo)
     xp_gained = xp_for(old_best, progress.best_score, multiplier)
-    new_stars = stars_for(progress.best_score, progress.hints_used())
+    full_quality = not has_build_wave(level) or progress.passed_quality == 1.0
+    new_stars = stars_for(progress.best_score, progress.hints_used(), full_quality)
     if new_stars > progress.stars:
         progress.stars = new_stars
 
     state.xp = state.xp + xp_gained
     state.coins = state.coins + coins
 
-    cleared_now = all_waves_passed(progress) and level.id not in state.cleared
+    blocked = quality_blocks_clear(level, progress)
+    cleared_now = all_waves_passed(progress) and not blocked and level.id not in state.cleared
     opened_level = None
     if cleared_now:
         state.cleared.append(level.id)
@@ -162,4 +186,4 @@ def apply_submission(state, level, submissions):
 
     return Reward(progress.best_score, old_best, progress.stars, xp_gained, coins,
                   state.combo, multiplier, cleared_now, opened_level, old_stars,
-                  level.id in state.cleared)
+                  level.id in state.cleared, quality_blocked=blocked)

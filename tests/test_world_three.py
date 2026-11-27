@@ -36,6 +36,8 @@ class TestWorldThree(unittest.TestCase):
                     if wave.mode == "predict":
                         printed = run_code(wave.code).stdout
                         self.assertEqual(normalise_output(printed), normalise_output(wave.answer))
+                    elif wave.is_quiz():
+                        self.assertFalse(grade_wave(wave, wave.wrong).all_passed())
                     else:
                         self.assertFalse(grade_wave(wave, wave.starter).all_passed())
 

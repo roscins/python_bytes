@@ -122,6 +122,8 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False):
             lines.append(f"   {letter}) {category}")
         lines.append("")
         lines.append(f"YOUR ANSWERS (line: letter, one for each of {len(wave.faults)} faults):")
+        if wave.takes_comments():
+            lines.append("You may add a comment, not graded: 4: a # why it is wrong")
     elif wave.is_quiz():
         lines.extend(question_lines(wave, color))
         lines.append("")

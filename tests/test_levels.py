@@ -65,13 +65,15 @@ class TestRealLevels(unittest.TestCase):
                 self.assertEqual(level.folder.parent.name, f"w{level.world}")
 
     def test_three_waves_in_order(self):
-        """Every level has a fill-in, a build and a debug wave, in that order."""
+        """Fill-in, build and debug, in that order; only review waves may follow."""
         for level in self.levels:
             with self.subTest(level=level.id):
                 kinds = []
                 for wave in level.waves:
                     kinds.append(wave.kind)
-                self.assertEqual(kinds, WAVE_ORDER)
+                self.assertEqual(kinds[:len(WAVE_ORDER)], WAVE_ORDER)
+                for wave in level.waves[len(WAVE_ORDER):]:
+                    self.assertEqual(wave.mode, "review")
 
     def test_cutscene_length_and_story(self):
         """A cutscene is at most 25 lines and has at least one # >> story line."""

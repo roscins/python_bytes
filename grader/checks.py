@@ -25,6 +25,8 @@ TEST_KINDS = [
     "require_comment",
     "expected_file",
     "catches",
+    "require_call",
+    "require_plan",
 ]
 
 # Friendly names for the Python constructs levels ask for most. Any other
@@ -530,6 +532,56 @@ def check_require_comment(test, code):
     return CheckResult(False, name, "Add a # comment that says what your code does.")
 
 
+def check_require_call(test, code):
+    """The code must call every name in test["require_call"], for example "csv.reader"."""
+    wanted = test["require_call"]
+    name = "calls " + ", ".join(wanted)
+    problem = parse_problem(code)
+    if problem:
+        return CheckResult(False, name, problem)
+    called = set()
+    for node in ast.walk(ast.parse(code)):
+        if isinstance(node, ast.Call):
+            called.add(ast.unparse(node.func))
+    missing = [call for call in wanted if call not in called]
+    if not missing:
+        return CheckResult(True, name)
+    return CheckResult(False, name, "Your code must call " + ", ".join(missing) + ".")
+
+
+def plan_lines(code):
+    """Return how many comment lines with words come before the first statement.
+
+    `code` must be readable by Python.
+    """
+    tree = ast.parse(code)
+    first_line = None
+    if tree.body:
+        first_line = tree.body[0].lineno
+    count = 0
+    for token in tokenize.generate_tokens(io.StringIO(code).readline):
+        if token.type != tokenize.COMMENT or not token.string.strip("# \t"):
+            continue
+        before_code = first_line is None or token.start[0] < first_line
+        if before_code and token.line.lstrip().startswith("#"):
+            count = count + 1
+    return count
+
+
+def check_require_plan(test, code):
+    """The code must start with at least test["require_plan"] comment lines of plan."""
+    wanted = test["require_plan"]
+    name = f"starts with a plan of {wanted} comment lines"
+    problem = parse_problem(code)
+    if problem:
+        return CheckResult(False, name, problem)
+    found = plan_lines(code)
+    if found >= wanted:
+        return CheckResult(True, name)
+    return CheckResult(False, name, f"Plan first: write at least {wanted} # comment lines above "
+                                    f"your first line of code (found {found}).")
+
+
 # Which function runs each kind of test.
 CHECK_FUNCTIONS = {
     "expected_stdout": check_expected_stdout,
@@ -540,6 +592,8 @@ CHECK_FUNCTIONS = {
     "require": check_require,
     "forbid": check_forbid,
     "require_comment": check_require_comment,
+    "require_call": check_require_call,
+    "require_plan": check_require_plan,
 }
 
 

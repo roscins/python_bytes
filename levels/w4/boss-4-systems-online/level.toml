@@ -29,13 +29,15 @@ WARN name value per warning, in order; COUNT name n per warned name (use a
 dict), by first warning; EXCESS total of value - limit; SKIPPED n (non-numbers).
 Numbers have 1 decimal, except counts. Write the lines to warnings.txt.
 Write test_is_warning() with asserts.
+Start the file with at least 3 comment lines of plan.
 """
 starter = '''
-# Sensor warnings
 import csv
 '''
 reference = '''
-# Sensor warnings
+# Plan: judge one reading
+# Then: build the report lines
+# Last: read and write the files
 import csv
 
 
@@ -92,7 +94,6 @@ with open("warnings.txt", "w") as target:
         target.write(line + "\n")
 '''
 wrong = '''
-# Sensor warnings
 import csv
 
 
@@ -217,3 +218,7 @@ require = ["Assert", "Dict"]
 
 [[wave.test]]
 require = ["FunctionDef", "With", "Try"]
+
+[[wave.test]]
+require_plan = 3
+
