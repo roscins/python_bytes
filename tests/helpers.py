@@ -38,11 +38,13 @@ def make_full_level(**build_changes):
 
     tests = [{"expected_stdout": "a\n"}, {"require": ["Call"]}]
     fill_in = Wave("fill-in", "Fill.", starter="print(___)", reference='print("a")',
-                   wrong="print(a b)", tests=tests)
-    build_parts = {"reference": 'print("a")', "wrong": 'print("b")', "starter": None}
+                   wrong="print(a b)", tests=tests, goal="Print a.")
+    build_parts = {"reference": 'print("a")', "wrong": 'print("b")', "starter": None,
+                   "goal": "Print a."}
     build_parts.update(build_changes)
     build = Wave("build", "Build.", tests=tests, **build_parts)
-    debug = Wave("debug", "Predict.", mode="predict", code='print("a")', answer="a", wrong="b")
+    debug = Wave("debug", "Predict.", mode="predict", code='print("a")', answer="a", wrong="b",
+                 goal="Say what it prints.")
     return Level("1-1", "Hello, Terminal", 1, ["print()", "string literals", "comments"],
                  "status", '# >> Hi.\nprint("a")', ["t1", "t2", "t3"], [fill_in, build, debug])
 
@@ -176,7 +178,8 @@ def make_boss_level(level_id="boss-1", time_limit=600):
     ]
     reference = 'def add(a, b):\n    """Add."""\n    return a + b\n'
     wrong = 'def add(a, b):\n    """Add."""\n    return a - b\n'
-    wave = Wave("boss", "Write add(a, b).", reference=reference, wrong=wrong, tests=tests)
+    wave = Wave("boss", "Write add(a, b).", reference=reference, wrong=wrong, tests=tests,
+                goal="Write add(a, b).")
     return Level(level_id, "The Test Boss", 1, [], "", "# >> The boss wakes.", [], [wave],
                  boss=True, time_limit=time_limit, sprite="boss-placeholder")
 

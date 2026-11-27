@@ -1,13 +1,20 @@
 """The command loop: read a line, run the command, show the answer, repeat."""
 
+import shutil
 import time
 
 from engine.autosave import AutoSaver
 from engine.code_mode import prompt_for, show_wave
 from engine.commands import do_map, handle_line
+from engine.footer import footer_for
+from engine.screens import CONTINUE_PROMPT, SKIP_WORDS, split_screens, wrap_text
 
 # How long each frame of an animation stays on screen, in seconds.
 FRAME_SECONDS = 0.05
+
+# Plain text is wrapped to the window, within these widths.
+PLAIN_WIDTH = 80
+MIN_WRAP_WIDTH = 40
 
 
 def move_cursor_up(line_count):
@@ -60,12 +67,48 @@ def save_and_report(autosaver, write, already_reported):
     return True
 
 
-def show_answer(answer, write, pause):
-    """Show what a command answered: a text, or a list of frames as an animation."""
+def show_screens(screens, write, read_line, width):
+    """Write screens one at a time, waiting for Enter between them.
+
+    Returns a line typed at a pause that still has to be handled, or None.
+    """
+    for screen in screens[:-1]:
+        write(wrap_text(screen, width))
+        typed = read_line(CONTINUE_PROMPT)
+        if typed.strip() != "":
+            write(wrap_text(screens[-1], width))
+            if typed.strip().lower() in SKIP_WORDS:
+                return None
+            return typed
+    write(wrap_text(screens[-1], width))
+    return None
+
+
+def show_answer(answer, write, pause, read_line=input, width=PLAIN_WIDTH):
+    """Show what a command answered: a text, or a list of frames as an animation.
+
+    Returns a line typed at a pause that still has to be handled, or None.
+    """
     if isinstance(answer, list):
-        show_frames(answer, write, pause)
-    elif answer:
-        write(answer)
+        screens = split_screens(answer[-1])
+        screens[0] = wrap_text(screens[0], width)
+        show_frames(answer[:-1] + [screens[0]], write, pause)
+        if len(screens) == 1:
+            return None
+        typed = read_line(CONTINUE_PROMPT)
+        if typed.strip().lower() not in [""] + SKIP_WORDS:
+            write(wrap_text(screens[-1], width))
+            return typed
+        return show_screens(screens[1:], write, read_line, width)
+    if answer:
+        return show_screens(split_screens(answer), write, read_line, width)
+    return None
+
+
+def plain_width(get_size=shutil.get_terminal_size):
+    """Return the width text is wrapped to: the window's, at most 80."""
+    columns = get_size((PLAIN_WIDTH, 24))[0]
+    return max(MIN_WRAP_WIDTH, min(PLAIN_WIDTH, columns))
 
 
 def read_one_line(read_line, guard, display, prompt):
@@ -81,7 +124,7 @@ def read_one_line(read_line, guard, display, prompt):
 
 
 def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
-        guard=None, autosaver=None, display=None):
+        guard=None, autosaver=None, display=None, first_answer=None):
     """Keep asking for lines until the player quits.
 
     read_line and write default to input and print. Tests pass in their own
@@ -103,29 +146,58 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
 
     With a `display` (the full-screen mode) every answer is drawn as a screen
     by the display instead of being written as text.
+
+    `first_answer` is shown before the first line is read. In the plain mode a
+    footer follows every answer.
     """
     if autosaver is None and save_path is not None:
         autosaver = AutoSaver(state, save_path)
+    width = plain_width()
+
+    def read(prompt):
+        """Read one line through the guard and the display."""
+        return read_one_line(read_line, guard, display, prompt)
+
+    def present(answer):
+        """Show an answer; return a line typed at a pause, or None."""
+        if display is not None:
+            return display.show(answer)
+        typed = show_answer(answer, write, pause, read, width)
+        if answer and typed is None and state.running:
+            write(footer_for(state))
+        return typed
+
     failure_reported = False
-    while state.running:
-        prompt = prompt_for(state)
+    queued = None
+    if first_answer is not None:
         try:
-            line = read_one_line(read_line, guard, display, prompt)
+            queued = present(first_answer)
+        except (EOFError, KeyboardInterrupt):
+            write("")
+            queued = ":quit"
+    while state.running:
+        try:
+            if queued is not None:
+                line, queued = queued, None
+            else:
+                line = read(prompt_for(state))
         except (EOFError, KeyboardInterrupt):
             # Start on a fresh line, because the terminal is still on the prompt.
             write("")
             line = ":quit"
         combo_before = state.combo
         answer = handle_line(state, line)
+        # Save before showing: a screen may wait at a pause for a long time.
+        failure_reported = save_and_report(autosaver, write, failure_reported)
         try:
+            queued = present(answer)
             if display is not None:
-                display.show(answer)
                 display.after_command(combo_before)
-            else:
-                show_answer(answer, write, pause)
+        except (EOFError, KeyboardInterrupt):
+            write("")
+            queued = ":quit"
         except OSError:
             # The terminal is gone (the window was closed). Save and stop.
             state.running = False
-        failure_reported = save_and_report(autosaver, write, failure_reported)
         if guard is not None and guard.requested:
             state.running = False

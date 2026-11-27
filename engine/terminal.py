@@ -143,6 +143,19 @@ class EnterWatcher:
         return found
 
 
+def enable_line_editing(importer=__import__):
+    """Let input() use the arrow keys and recall earlier lines, where Python can.
+
+    Importing readline is enough. Windows does not have it; then nothing
+    changes. Returns True if line editing is on.
+    """
+    try:
+        importer("readline")
+    except ImportError:
+        return False
+    return True
+
+
 def default_write(text):
     """Write text to the terminal right away, without a newline."""
     sys.stdout.write(text)

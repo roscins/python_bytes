@@ -99,9 +99,13 @@ class TestKillMinusNine(unittest.TestCase):
         game.wait_for("PYTHON BYTES")
         game.wait_for("> ")
         game.type("1")                      # NEW GAME
+        game.wait_for("(s skips)")
+        game.type("s")                      # skip the tutorial
         game.wait_for("Type play <level>")
         game.wait_for("> ")
         game.type("play 1-1")
+        game.wait_for("(s skips)")
+        game.type("s")                      # skip story and tips
         game.wait_for("WAVE 1 of 3 · FILL-IN")
         game.wait_for("  2 | ")             # the starter has one line, so the next is line 2
         game.type(":clear")
@@ -164,9 +168,13 @@ class TestStopSignals(unittest.TestCase):
         game = RunningGame(self, save_path)
         game.wait_for("> ")
         game.type("1")
+        game.wait_for("(s skips)")
+        game.type("s")
         game.wait_for("Type play <level>")
         game.wait_for("> ")
         game.type("play 1-1")
+        game.wait_for("(s skips)")
+        game.type("s")                      # skip story and tips
         game.wait_for("  2 | ")
         game.type(":clear")
         game.wait_for("  1 | ")

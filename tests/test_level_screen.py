@@ -83,9 +83,9 @@ class TestParts(unittest.TestCase):
         self.assertIn("YOUR ANSWER", text)
         self.assertNotIn("TWO", text)
 
-    def test_wave_screen_ends_with_the_commands(self):
-        """The player always sees how to submit."""
-        self.assertIn(":submit", wave_screen_text(make_intro_level(), 2, ""))
+    def test_the_commands_are_in_the_footer_not_on_the_wave_screen(self):
+        """The footer names them, once."""
+        self.assertNotIn(":submit", wave_screen_text(make_intro_level(), 2, ""))
 
 
 class TestIntroText(unittest.TestCase):

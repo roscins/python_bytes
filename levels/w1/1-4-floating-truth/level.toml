@@ -29,6 +29,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Compare 0.1 + 0.2 with 0.3 in two ways."
 brief = "Show that the exact comparison fails and the tolerant one succeeds."
 starter = '''
 import math
@@ -66,6 +67,7 @@ values = { total = 0.3 }
 
 [[wave]]
 kind = "build"
+goal = "Compare two readings: exact, absolute, relative."
 brief = '''
 Compare reading_a with reading_b three ways and print True or False after each
 label: Exact: (are they equal?), Absolute: (at most 0.5 apart?) and Relative:
@@ -114,6 +116,7 @@ values = { reading_a = 50.4, reading_b = 50.0 }
 
 [[wave]]
 kind = "debug"
+goal = "Type exactly what the program prints."
 mode = "predict"
 brief = "What does this program print? Type the output exactly."
 code = '''

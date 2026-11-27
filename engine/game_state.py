@@ -27,6 +27,8 @@ class GameState:
             (level id, wave number, text). Not saved.
         pending: what the game is waiting for after an answer that needs more
             typing (a dict with a "kind"), or None. Not saved.
+        just_filled: the wave and code right after its last blank was filled
+            (see engine/code_mode.py), or None. Not saved.
         repl: the quick console (runner/repl.py), started when first needed.
         repl_timeout: seconds one line of the quick console may run.
         plain: True for the ASCII look (no box characters).
@@ -57,6 +59,8 @@ class GameState:
         self.buffers = {}
         self.undo_stack = []
         self.pending = None
+        # (level id, wave number, code) right after the last blank was filled.
+        self.just_filled = None
         self.repl = None
         self.repl_timeout = 2.0
         self.plain = False

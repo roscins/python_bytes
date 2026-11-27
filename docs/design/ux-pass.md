@@ -101,5 +101,7 @@ One pull request, with a commit per step, bugs first.
   other line skips too and is then treated as typed, so nothing is lost.
 - The footer replaces the long command line under the code.
 - The tutorial is four screens of text, shown when there is no save at all.
-- In full screen, a wave too tall for 18 rows is redrawn without its task
-  paragraph while you type; the GOAL box stays, and `:show` has it all.
+- In full screen, a wave too tall for 18 rows is redrawn as GOAL box and code
+  only while you type (the end of the code if it is longer than 13 lines);
+  `:show` has it all. A boss starts that way, its task being on the first screen.
+- The tutorial is text to read, not an exercise.

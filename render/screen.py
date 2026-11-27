@@ -3,7 +3,8 @@
     rows 1-2        the HUD (see render/hud.py)
     row  3          a thin rule
     rows 4 ...      the body: panels, the map, animations
-    row  rows - 1   the status line (a short message)
+    row  rows - 2   the status line (a short message)
+    row  rows - 1   the footer: the mode and its keys
     row  rows       where the player types
 
 compose_screen() returns the rows as a list of text; draw_commands() turns
@@ -17,8 +18,8 @@ WIDTH = 80
 MIN_COLUMNS = 80
 MIN_ROWS = 24
 
-# HUD (2) + rule (1) + status (1) + the row where the player types (1).
-FIXED_ROWS = 5
+# HUD (2) + rule (1) + status (1) + footer (1) + the row where the player types (1).
+FIXED_ROWS = 6
 
 
 def body_height(rows):
@@ -36,7 +37,7 @@ def paginate(lines, height):
     return pages
 
 
-def compose_screen(hud, body, status, rows):
+def compose_screen(hud, body, status, rows, footer=""):
     """Return the frame: `rows - 1` rows, each exactly WIDTH cells wide.
 
     The last row of the window is left for the player's typing. A body that
@@ -54,6 +55,7 @@ def compose_screen(hud, body, status, rows):
             line = body[index]
         frame.append(pad(fit(line, WIDTH), WIDTH))
     frame.append(pad(fit(status, WIDTH), WIDTH))
+    frame.append(pad(fit(footer, WIDTH), WIDTH))
     return frame
 
 
@@ -63,6 +65,20 @@ def draw_commands(lines):
     for index in range(len(lines)):
         parts.append(f"\x1b[{index + 1};1H{lines[index]}\x1b[K")
     return "".join(parts)
+
+
+def size_problem(columns, rows):
+    """Say exactly what a too small window needs, or return "" if it is big enough."""
+    if columns >= MIN_COLUMNS and rows >= MIN_ROWS:
+        return ""
+    needed = []
+    if columns < MIN_COLUMNS:
+        needed.append(f"{MIN_COLUMNS - columns} columns wider")
+    if rows < MIN_ROWS:
+        needed.append(f"{MIN_ROWS - rows} rows taller")
+    return (f"Python Bytes needs a window of {MIN_COLUMNS} x {MIN_ROWS}; yours is {columns} x {rows}.\n"
+            f"Make it {' and '.join(needed)}.\n"
+            "Press Enter to check again, or type p to play in plain mode.")
 
 
 def too_small_message(columns, rows):

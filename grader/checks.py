@@ -10,6 +10,7 @@ import ast
 import io
 import json
 import math
+import re
 import tokenize
 
 from runner.process import DEFAULT_TIME_LIMIT, run_code, run_files
@@ -108,8 +109,13 @@ class CheckResult:
         message: why the check failed, to help the player; "" if it passed.
     """
 
-    def __init__(self, passed, name, message=""):
-        """Remember the result, the name and the message."""
+    def __init__(self, passed, name, message="", expected=None, printed=None):
+        """Remember the result, the name and the message.
+
+        `expected` and `printed` are given when two outputs did not match.
+        """
+        self.expected = expected
+        self.printed = printed
         self.passed = passed
         self.name = name
         self.message = message
@@ -165,13 +171,13 @@ def input_note(test):
 
 
 def values_note(test):
-    """Return " when capacity = 400" for a test that changes values, or ""."""
+    """Return the words for a test that changes values, or ""."""
     if "values" not in test:
         return ""
     changes = []
     for variable, value in test["values"].items():
         changes.append(f"{variable} = {value!r}")
-    return " when " + ", ".join(changes)
+    return " when the grader sets " + ", ".join(changes)
 
 
 def change_values(code, values):
@@ -224,7 +230,7 @@ def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
         return CheckResult(True, name)
     message = ("Expected this output:\n" + indent_block(expected)
                + "\nYour program printed:\n" + indent_block(printed))
-    return CheckResult(False, name, message)
+    return CheckResult(False, name, message, expected=expected, printed=printed)
 
 
 def check_expected_stdout_contains(test, code, time_limit=DEFAULT_TIME_LIMIT):
@@ -325,7 +331,8 @@ def parse_problem(code):
     try:
         ast.parse(code)
     except SyntaxError as error:
-        return f"Python cannot read your code: {error.msg} (line {error.lineno})."
+        message = re.sub(r" \(detected at line \d+\)", "", error.msg)
+        return f"Python cannot read your code: {message} (line {error.lineno})."
     return ""
 
 

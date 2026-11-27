@@ -48,6 +48,6 @@ def ask_for_hint(state, level, number):
     lines.append(f"You paid {price} coins and have {state.coins} left. "
                  "With a hint, this level can earn at most 2 stars.")
     if bought < len(HINT_NAMES):
-        lines.append(f"Type hint {number} again for the {HINT_NAMES[bought]} "
+        lines.append(f"Type :hint {number} again for the {HINT_NAMES[bought]} "
                      f"({HINT_PRICES[bought]} coins).")
     return "\n".join(lines)

@@ -110,6 +110,7 @@ class TestQuickConsole(ConsoleTestCase):
     def test_inside_a_wave_the_same_line_is_code_not_python(self):
         """Typed during code mode, print("hi") only goes into the code."""
         self.type("play 1-1")
+        self.type(":clear")
         self.assertEqual(self.type('print("hi")'), "")
         self.assertIn('print("hi")', self.state.wave_text(self.state.levels[0], 1))
 

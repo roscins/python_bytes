@@ -18,6 +18,8 @@ import re
 import time
 
 from engine.code_mode import show_wave
+from engine.footer import footer_for
+from engine.screens import PAGE_BREAK, SKIP_WORDS, split_screens
 from engine.hud import hud_info
 from engine.terminal import Fullscreen, terminal_size
 from render.ansi import strip_ansi, to_256, visible_length
@@ -207,6 +209,8 @@ class Display:
         self.fullscreen = Fullscreen(write)
         self.last_frame = None
         self.reactions = None
+        # Off on the title screen; the game switches it on.
+        self.show_footer = False
 
     # ---- starting, stopping, writing
 
@@ -241,7 +245,10 @@ class Display:
             self.write("\x1b[2J\x1b[H" + too_small_message(columns, rows))
             self.last_frame = None
             return
-        frame = compose_screen(self.hud(), body, status, rows)
+        footer = ""
+        if self.show_footer:
+            footer = footer_for(self.state)
+        frame = compose_screen(self.hud(), body, status, rows, footer)
         self.last_frame = frame
         self.write(draw_commands(frame))
 
@@ -271,22 +278,58 @@ class Display:
     # ---- showing answers
 
     def show(self, answer):
-        """Show what a command answered: a text, or a list of frames to animate."""
+        """Show what a command answered: a text, or a list of frames to animate.
+
+        Returns a line typed at a pause that still has to be handled, or None.
+        """
         if isinstance(answer, list):
-            self.show_animation(answer)
-        elif answer == "":
+            return self.show_animation(answer)
+        if PAGE_BREAK in answer:
+            return self.show_screens(split_screens(answer))
+        if answer == "":
             self.show_nothing_new()
         elif self.state.coding and self.is_short_message(answer):
             self.show_wave_with_status(answer)
         else:
             self.show_text(answer)
+        return None
+
+    def show_screens(self, screens):
+        """Show screens one at a time; return a line typed at a pause, or None."""
+        typed = ""
+        for screen in screens[:-1]:
+            self.show_text(screen, status="Enter to continue (s skips)")
+            typed = self.read(self.read_line, "")
+            if typed.strip() != "":
+                break
+        # A boss's task was on the first screen, so its code gets the whole room.
+        level = self.state.find_level(self.state.current_level)
+        if level is not None and level.boss and self.state.coding and screens[-1] == show_wave(self.state):
+            self.draw(self.typing_page())
+        else:
+            self.show_text(screens[-1])
+        if typed.strip().lower() in [""] + SKIP_WORDS:
+            return None
+        return typed
 
     def show_nothing_new(self):
         """After a line with no answer: while coding, the code (with the new line); else the same screen."""
         if self.state.coding and self.state.find_level(self.state.current_level) is not None:
-            self.show_text(show_wave(self.state))
+            self.draw(self.typing_page())
         else:
             self.redraw()
+
+    def typing_page(self):
+        """Return the page to show while the player types: never one that needs Enter.
+
+        A wave too tall for the window is shown without its task paragraph,
+        and if it is still too tall, its end, where the player is typing.
+        """
+        text = show_wave(self.state)
+        pages = self.pages_for(split_sections(text))
+        if len(pages) > 1:
+            pages = self.pages_for(split_sections(show_wave(self.state, compact=True)))
+        return pages[-1]
 
     def is_short_message(self, text):
         """Return True for a one or two line note, which goes to the status line."""
@@ -298,8 +341,7 @@ class Display:
 
     def show_wave_with_status(self, message):
         """Draw the code of the wave, with `message` on the status line."""
-        panels = self.panels_for(split_sections(show_wave(self.state)))
-        self.draw(make_pages(panels, self.height())[0], status=message.replace("\n", " "))
+        self.draw(self.typing_page(), status=message.replace("\n", " "))
 
     def results_panel(self, lines):
         """Return the RESULTS panel, with Snek's reaction beside the text."""
@@ -340,8 +382,8 @@ class Display:
             return story + rest
         return make_pages(self.panels_for(sections), self.height())
 
-    def show_text(self, text):
-        """Show a text as panels (or as pixel art), page by page."""
+    def show_text(self, text, status=""):
+        """Show a text as panels (or as pixel art), page by page; `status` goes with the last."""
         if is_pixel_art(text):
             pages = paginate(text.split("\n"), self.height())
         else:
@@ -352,7 +394,7 @@ class Display:
         for number in range(len(pages)):
             last = number == len(pages) - 1
             if last:
-                self.draw(pages[number])
+                self.draw(pages[number], status=status)
             else:
                 self.draw(pages[number], status="Press Enter for more")
                 self.wait_for_enter()
@@ -383,7 +425,8 @@ class Display:
         if message:
             self.draw(self.last_body(shown[-1]), status="Press Enter to continue")
             self.wait_for_enter()
-            self.show(message)
+            return self.show(message)
+        return None
 
     def last_body(self, frame):
         """Return the lines of a frame, cut to the room there is."""

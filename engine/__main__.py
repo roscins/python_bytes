@@ -9,6 +9,9 @@ from pathlib import Path
 from engine.autosave import AutoSaver
 from engine.game_state import GameState
 from engine.level_pack import LevelError, load_levels
+from engine.screens import join_screens
+from engine.tutorial import tutorial_text
+from render.screen import size_problem
 from engine.loop import run, start_text
 from engine.save_file import DEFAULT_SAVE_PATH, load_progress, set_aside_broken_save
 from engine.display import Display
@@ -16,6 +19,7 @@ from engine.shutdown import GameInterrupted, ShutdownGuard, install_windows_clos
 from engine.terminal import (
     EnterWatcher,
     default_write,
+    enable_line_editing,
     enable_virtual_terminal,
     supports_truecolor,
     terminal_size,
@@ -23,6 +27,10 @@ from engine.terminal import (
 from engine.title import NEW, QUIT, ask_title, inspect_save, keep_old_save
 from engine.workspace import WORKSPACE_FOLDER
 from grader.progression import CONCEPTS_FILE, load_curriculum
+
+# What wait_for_window can answer, besides QUIT.
+FULL = "full"
+PLAIN = "plain"
 
 # The levels folder, found from this file's folder so it works from anywhere.
 LEVELS_FOLDER = Path(__file__).parent.parent / "levels"
@@ -64,6 +72,25 @@ def make_real_display(state):
         return None
     return Display(state, default_write, size=terminal_size, sleep=time.sleep,
                    skipped=EnterWatcher(sys.stdin).pressed, truecolor=supports_truecolor())
+
+
+def wait_for_window(size, read_line, write):
+    """Before full screen: make sure the window is big enough.
+
+    Returns FULL when it is, PLAIN if the player chose the plain mode, or
+    QUIT at the end of input or Ctrl-C.
+    """
+    while True:
+        problem = size_problem(*size())
+        if not problem:
+            return FULL
+        write(problem)
+        try:
+            typed = read_line("> ")
+        except (EOFError, KeyboardInterrupt):
+            return QUIT
+        if typed.strip().lower() == "p":
+            return PLAIN
 
 
 def choose_how_to_start(state, info, save_path, read_line, write, plain):
@@ -133,8 +160,17 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
     elif not plain:
         display = make_real_display(state)
     if display is not None:
-        state.plain = False
-        state.color = True
+        choice = wait_for_window(display.size, read_line, write)
+        if choice == QUIT:
+            return 0
+        if choice == PLAIN:
+            display = None
+            plain = True
+            state.plain = True
+            state.color = False
+        else:
+            state.plain = False
+            state.color = True
     guard = ShutdownGuard()
     autosaver = AutoSaver(state, save_path)
     close_handler = None
@@ -187,9 +223,15 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
             display.stop()
             write("Goodbye, technician.")
         return 0
-    say(start_text(state))
+    first = start_text(state)
+    # A brand new player (no save at all) gets the tutorial first.
+    if info.status == "none":
+        first = join_screens([tutorial_text(), first])
     autosaver.save()
-    run(state, read_line, write, pause=pause, guard=guard, autosaver=autosaver, display=display)
+    if display is not None:
+        display.show_footer = True
+    run(state, read_line, write, pause=pause, guard=guard, autosaver=autosaver, display=display,
+        first_answer=first)
     autosaver.save()
     if display is not None:
         display.stop()
@@ -234,6 +276,7 @@ def wants_plain(arguments, environment=os.environ, is_terminal=None,
 def main(argv=None):
     """Start the game from the command line (python play.py) and return the exit code."""
     arguments = parse_arguments(sys.argv[1:] if argv is None else argv)
+    enable_line_editing()
     return run_game(save_path=Path(arguments.save), plain=wants_plain(arguments))
 
 

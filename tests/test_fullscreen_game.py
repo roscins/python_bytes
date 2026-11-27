@@ -271,7 +271,7 @@ class TestRealTerminal(unittest.TestCase):
         self.read_until(master, "PRESS ENTER")
         self.press_enter_until(master, "NEW GAME")
         self.type_line(master, "1")
-        self.read_until(master, "[1-1]")
+        self.press_enter_until(master, "[1-1]")        # the tutorial comes first
         self.type_line(master, "play 1-1")
         self.press_enter_until(master, "WAVE 1 of 3")
         self.type_line(master, ':edit 1 print("SNEK ONLINE")')
