@@ -168,6 +168,31 @@ def header_with_hud(world, hud):
     return header + " " * gap + hud
 
 
+def text_map(world, level_ids, snek_index, status=None):
+    """Return the map as words only, for the plain mode: no pictures and no colour codes.
+
+    The line under the ids shows each open level's stars, or "locked". Snek's
+    node is marked on the line below. `snek_index` None means no Snek.
+    """
+    if status is None:
+        lines = [header_line(world), "", label_line(level_ids)]
+    else:
+        lines = [header_with_hud(world, status.hud), "", label_line(level_ids)]
+        texts = []
+        for index in range(len(level_ids)):
+            if status.locked[index]:
+                texts.append("locked")
+            else:
+                stars = status.stars[index]
+                texts.append("★" * stars + "☆" * (MAX_STARS - stars))
+        lines.append(centred_line(texts))
+    if snek_index is not None:
+        markers = [""] * len(level_ids)
+        markers[snek_index] = "^Snek"
+        lines.append(centred_line(markers))
+    return "\n".join(lines)
+
+
 def map_frame(world, level_ids, snek_column, art, status=None):
     """Return one picture of the map as text, with Snek's left edge at `snek_column`.
 

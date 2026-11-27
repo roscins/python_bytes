@@ -12,7 +12,7 @@ from engine.friendly import friendly_message
 from engine.results_screen import reward_lines
 from engine.rewards import apply_submission
 from engine.submission import grade_text
-from render.boss_screen import boss_screen, hp_drain_frames, load_boss_art
+from render.boss_screen import boss_screen, boss_text, hp_drain_frames, load_boss_art
 
 # Messages that explain a crash or unreadable code. They say nothing about
 # the hidden tests, so they can be shown in a boss fight.
@@ -24,9 +24,12 @@ SAFE_MESSAGE_STARTS = [
 ]
 
 
-def current_screen(fight):
-    """Return the boss screen for the fight as it is now."""
+def current_screen(fight, plain=False):
+    """Return the boss screen for the fight as it is now (words only if `plain`)."""
     level = fight.level
+    if plain:
+        return boss_text(level.id, level.title, fight.hp_left, fight.hp_total, fight.lives,
+                         fight.time_left())
     art = load_boss_art(level.sprite)
     return boss_screen(level.id, level.title, fight.hp_left, fight.hp_total, fight.lives,
                        fight.time_left(), art)
@@ -35,7 +38,16 @@ def current_screen(fight):
 def start_boss_fight(state, level):
     """Begin a new fight against `level` and return its boss screen."""
     state.boss_fight = BossFight(level)
-    return current_screen(state.boss_fight)
+    return current_screen(state.boss_fight, state.plain)
+
+
+def drain_or_text(fight, hp_from, hp_to, lives_left, plain):
+    """Return the health bar draining as frames, or one frame of words in the plain mode."""
+    level = fight.level
+    if plain:
+        return [boss_text(level.id, level.title, hp_to, fight.hp_total, lives_left, fight.time_left())]
+    return hp_drain_frames(level.id, level.title, hp_from, hp_to, fight.hp_total, lives_left,
+                           fight.time_left(), load_boss_art(level.sprite))
 
 
 def safe_problem(result):
@@ -59,7 +71,7 @@ def submit_to_boss(state, level):
 
     if fight.time_is_up():
         fight.restart()
-        return (current_screen(fight)
+        return (current_screen(fight, state.plain)
                 + "\n\nTIME'S UP. The fight starts again: 3 tries, full health and a new timer.")
 
     submission = grade_text(level.waves[0], 1, state.wave_text(level, 1))
@@ -70,13 +82,11 @@ def submit_to_boss(state, level):
     hp_before = fight.hp_left
     lives_before = fight.lives
     outcome = fight.submit_result(submission.result)
-    art = load_boss_art(level.sprite)
 
     if outcome == WON:
         reward = apply_submission(state, level, submissions)
         state.boss_fight = None
-        frames = hp_drain_frames(level.id, level.title, hp_before, 0, fight.hp_total,
-                                 lives_before, fight.time_left(), art)
+        frames = drain_or_text(fight, hp_before, 0, lives_before, state.plain)
         lines = ["BOSS DEFEATED."]
         lines.extend(reward_lines(level, reward))
         frames[-1] = frames[-1] + "\n\n" + "\n".join(lines)
@@ -85,10 +95,9 @@ def submit_to_boss(state, level):
     # Otherwise the outcome is HIT (a life lost) or RESTART (the last life lost).
     if outcome == RESTART:
         message = "The boss knocked you out. The fight starts again: 3 tries, full health."
-        frames = [current_screen(fight)]
+        frames = [current_screen(fight, state.plain)]
     else:
-        frames = hp_drain_frames(level.id, level.title, hp_before, fight.hp_left,
-                                 fight.hp_total, fight.lives, fight.time_left(), art)
+        frames = drain_or_text(fight, hp_before, fight.hp_left, fight.lives, state.plain)
         message = (f"HIT! {fight.hp_left} hidden tests still failing. "
                    f"One try is used up: {fight.lives} left.")
     problem = safe_problem(submission.result)
