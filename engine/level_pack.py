@@ -35,7 +35,7 @@ MIN_FAULTS, MAX_FAULTS = 1, 4
 
 # A data file has a plain name: no folders, and not a name the runner uses.
 DATA_FILE_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*")
-RESERVED_FILE_NAMES = ["call.json"]
+RESERVED_FILE_NAMES = ["call.json", "catch.json"]
 MAX_DATA_FILE_BYTES = 100_000
 # The folder of a level that holds its data files.
 DATA_FOLDER = "files"
@@ -464,6 +464,8 @@ def check_test(test, place):
             raise LevelError(f"{place}: a call test needs an expected value")
         if "args" in test and not isinstance(test["args"], list):
             raise LevelError(f"{place}: args must be a list, like [1, 2]")
+    if kind == "catches":
+        check_catches_table(test["catches"], place)
     if kind == "expected_file":
         wanted = test["expected_file"]
         if not isinstance(wanted, dict):
@@ -486,6 +488,22 @@ def check_test(test, place):
             if not is_test_value(value):
                 raise LevelError(
                     f"{place}: a value must be text, a number, true, false or a list of these")
+
+
+def check_catches_table(wanted, place):
+    """Raise LevelError unless a catches test names two usable versions of a function."""
+    if not isinstance(wanted, dict):
+        raise LevelError(f"{place}: catches needs test, function, correct and broken")
+    for key in ["test", "function", "correct", "broken"]:
+        get_text(wanted, key, place)
+    for key in ["correct", "broken"]:
+        try:
+            tree = ast.parse(wanted[key])
+        except SyntaxError as error:
+            raise LevelError(f"{place}: {key} is not valid Python") from error
+        names = [node.name for node in tree.body if isinstance(node, ast.FunctionDef)]
+        if wanted["function"] not in names:
+            raise LevelError(f"{place}: {key} must define {wanted['function']}")
 
 
 def is_test_value(value):

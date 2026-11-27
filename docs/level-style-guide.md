@@ -54,7 +54,7 @@ Two scripts in `tools/` help while writing a level:
 
 ## Kinds of test
 
-Each `[[wave.test]]` table has exactly one of these keys (`expected_file` is under Data files below):
+Each `[[wave.test]]` table has exactly one of these keys (`expected_file` is under Data files and `catches` under Testing the player's tests, below):
 
 | Key | Passes when |
 | --- | --- |
@@ -220,3 +220,20 @@ expected_file = { name = "summary.txt", contents = "..." }
 ```
 
 Grade every program on at least two datasets, so that printing or writing fixed text cannot pass.
+
+## Testing the player's tests
+
+When a wave asks for a test function, grade that it can tell right from wrong:
+
+```toml
+[[wave.test]]
+catches = { test = "test_is_low", function = "is_low", correct = '''
+def is_low(value):
+    return value <= 5
+''', broken = '''
+def is_low(value):
+    return value < 5
+''' }
+```
+
+The player's `test_is_low()` (no parameters) runs twice, with `is_low` swapped for each version. It must pass with `correct` and fail an `assert` with `broken`. Add one test per fault the player should catch. The brief must name both functions.
