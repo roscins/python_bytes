@@ -35,9 +35,21 @@ plan approval, so this document records the decisions for review in the PR.
 - One scrambled program to repair: a missing `strip()`, a wrong slice, no
   conversion to numbers, no `upper()`, no rounding and an exact float `==`.
 - 3.7 V times 3 cells is used because the float result is not exactly 11.1.
-- Eight hidden tests are the health bar. Time limit 15 minutes, because the
+- Nine hidden tests are the health bar (one added by the anti-cheat branch). Time limit 15 minutes, because the
   code is edited a line at a time.
 - Sprite `art/boss-bootloader.txt`: a chewed-up red chip (red, maroon, orange,
   navy, slate outline).
 - The boss-door star rule is not built: a level is cleared only when every
   wave passes, which already gives 2 stars or more.
+
+## Printing the answer must not pass (branch `phase-3/world-1-anti-cheat`)
+
+- Node requirements alone are not enough: unused code can satisfy them.
+- An output test may have `values`: the grader gives the player's first
+  `name = ...` line another value and compares with the output for that value.
+- Every code wave of 1-2 to 1-5 and Boss 1 has such a test and asks for the
+  level's constructs (a variable, an operator, a comparison, a slice).
+- 1-1 is unchanged: printing text is what it teaches. Predict waves are
+  unchanged: the answer is the output.
+- A player can still write a program that works out both outputs without
+  doing the task as intended. This stops printing the text, not every trick.

@@ -65,7 +65,11 @@ hints = [
 expected_stdout = "2\n10\n"
 
 [[wave.test]]
-require = ["BinOp"]
+require = ["Name", "BinOp"]
+
+[[wave.test]]
+expected_stdout = "3\n20\n"
+values = { total_minutes = 200 }
 
 [[wave]]
 kind = "build"
@@ -104,7 +108,11 @@ hints = [
 expected_stdout = "Hours: 6\nMinutes: 15\n"
 
 [[wave.test]]
-require = ["BinOp"]
+require = ["Name", "BinOp"]
+
+[[wave.test]]
+expected_stdout = "Hours: 3\nMinutes: 30\n"
+values = { capacity = 350, power_draw = 100 }
 
 [[wave]]
 kind = "debug"
@@ -140,4 +148,8 @@ hints = [
 expected_stdout = "Average: 72.8\n"
 
 [[wave.test]]
-require = ["BinOp"]
+require = ["Name", "BinOp"]
+
+[[wave.test]]
+expected_stdout = "Average: 85.5\n"
+values = { first = "80", second = "91" }

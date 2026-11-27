@@ -57,7 +57,11 @@ hints = [
 expected_stdout = "08:15\nE42\n"
 
 [[wave.test]]
-require = ["Subscript"]
+require = ["Name", "Slice"]
+
+[[wave.test]]
+expected_stdout = "23:59\nW07\n"
+values = { line = "23:59|W07|10.0" }
 
 [[wave]]
 kind = "build"
@@ -100,6 +104,10 @@ expected_stdout = "09:42   E07      18.46\n"
 [[wave.test]]
 require = ["JoinedStr", "Subscript"]
 
+[[wave.test]]
+expected_stdout = "17:05   W99       3.14\n"
+values = { line = " 17:05|w99|3.14159 " }
+
 [[wave]]
 kind = "debug"
 brief = "This should print [sys ok] and then 6. Fix the bug."
@@ -136,4 +144,8 @@ hints = [
 expected_stdout = "[sys ok]\n6\n"
 
 [[wave.test]]
-require = ["Call"]
+require = ["Name", "Call"]
+
+[[wave.test]]
+expected_stdout = "[motor ok]\n8\n"
+values = { message = "##MOTOR#OK##" }
