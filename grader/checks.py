@@ -24,6 +24,7 @@ TEST_KINDS = [
     "forbid",
     "require_comment",
     "expected_file",
+    "catches",
 ]
 
 # Friendly names for the Python constructs levels ask for most. Any other
@@ -98,6 +99,39 @@ else:
         print(MARKER + "VALUE " + json.dumps(result, default=as_json_value))
     except TypeError:
         print(MARKER + "OTHER " + repr(result))
+'''
+
+
+# The files for a "catches" test: which test function to run, and the code
+# that replaces the function it tests.
+CATCH_FILE = "catch.json"
+CATCH_SCRIPT_FILE = "run_test.py"
+
+CATCH_SCRIPT = '''"""Load player.py, swap one function, and run one of the player's test functions."""
+
+import importlib.util
+import json
+
+MARKER = "@@PYTHON-BYTES-RESULT@@ "
+
+with open("catch.json", encoding="utf-8") as catch_file:
+    catch = json.load(catch_file)
+
+spec = importlib.util.spec_from_file_location("player", "player.py")
+player = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(player)
+
+if not callable(getattr(player, catch["test"], None)):
+    print("\\n" + MARKER + "MISSING")
+else:
+    # The test looks the function up by name when it runs, so it gets this one.
+    exec(catch["source"], player.__dict__)
+    try:
+        getattr(player, catch["test"])()
+    except AssertionError:
+        print("\\n" + MARKER + "CAUGHT")
+    else:
+        print("\\n" + MARKER + "PASSED")
 '''
 
 
@@ -342,6 +376,52 @@ def find_result_line(stdout):
     return found
 
 
+def run_players_test(test, code, source, time_limit):
+    """Run the player's test function against `source`.
+
+    Return (what happened, ""), where what happened is "PASSED", "CAUGHT" (an
+    assert failed) or "MISSING", or (None, a CheckResult-ready problem).
+    """
+    wanted = test["catches"]
+    catch_json = json.dumps({"test": wanted["test"], "source": source})
+    files = {PLAYER_FILE: code, CATCH_FILE: catch_json, CATCH_SCRIPT_FILE: CATCH_SCRIPT}
+    result = run_files(files, CATCH_SCRIPT_FILE, test.get("stdin", ""), time_limit,
+                       test.get("data"))
+    problem = problem_with_run(result, time_limit)
+    if problem:
+        return None, problem
+    found = find_result_line(result.stdout)
+    if found is None:
+        return None, "Your program stopped before your test could run."
+    return found, ""
+
+
+def check_catches(test, code, time_limit=DEFAULT_TIME_LIMIT):
+    """The player's test function must tell a correct function from a broken one.
+
+    test["catches"] names the player's test function, and holds the source of
+    a correct and of a broken version of the function it tests. The test must
+    pass with the first and fail an assert with the second.
+    """
+    wanted = test["catches"]
+    test_name = wanted["test"]
+    name = f"{test_name}() catches a broken {wanted['function']}"
+    outcome, problem = run_players_test(test, code, wanted["correct"], time_limit)
+    if outcome == "MISSING":
+        problem = f"Your code has no function named {test_name}."
+    elif outcome == "CAUGHT":
+        problem = f"{test_name}() fails even when {wanted['function']} is correct."
+    if problem:
+        return CheckResult(False, name, problem)
+    outcome, problem = run_players_test(test, code, wanted["broken"], time_limit)
+    if outcome == "PASSED":
+        problem = (f"{test_name}() still passes when {wanted['function']} is broken. "
+                   "Assert more, for example at the boundary.")
+    if problem:
+        return CheckResult(False, name, problem)
+    return CheckResult(True, name)
+
+
 def check_call(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """Calling test["call"] with test["args"] must return test["expected"]."""
     call = call_text(test)
@@ -456,6 +536,7 @@ CHECK_FUNCTIONS = {
     "expected_stdout_contains": check_expected_stdout_contains,
     "call": check_call,
     "expected_file": check_expected_file,
+    "catches": check_catches,
     "require": check_require,
     "forbid": check_forbid,
     "require_comment": check_require_comment,
@@ -471,7 +552,7 @@ def test_kind(test):
 
 
 # The kinds of test that run the player's program, and so have a time limit.
-RUNNING_KINDS = ["expected_stdout", "expected_stdout_contains", "call", "expected_file"]
+RUNNING_KINDS = ["expected_stdout", "expected_stdout_contains", "call", "expected_file", "catches"]
 
 
 def run_check(test, code, time_limit=DEFAULT_TIME_LIMIT):
