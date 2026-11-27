@@ -29,6 +29,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Store 12 in battery_level and print it."
 brief = "Store the whole number 12 in battery_level, then print the value it holds."
 starter = '''
 unit_name = "Snek"
@@ -66,6 +67,7 @@ values = { unit_name = "Bolt", battery_level = 47 }
 
 [[wave]]
 kind = "build"
+goal = "Store three values, change one, print them and a type."
 brief = '''
 Store "SN-7" in serial_number, 87.5 in battery_level and False in is_online.
 Then Snek wakes: give is_online the new value True.
@@ -111,6 +113,7 @@ values = { serial_number = "XR-2", battery_level = 40 }
 
 [[wave]]
 kind = "debug"
+goal = "Type exactly what the program prints."
 mode = "predict"
 brief = "What does this program print? Type the output exactly."
 code = '''

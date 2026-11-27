@@ -23,6 +23,7 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`. The last boss is `bo
 | Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code; from World 3: up to 3 bugs and 30 lines |
 | Tests | At least 2 tests per wave. In a predict-mode debug wave, `answer` and `wrong` count as its tests | – |
 | `explanation` (predict waves) | Why the answer is right; shown after 3 wrong guesses | Every predict wave |
+| `goal` (every wave) | The task in one line, shown in the GOAL box | 60 characters |
 | Reference + wrong solution | One solution that must pass, one typical mistake that must fail | Per wave |
 | `hints` (optional) | A nudge, an outline and a partial solution, bought with coins | Exactly 3 per wave |
 | `time_limit` (optional, per wave) | Seconds the player's code may run, for missions that time code (Level 8-2) | Runner default if left out |
@@ -106,6 +107,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Make Snek print SNEK ONLINE."
 brief = "Fill in the blank so Snek says SNEK ONLINE."
 starter = '''print(___)'''
 reference = '''print("SNEK ONLINE")'''
@@ -124,6 +126,7 @@ require = ["Call"]
 
 [[wave]]
 kind = "build"
+goal = "Print the three start-up lines, with a comment."
 brief = """
 Make Snek print exactly three lines: SYSTEM CHECK, VOICE MODULE OK, and
 HELLO, TECHNICIAN. Add a comment above the code saying what it does.
@@ -151,6 +154,7 @@ require_comment = true
 
 [[wave]]
 kind = "debug"
+goal = "Type exactly what the program prints."
 mode = "predict"
 brief = "What does this program print? Type the output exactly."
 code = '''

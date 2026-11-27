@@ -211,7 +211,7 @@ class TestCompose(unittest.TestCase):
         self.assertTrue(frame[0].startswith("HUD ONE"))
         self.assertTrue(frame[1].startswith("HUD TWO"))
         self.assertTrue(frame[3].startswith("BODY ONE"))
-        self.assertTrue(frame[-1].startswith("STATUS"))
+        self.assertTrue(frame[-2].startswith("STATUS"))
 
     def test_a_body_that_is_too_tall_is_cut_not_overflowing(self):
         """The frame keeps its size."""
@@ -225,10 +225,10 @@ class TestCompose(unittest.TestCase):
             self.assertTrue(frame[0].startswith("HUD ONE"))
 
     def test_body_height_is_what_the_pages_use(self):
-        """The body area is rows - 5 lines (HUD 2, rule 1, status 1, prompt 1)."""
+        """The body area is rows - 6 lines (HUD 2, rule 1, status 1, footer 1, prompt 1)."""
         from render.screen import body_height
 
-        self.assertEqual(body_height(24), 19)
+        self.assertEqual(body_height(24), 18)
 
 
 class TestDrawCommands(unittest.TestCase):

@@ -22,6 +22,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Make Snek print SNEK ONLINE."
 brief = "Fill in the blank so Snek says SNEK ONLINE."
 starter = '''print(___)'''
 reference = '''print("SNEK ONLINE")'''
@@ -40,6 +41,7 @@ require = ["Call"]
 
 [[wave]]
 kind = "build"
+goal = "Print the three start-up lines, with a comment."
 brief = """
 Make Snek print exactly three lines: SYSTEM CHECK, VOICE MODULE OK, and
 HELLO, TECHNICIAN. Add a comment above the code saying what it does.
@@ -67,6 +69,7 @@ require_comment = true
 
 [[wave]]
 kind = "debug"
+goal = "Type exactly what the program prints."
 mode = "predict"
 brief = "What does this program print? Type the output exactly."
 code = '''

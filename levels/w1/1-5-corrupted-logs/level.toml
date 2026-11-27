@@ -31,6 +31,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Cut the time and the error code out of the line."
 brief = "Cut the time 08:15 and the error code E42 out of the log line."
 starter = '''
 line = "08:15|E42|73.5"
@@ -65,6 +66,7 @@ values = { line = "23:59|W07|10.0" }
 
 [[wave]]
 kind = "build"
+goal = "Turn the damaged line into one aligned report line."
 brief = '''
 Strip the damaged line and split it at | into time, code and value.
 Print one report line with an f-string: the time left-aligned in 8, the code
@@ -110,6 +112,7 @@ values = { line = " 17:05|w99|3.14159 " }
 
 [[wave]]
 kind = "debug"
+goal = "Fix the bug so it prints [sys ok] and 6."
 brief = "This should print [sys ok] and then 6. Fix the bug."
 starter = '''
 # Repair the status message from the damaged log

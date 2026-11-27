@@ -18,8 +18,9 @@ class WaveSubmission:
             (the player has not started this wave yet).
     """
 
-    def __init__(self, number, wave, file_name, result):
-        """Remember the wave, its file and its result."""
+    def __init__(self, number, wave, file_name, result, code=""):
+        """Remember the wave, its file, its result and the code that was graded."""
+        self.code = code
         self.number = number
         self.wave = wave
         self.file_name = file_name
@@ -34,4 +35,4 @@ def grade_text(wave, number, text):
     result = None
     if text is not None and text.strip() != "":
         result = grade_wave(wave, text)
-    return WaveSubmission(number, wave, "your code", result)
+    return WaveSubmission(number, wave, "your code", result, text or "")

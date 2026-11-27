@@ -74,6 +74,8 @@ def title_text(info, plain=False):
     for _, label in options_for(info):
         number = number + 1
         lines.append(f"  {number}  {label}")
+    lines.append("")
+    lines.append("Type a number and press Enter. Enter alone picks 1.")
     return "\n".join(lines)
 
 

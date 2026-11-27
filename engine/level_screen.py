@@ -5,7 +5,10 @@ piece of text; wave_screen_text shows one wave with the code typed so far. Like 
 prints, so it is easy to test.
 """
 
+from engine.fill import all_blanks_filled, blank_marker, is_filling
+from engine.screens import join_screens
 from render.highlight import highlight_lines
+from render.panel import panel
 
 # Story lines in a cutscene start with this; every other line is code.
 STORY_MARKER = "# >>"
@@ -68,18 +71,42 @@ def numbered_code(text, plain=False, color=False):
     return lines
 
 
-HELP_LINE = ":submit  :show  :undo  :clear  :edit n text  :ins n text  :del n  :hint  :map  :help"
+# The width of the GOAL box; it also fits inside a panel of the full screen.
+GOAL_WIDTH = 66
+
+# Code lines the compact screen has room for: 18 rows of body, less the
+# panel's frame (2) and the GOAL box (3).
+COMPACT_CODE_LINES = 13
 
 
-def wave_screen_text(level, number, buffer_text, plain=False, color=False):
-    """Return the screen of one wave: its task and the numbered code typed so far."""
+def goal_box(goal, plain=False):
+    """Return the GOAL box of a wave as lines."""
+    return panel("GOAL", [goal], GOAL_WIDTH, ascii_only=plain)
+
+
+def wave_screen_text(level, number, buffer_text, plain=False, color=False, compact=False):
+    """Return the screen of one wave: its goal, its task and the numbered code typed so far.
+
+    `compact` is for a screen with little room: the goal and the code only,
+    and of a long code its end, where the player is typing.
+    """
     wave = level.waves[number - 1]
     label = f"WAVE {number} of {len(level.waves)} · {wave.kind.upper()}"
     if level.boss:
         label = "BOSS WAVE"
     lines = [label]
-    for line in wave.brief.strip().splitlines():
-        lines.append(line.strip())
+    if wave.goal is not None:
+        lines.extend(goal_box(wave.goal, plain))
+    if not compact:
+        for line in wave.brief.strip().splitlines():
+            lines.append(line.strip())
+    if compact and wave.mode != "predict":
+        code = numbered_code(buffer_text, plain, color)
+        if len(code) > COMPACT_CODE_LINES:
+            hidden = len(code) - COMPACT_CODE_LINES + 1
+            code = [f"    (lines 1-{hidden} are above: :show)"] + code[hidden:]
+        lines.extend(code)
+        return "\n".join(lines)
     # A predict wave shows the code to read; the player types its output.
     if wave.mode == "predict" and wave.code is not None:
         lines.append("")
@@ -94,26 +121,31 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False):
         lines.append("    (nothing yet: type your first line)")
     else:
         lines.extend(numbered_code(buffer_text, plain, color))
-    lines.append("")
-    lines.append(HELP_LINE)
+    if is_filling(wave, buffer_text):
+        index, marker, question = blank_marker(buffer_text, wave, len("  1 | "))
+        # The marker goes right under the line with the blank.
+        position = len(lines) - len(buffer_text.splitlines()) + index + 1
+        lines.insert(position, marker)
+        lines.append(question)
+    elif all_blanks_filled(wave, buffer_text):
+        lines.append("All blanks are filled: :submit to check it.")
     return "\n".join(lines)
 
 
 def intro_text(level):
     """Return everything shown when the player starts `level`, as one text."""
-    lines = [title_card(level), ""]
-    lines.extend(cutscene_lines(level.cutscene))
-    lines.append("")
-    lines.append("TIPS")
+    story = [title_card(level), ""]
+    story.extend(cutscene_lines(level.cutscene))
+    tips = ["TIPS"]
     for tip in level.tips:
-        lines.append(f"  • {tip}")
-    lines.append("")
+        tips.append(f"  • {tip}")
+    tips.append("")
     count = len(level.waves)
     waves = f"{count} waves"
     if count == 1:
         waves = "1 wave"
-    lines.append(f"{waves}. Type your code one line at a time; commands start with a colon (:help).")
-    return "\n".join(lines)
+    tips.append(f"{waves}. Type your code one line at a time; commands start with a colon (:help).")
+    return join_screens(["\n".join(story), "\n".join(tips)])
 
 
 def boss_intro_text(level):

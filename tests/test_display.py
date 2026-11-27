@@ -7,6 +7,7 @@ the pauses, `skipped` is a switch. No real terminal and no real time.
 import re
 import unittest
 
+from engine.screens import split_screens
 from engine.commands import handle_line
 from engine.display import Display, split_sections
 from engine.game_state import GameState
@@ -85,8 +86,10 @@ class TestSections(unittest.TestCase):
     def test_the_intro_of_a_level(self):
         """Story, tips and the wave."""
         state = GameState([make_full_level()])
-        sections = split_sections(handle_line(state, "play 1-1"))
-        self.assertEqual([title for title, _ in sections], ["STORY", "TIPS", "CODE"])
+        titles = []
+        for screen in split_screens(handle_line(state, "play 1-1")):
+            titles.extend(title for title, _ in split_sections(screen))
+        self.assertEqual(titles, ["STORY", "TIPS", "CODE"])
 
     def test_results_followed_by_the_next_wave(self):
         """The results panel and the code panel."""
@@ -246,7 +249,7 @@ class TestCodeScreen(unittest.TestCase):
         """:undo with nothing to undo."""
         self.display.show("There is nothing to undo.")
         rows = self.terminal.last_frame_rows()
-        self.assertIn("There is nothing to undo.", rows[23])
+        self.assertIn("There is nothing to undo.", rows[22])
         self.assertIn("YOUR CODE", "\n".join(rows.values()))
 
     def test_a_long_answer_replaces_the_code_view(self):
@@ -405,13 +408,13 @@ class TestPagingAndReading(unittest.TestCase):
     """Long answers and the typing row."""
 
     def test_the_story_is_a_page_of_its_own_so_the_wave_can_be_typed_at_once(self):
-        """Story, then Enter, then the tips and the wave together."""
+        """Story, Enter, tips, Enter, and the wave: one thing at a time."""
         display, terminal, state = make_display()
         display.start()
         display.show(handle_line(state, "play 1-1"))
-        self.assertEqual(len(terminal.typed), 1)
+        self.assertEqual(len(terminal.typed), 2)
         rows = "\n".join(terminal.last_frame_rows().values())
-        self.assertIn("┌─ TIPS", rows)
+        self.assertNotIn("┌─ TIPS", rows)
         self.assertIn("┌─ WAVE 1 of 3", rows)
 
     def test_enter_during_the_title_animation_is_the_enter_to_continue(self):

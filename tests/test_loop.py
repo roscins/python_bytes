@@ -144,7 +144,8 @@ class TestRun(unittest.TestCase):
         state.plain = True
         player = ScriptedPlayer(["play 1-1", "x = 1", ":quit"])
         run(state, read_line=player.read_line, write=lambda text: None)
-        self.assertEqual(player.prompts, ["> ", "  1 | ", "  2 | "])
+        # The line typed at the story's pause is not lost: it is the first line of code.
+        self.assertEqual(player.prompts, ["> ", "Enter to continue (s skips) > ", "  2 | "])
 
     def test_a_stop_request_ends_the_loop_after_the_command(self):
         """The guard's `requested` flag stops the game once the command is done and saved."""

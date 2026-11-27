@@ -348,7 +348,7 @@ class TestHint(unittest.TestCase):
         first = handle_line(self.state, "hint 1")
         self.assertIn("WAVE 1 · HINT 1 of 3 (nudge)\n  Nudge.", first)
         self.assertIn("You paid 5 coins and have 45 left", first)
-        self.assertIn("Type hint 1 again for the outline (15 coins)", first)
+        self.assertIn("Type :hint 1 again for the outline (15 coins)", first)
         second = handle_line(self.state, "hint 1")
         self.assertIn("Nudge.", second)
         self.assertIn("Outline.", second)

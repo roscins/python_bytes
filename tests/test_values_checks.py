@@ -38,7 +38,7 @@ class TestChangedValues(unittest.TestCase):
 
     def test_the_check_name_says_what_changed(self):
         """The player sees which values were tried."""
-        self.assertIn("when size = 4", run_check(TEST, "size = 1\nprint(size)").name)
+        self.assertIn("when the grader sets size = 4", run_check(TEST, "size = 1\nprint(size)").name)
 
     def test_loader_rejects_values_on_other_tests(self):
         """values only makes sense when output is compared."""

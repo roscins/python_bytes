@@ -23,6 +23,7 @@ from engine.code_mode import (
 from engine.friendly import format_friendly, friendly_error, friendly_timeout
 from engine.level_screen import separator
 from engine.predict_lock import locked_message
+from engine.suggest import MAP_WORDS, did_you_mean
 from runner.process import DEFAULT_TIME_LIMIT, run_code
 from runner.repl import ReplSession, classify
 
@@ -41,7 +42,8 @@ def get_repl(state):
 
 def unknown_command_text(word):
     """Return the answer for a line that is neither a command nor Python."""
-    return f"Unknown command: {word}. Type help to see the commands."
+    return (f"Unknown command: {word}. Type help to see the commands."
+            + did_you_mean(word, MAP_WORDS, colon=False))
 
 
 def looks_like_python(line):

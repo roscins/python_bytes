@@ -7,6 +7,9 @@ never print anything themselves; that is the job of the loop in loop.py.
 This keeps them easy to test.
 """
 
+import ast
+import re
+
 from engine.boss_turns import start_boss_fight, submit_to_boss
 from engine.code_mode import (
     CODE_COMMANDS,
@@ -17,15 +20,19 @@ from engine.code_mode import (
     start_coding,
 )
 from engine.console import continue_pending, do_cancel, do_run, run_python_line
+from engine.fill import is_filling
 from engine.hints import ask_for_hint
 from engine.hud import map_status
-from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
+from engine.level_screen import boss_intro_text, intro_text
 from engine.powerups import POWER_UPS, earned_help_lines, is_python_line, use_power_up
+from engine.progression_help import next_level_to_play
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
 from engine.scoring import GUESSES_BEFORE_REVEAL, is_unlocked
+from engine.screens import join_screens
 from engine.stats import stats_text
 from engine.submission import grade_text
+from engine.suggest import CODE_WORDS, closest, did_you_mean
 from engine.workspace import export_wave
 from render.level_clear import level_clear_frames, level_clear_text, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames, text_map
@@ -60,7 +67,7 @@ def do_help(state, arguments):
     """Return a list of all commands with a short description of each."""
     if arguments:
         return extra_words_message("help")
-    lines = ["Commands (while you are coding, type a colon first, for example :submit):"]
+    lines = ["Commands. At the map type the word; in a wave put a colon first, like :submit."]
     # COMMANDS is defined further down in this file. That is fine: Python
     # only looks the name up when do_help runs, and by then the whole file
     # has been read.
@@ -113,9 +120,13 @@ def do_map(state, arguments):
         picture = text_map(world, ids, snek_index, status)
     else:
         picture = map_screen(world, ids, snek_index, load_map_art(), status)
+    gap = "\n\n"
+    if state.plain:
+        picture = picture + "\n\n\u2605 stars earned \u00b7 locked: clear the level before it \u00b7 COINS buy hints"
+        gap = "\n"
     if current is None:
-        return picture + "\n\nType play <level> to start, for example: play " + ids[0]
-    return picture + f"\n\nYou are at [{current.id}] {current.title}."
+        return picture + gap + "Type play <level> to start, for example: play " + ids[0]
+    return picture + gap + f"You are at [{current.id}] {current.title}."
 
 
 def do_play(state, arguments):
@@ -131,12 +142,19 @@ def do_play(state, arguments):
     last frame has the intro below the map.
     """
     if len(arguments) != 1:
-        return "Usage: play <level>, for example: play 1-1"
+        usage = "Usage: play <level>, for example: play 1-1"
+        following = next_level_to_play(state)
+        if following is not None:
+            usage = usage + f"\nYour next level: play {following.id}"
+        return usage
     level_id = arguments[0]
     level = state.find_level(level_id)
     if level is None:
         if state.find_slot(level_id) is not None:
             return f"Level {level_id} is not written yet. Type map to see the levels."
+        meant = level_id.replace(".", "-").replace("_", "-")
+        if state.find_level(meant) is not None:
+            return f"There is no level {level_id}. Did you mean play {meant}?"
         return f"There is no level {level_id}. Type map to see the levels."
     slots = state.slots()
     if not is_unlocked(slots, state.cleared, level):
@@ -145,9 +163,10 @@ def do_play(state, arguments):
     previous = state.find_level(state.current_level)
     start_coding(state, level)
     if level.boss:
-        intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level) + "\n\n" + HELP_LINE
+        intro = join_screens([boss_intro_text(level), start_boss_fight(state, level),
+                              show_wave(state)])
     else:
-        intro = intro_text(level) + "\n\n" + show_wave(state)
+        intro = join_screens([intro_text(level), show_wave(state)])
     # The plain mode has no pictures, so Snek does not slither there.
     if state.plain or previous is None or previous.world != level.world or previous.id == level.id:
         return intro
@@ -182,7 +201,10 @@ def advance_after_submit(state, level, number, result):
             left = GUESSES_BEFORE_REVEAL - progress.wave_attempts[number - 1]
             return (f"Not yet. Change your answer and :submit again, or buy a :hint.\n"
                     f"Wrong guesses left before Snek shows the output: {left}")
-        return "Not yet. Change your code and :submit again, or buy a :hint."
+        again = "Not yet. Change your code and :submit again, or buy a :hint."
+        if wave.goal is not None:
+            again = again + f"\nGOAL: {wave.goal}"
+        return again
     start = f"Wave {number} passed"
     before = ""
     if revealed:
@@ -192,7 +214,11 @@ def advance_after_submit(state, level, number, result):
         state.current_wave = number + 1
         return before + f"{start}! Next:\n\n" + show_wave(state)
     state.coding = False
-    return before + f"{start}, and that was the last wave. Type map to see where to go next."
+    following = next_level_to_play(state)
+    where = "Type map to see where to go next."
+    if following is not None and level.id in state.cleared:
+        where = f"Next: play {following.id}"
+    return before + f"{start}, and that was the last wave. {where}"
 
 
 def do_submit(state, arguments):
@@ -220,7 +246,10 @@ def do_submit(state, arguments):
     reward = apply_submission(state, level, [submission])
     results = results_text(level, [submission], [], reward)
     results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)
-    if not reward.cleared_now and reward.stars <= reward.old_stars:
+    # CLEARED is only said of a cleared level: when it is cleared now, or when
+    # a cleared level earns more stars.
+    more_stars = reward.is_cleared and reward.stars > reward.old_stars
+    if not reward.cleared_now and not more_stars:
         return results
     if state.plain:
         return level_clear_text(level.id, level.title, reward.best_score, reward.stars,
@@ -318,11 +347,57 @@ def run_command(state, text, colon):
     # "stats = 5" is a player's own variable, not the command.
     if name not in COMMANDS or (name == "stats" and is_python_line(rest)):
         if colon:
-            return f"Unknown command: :{name}. Type :help to see the commands."
+            return (f"Unknown command: :{name}. Type :help to see the commands."
+                    + did_you_mean(name, CODE_WORDS, colon=True))
         return run_python_line(state, text)
     # Each entry is (function, description); only the function is needed here.
     function, _ = COMMANDS[name]
     return function(state, arguments)
+
+
+def is_bare_command(line):
+    """Return True for a line that is exactly "submit", "hint" or "hint 2"."""
+    words = line.split(" ")
+    if words == ["submit"] or words == ["hint"]:
+        return True
+    return len(words) == 2 and words[0] == "hint" and words[1].isdigit()
+
+
+def code_has_name(code, name):
+    """Return True if the player's code makes something called `name`."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        pattern = rf"^\s*(?:def\s+{name}\b|{name}\s*=[^=])"
+        return re.search(pattern, code, re.MULTILINE) is not None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == name and isinstance(node.ctx, ast.Store):
+            return True
+        if isinstance(node, ast.FunctionDef) and node.name == name:
+            return True
+    return False
+
+
+def code_mode_line(state, line):
+    """Handle a line typed in a wave: usually code, sometimes a command without its colon."""
+    level, number = current_context(state)
+    if level is None:
+        return add_code_line(state, line)
+    code = state.wave_text(level, number)
+    word = line.split(" ")[0]
+    if is_bare_command(line):
+        if not code_has_name(code, word):
+            return run_command(state, line, colon=False)
+        add_code_line(state, line)
+        return f"Your code has a name {word}, so this line is code. To hand in, type :submit."
+    # A lone word close to submit or hint is probably a typo.
+    meant = closest(line, ["submit", "hint"])
+    if meant is not None and line.isidentifier() and not code_has_name(code, line):
+        if is_filling(level.waves[number - 1], code):
+            return f"Not filled in. Did you mean :{meant}?"
+        add_code_line(state, line)
+        return f"Added as code. Did you mean :{meant}? (:undo takes the line back)"
+    return add_code_line(state, line)
 
 
 def handle_line(state, line):
@@ -345,5 +420,5 @@ def handle_line(state, line):
     if line.startswith(":"):
         return run_command(state, line[1:], colon=True)
     if state.coding:
-        return add_code_line(state, line)
+        return code_mode_line(state, line)
     return run_command(state, line, colon=False)

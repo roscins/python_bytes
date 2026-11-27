@@ -10,6 +10,7 @@ engine/loop.py), so nothing typed is lost if the game is closed or killed.
 Like the other command modules, this one returns text and never prints.
 """
 
+from engine.fill import BLANK, fill_next_blank, is_filling
 from engine.level_screen import wave_screen_text
 
 NOT_PLAYING = "You are not playing a level. Type play <level> first."
@@ -70,7 +71,20 @@ def add_code_line(state, line):
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    lines = buffer_lines(state.wave_text(level, number))
+    wave = level.waves[number - 1]
+    text = state.wave_text(level, number)
+    if is_filling(wave, text):
+        if line.strip() == "":
+            return ""
+        filled = fill_next_blank(text, line)
+        state.set_wave_text(level, number, filled)
+        if BLANK not in filled:
+            state.just_filled = (level.id, number, filled)
+        return show_wave(state)
+    # Only right after filling: a player who cleared the wave writes freely.
+    if state.just_filled == (level.id, number, text) and line.strip() != "":
+        return "All blanks are filled. :submit checks it; :undo or :edit changes it."
+    lines = buffer_lines(text)
     line = line.replace("\t", " " * TAB_WIDTH).rstrip("\r\n")
     if line.strip() == "":
         if not lines or lines[-1].strip() == "":
@@ -81,12 +95,13 @@ def add_code_line(state, line):
     return ""
 
 
-def show_wave(state):
+def show_wave(state, compact=False):
     """Return the screen of the current wave: the task and the numbered code so far."""
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    return wave_screen_text(level, number, state.wave_text(level, number), state.plain, state.color)
+    return wave_screen_text(level, number, state.wave_text(level, number), state.plain, state.color,
+                            compact)
 
 
 def split_number(text):

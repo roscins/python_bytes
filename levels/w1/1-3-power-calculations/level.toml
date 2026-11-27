@@ -33,6 +33,7 @@ tips = [
 
 [[wave]]
 kind = "fill-in"
+goal = "Split 130 minutes into hours and minutes."
 brief = "Split 130 minutes into whole hours and the minutes left over."
 starter = '''
 total_minutes = 130
@@ -73,6 +74,7 @@ values = { total_minutes = 200 }
 
 [[wave]]
 kind = "build"
+goal = "Print the run time as whole hours and minutes."
 brief = '''
 The battery holds capacity watt-hours and Snek draws power_draw watts, so it
 lasts capacity / power_draw hours. Work out that run time as whole hours and
@@ -116,6 +118,7 @@ values = { capacity = 350, power_draw = 100 }
 
 [[wave]]
 kind = "debug"
+goal = "Fix the bug so the average is right."
 brief = "This should print the average of the two readings, but the number is wrong. Fix the bug."
 starter = '''
 # Average of two battery readings

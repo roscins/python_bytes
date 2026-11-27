@@ -16,6 +16,7 @@ MIN_BLANKS = 1
 MAX_BLANKS = 3
 MAX_BRIEF_SENTENCES = 5
 MIN_TESTS_PER_WAVE = 2
+MAX_GOAL_LENGTH = 60
 STORY_MARK = "# >>"
 
 # A debug wave holds at most this much code: 10 lines, and from World 3, 30.
@@ -72,6 +73,8 @@ def player_texts(level):
         number = number + 1
         place = wave_place(number, wave)
         texts.append((place + " brief", wave.brief))
+        if wave.goal is not None:
+            texts.append((place + " goal", wave.goal))
         for hint in wave.hints:
             texts.append((place + " hint", hint))
     return texts
@@ -116,6 +119,10 @@ def check_wave(world, number, wave):
             problems.append(f"{place} has {plural(test_count, 'test')} "
                             f"(at least {MIN_TESTS_PER_WAVE})")
 
+    if wave.goal is None or wave.goal.strip() == "":
+        problems.append(f"{place} has no goal")
+    elif len(wave.goal) > MAX_GOAL_LENGTH or "\n" in wave.goal:
+        problems.append(f"{place} goal must be one line of at most {MAX_GOAL_LENGTH} characters")
     if wave.kind == "fill-in":
         problems.extend(check_fill_in(place, wave))
     if wave.kind == "build":

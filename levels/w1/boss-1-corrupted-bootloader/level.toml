@@ -14,6 +14,7 @@ print("BO0T REP#RT ... ERR0R")
 
 [[wave]]
 kind = "boss"
+goal = "Repair the program so the boot report is right."
 brief = '''
 Repair the program so it prints these five lines, worked out from raw:
 UNIT SNEK, VOLTS 3.70, CELLS 3, TOTAL 11.1 and MATCH True (each on its own
