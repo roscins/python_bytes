@@ -59,6 +59,17 @@ class TestSteps(unittest.TestCase):
                 self.assertFalse(answer.startswith("CALC\n") and "stops" not in answer, answer)
 
 
+class TestNotOrdinaryNumbers(unittest.TestCase):
+    """inf and nan cannot be written back into a line, so calc stops there."""
+
+    def test_inf_and_nan_do_not_loop(self):
+        """Each of these once could, or still could, go round for ever."""
+        for expression in ["float('nan')", "float('inf')", "float('-inf') + 1", "1e999 - 1e999",
+                           "1e308 * 10"]:
+            with self.subTest(expression=expression):
+                self.assertIn("inf or nan", do_calc(GameState(), expression))
+
+
 class TestVariables(unittest.TestCase):
     """calc with the variables of the console or the wave."""
 

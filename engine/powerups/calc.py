@@ -7,6 +7,7 @@ is shown with the part about to be worked out underlined.
 """
 
 import ast
+import math
 import operator
 
 from engine.powerups.values import NotAllowed, variable_values
@@ -18,6 +19,7 @@ CAN_DO = "calc knows numbers, text, + - * / // % **, brackets, int(), float(), s
 MAX_LENGTH = 70             # of an expression, so every step fits on one line
 MAX_INT_BITS = 2000         # about 600 digits
 MAX_ROUND_DIGITS = 100
+MAX_STEPS = 100             # a safety net: no line of 70 characters needs more
 
 OPERATORS = {
     ast.Add: operator.add,
@@ -140,6 +142,9 @@ def check_result(value):
     """Raise NotAllowed if a value cannot be shown."""
     if type(value) not in (int, float, str, bool):
         raise NotAllowed("calc shows numbers and text only.")
+    if type(value) is float and not math.isfinite(value):
+        # Python has no way to write inf or nan back into a line of code.
+        raise NotAllowed("calc stops here: the result is inf or nan, not an ordinary number.")
     if type(value) is int and value.bit_length() > MAX_INT_BITS:
         raise NotAllowed("That number is too big for calc.")
     if len(repr(value)) > MAX_LENGTH:
@@ -174,7 +179,7 @@ def steps_for(expression, variables):
     """
     steps = []
     line = ast.unparse(ast.parse(expression, mode="eval").body)
-    while True:
+    for _ in range(MAX_STEPS):
         tree = ast.parse(line, mode="eval").body
         node = next_to_work_out(tree)
         if node is None:
@@ -192,6 +197,7 @@ def steps_for(expression, variables):
         line = ast.unparse(Replacer(node, value_node(value)).visit(tree))
         if len(line) > MAX_LENGTH:
             raise NotAllowed("That expression grows too long for calc.")
+    raise NotAllowed("That expression takes too many steps for calc.")
 
 
 def do_calc(state, text):
