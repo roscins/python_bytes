@@ -1,7 +1,7 @@
 # Design: full-screen, key-driven interface
 
-**Status: proposed.** Nothing here is built. It comes before World 2 and builds
-on the UX pass (PR #38).
+**Status: approved** (see Decisions at the end). It comes before World 2 and
+builds on the UX pass (PR #38).
 
 ## Goal
 
@@ -140,19 +140,14 @@ Three pull requests, each with its own roadmap checkbox:
 3. `ui/waves`: fill-in, predict, boss, run input, restart level, key wording;
    remove the typing row.
 
-## Questions for you
+## Decisions
 
-Each has a recommendation, which is what the text above assumes.
+The six questions of the proposal were answered "OK" to every recommendation.
 
-1. **Tab.** "Tab inserts 4 spaces" and "Tab from the last line goes to the
-   buttons" clash: new code is typed on the last line, so Tab could not indent
-   there. *Recommend:* Tab always indents; Down on the last line or Esc goes to
-   the buttons.
-2. **Restart level.** *Recommend:* as above (code only; score and coins stay).
-3. **Command line (Ctrl-E).** *Recommend:* yes, so power-ups and the console
-   survive.
-4. **Fill-in.** *Recommend:* only blanks editable. The other choice is the
-   whole starter editable.
-5. **Automatic indent** after Enter. *Recommend:* none, as you described it;
-   typing the indent is practice, and pasted code is not indented twice.
-6. **Hint confirmation.** *Recommend:* yes.
+1. Tab always inserts 4 spaces; Down on the last line, or Esc, goes to the
+   buttons. (Tab from the last line cannot do both.)
+2. Restart level restores the starter code only; score and coins stay.
+3. Ctrl-E (`:` at the map) opens a one-line command prompt.
+4. In fill-in waves only the blanks are editable.
+5. No automatic indent.
+6. Buying a hint asks first.
