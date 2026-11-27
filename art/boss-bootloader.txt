@@ -1,0 +1,16 @@
+...2..2..2..2...
+...2..2..2..2...
+..222222222222..
+..2cccccccccc2..
+222cccccccccc222
+..2c11cccc11c2..
+..2c1bccccb1c2..
+222cccccccccc222
+..2cccccbccccd2.
+..2ccccbbccccd2.
+222c1c1c1c1ccd22
+..2c11111111cd2.
+..2cc1c1c1c1cd2.
+..2ddddddddddd2.
+..222222222222..
+...2..2..2..2...
