@@ -137,6 +137,14 @@ Submit, Run and Hint call the same functions as line mode.
 One branch, `ui/editor`, one pull request, a commit per part. The roadmap
 boxes 2 and 3 become one.
 
+## Changes while building
+
+- After a hit on the boss the health bar drains and you are straight back in
+  the code. Waiting for Enter swallowed what was typed. A win still waits.
+- Restart level and Hint ask with [No] [Yes] in the button row.
+- The old full screen with a typing row is no longer reachable by a player.
+  Its code is still there, used by its tests; removing it is a cleanup.
+
 ## Decisions
 
 1. The button is **Restart level**, not "Restart wave".

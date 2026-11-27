@@ -1,8 +1,8 @@
 """The full-screen display for the key-driven mode.
 
-It draws the same panels as Display, but every pause, menu and the map are
-worked with single keys. Waves are still typed on the last row: for that
-the keyboard is switched back to normal while the line is read.
+It draws the same panels as Display, but everything is worked with single
+keys. Only a typed command (`:` on the map, Ctrl-E in a wave) is read as a
+line: for that the keyboard is switched back to normal.
 """
 
 from engine.display import Display, is_pixel_art, split_sections
@@ -10,7 +10,8 @@ from engine.focus import Choice
 from engine.progression_help import next_level_to_play
 from engine.screens import PAGE_BREAK, split_screens
 from render.buttons import button_row
-from render.screen import key_screen, paginate
+from render.screen import compose_screen, key_screen, paginate
+from render.typewriter import play_frames
 
 # How often a waiting screen looks whether the window changed size.
 RESIZE_CHECK = 0.25
@@ -57,9 +58,10 @@ class KeyDisplay(Display):
     # ---- drawing
 
     def frame(self, body, status, rows):
-        """Return the rows of a screen: with buttons, or with a typing row."""
+        """Return the rows of a screen: with buttons, or with an empty last row."""
         if self.buttons is None:
-            return super().frame(body, status, rows)
+            # The line mode's footer names typed commands, so it is not shown.
+            return compose_screen(self.hud(), body, status, rows)
         return key_screen(self.hud(), body, status, rows, self.buttons, self.keys_footer)
 
     def draw_buttons(self, body, labels, chosen, footer, status=""):
@@ -83,16 +85,19 @@ class KeyDisplay(Display):
             key = self.keys.read_key(0)
         return found
 
+    def poll_key(self):
+        """Return the next key, or None if none came within a short while."""
+        if self.guard is None:
+            return self.keys.read_key(RESIZE_CHECK)
+        # A signal that came while the screen was drawn only set a flag.
+        self.guard.stop_if_requested()
+        return self.guard.read_input(self.keys.read_key, RESIZE_CHECK)
+
     def wait_key(self):
         """Wait for a key, drawing the screen again if the window changes size."""
         size = self.size()
         while True:
-            if self.guard is None:
-                key = self.keys.read_key(RESIZE_CHECK)
-            else:
-                # A signal that came while the screen was drawn only set a flag.
-                self.guard.stop_if_requested()
-                key = self.guard.read_input(self.keys.read_key, RESIZE_CHECK)
+            key = self.poll_key()
             if key is not None:
                 return key
             if self.size() != size:
@@ -173,29 +178,29 @@ class KeyDisplay(Display):
                 break
         last = screens[-1]
         if self.state.coding:
-            self.buttons = None
-            return super().show_screens([last])
+            # The wave screen draws the wave itself (see engine/wave_screen.py).
+            return None
         # At the map, the map screen itself comes next.
         if is_pixel_art(last):
             return None
         return self.show_text(last)
 
     def show_text(self, text, status=""):
-        """Show a text as pages. In a wave the last page stays for typing; at the map it waits."""
+        """Show a text as pages and wait. In a wave nothing is shown: its screen does that."""
         if PAGE_BREAK in text:
             return self.show_screens(split_screens(text))
-        pages = self.pages_of(text)
-        if self.state.coding:
-            if len(pages) > 1:
-                # All but the last page; that one is drawn with the typing row.
-                self.browse(pages[:-1])
-            self.buttons = None
-            self.fullscreen.show_cursor()
-            self.draw(pages[-1], status=status)
+        if self.state.coding or not self.state.running:
             return None
-        if not self.state.running:
-            return None
-        return self.wait_at_the_end(text, pages)
+        return self.wait_at_the_end(text, self.pages_of(text))
+
+    def play(self, frames, wait=True):
+        """Play an animation; with `wait`, stay on its last picture until Enter."""
+        self.buttons = button_row([])
+        self.keys_footer = ""
+        play_frames(frames, lambda picture: self.draw(picture.split("\n")), self.sleep, self.skipped,
+                    self.delay)
+        if wait:
+            self.browse([self.last_body(frames[-1])])
 
     def wait_at_the_end(self, text, pages):
         """Wait on a text shown at the map; return the command a button stands for, or None."""
@@ -212,13 +217,7 @@ class KeyDisplay(Display):
         """Show an answer; return a command chosen with a button, or None."""
         if isinstance(answer, list):
             return self.show_animation(answer)
-        if PAGE_BREAK in answer:
-            return self.show_screens(split_screens(answer))
-        if not self.state.coding:
-            return self.show_text(answer)
-        self.buttons = None
-        self.fullscreen.show_cursor()
-        return super().show(answer)
+        return self.show_text(answer)
 
     def show_title(self):
         """Play the title animation and wait for Enter."""

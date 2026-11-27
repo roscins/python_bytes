@@ -199,8 +199,8 @@ class TestTerminalIsRestored(unittest.TestCase):
                 report = self.end_with(lambda master, game: os.kill(game, number))
                 self.assertEqual(report, f"True CODE {128 + number}")
 
-    def test_after_a_signal_at_the_typing_row(self):
-        """Inside a wave the line is read by input(); a kill there must restore too."""
+    def test_after_a_signal_at_the_command_row(self):
+        """Ctrl-E reads a line with input(); a kill there must restore too."""
         def press(master, key, expected):
             """Press a key and wait for something printed after it."""
             self.output = b""
@@ -212,7 +212,8 @@ class TestTerminalIsRestored(unittest.TestCase):
             press(master, b"\r", "Esc skip")        # the tutorial
             press(master, b"\x1b", ": command")     # the map
             press(master, b"\r", "Esc skip")        # the story of 1-1
-            press(master, b"\x1b", "FILL ")         # the wave and its typing row
+            press(master, b"\x1b", "^S submit")     # the wave
+            press(master, b"\x05", "command: ")     # Ctrl-E
             time.sleep(0.5)
             os.kill(game, signal.SIGTERM)
 

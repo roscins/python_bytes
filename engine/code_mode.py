@@ -239,7 +239,10 @@ def do_wave(state, text):
         return NOT_PLAYING
     number, _ = split_number(text)
     if number is None or number < 1 or number > len(level.waves):
-        return f"Level {level.id} has waves 1 to {len(level.waves)}. Type, for example: :wave 2"
+        example = ":wave 2"
+        if state.keys:
+            example = "wave 2"
+        return f"Level {level.id} has waves 1 to {len(level.waves)}. Type, for example: {example}"
     state.current_wave = number
     state.coding = True
     return show_wave(state)

@@ -5,7 +5,7 @@ earned, and whether the level was cleared. Like the other screens, this
 module returns text and never prints.
 """
 
-from engine.friendly import friendly_error, friendly_message
+from engine.friendly import format_friendly, friendly_for_source, friendly_message
 from engine.scoring import star_text
 from render.compare_view import compare_lines
 
@@ -13,7 +13,7 @@ TICK = "✓"
 CROSS = "✗"
 
 
-def check_lines(check):
+def check_lines(check, code=""):
     """Return the lines for one failed check: a cross, its name and why.
 
     Two outputs that differ are shown side by side.
@@ -21,6 +21,9 @@ def check_lines(check):
     lines = [f"  {CROSS} {check.name}"]
     if check.expected is not None:
         explanation = compare_lines(check.expected, check.printed)
+    elif check.error_text:
+        error = friendly_for_source(check.error_text, code)
+        explanation = format_friendly(error, "", plain=True).splitlines()
     else:
         explanation = friendly_message(check.message).splitlines()
     for line in explanation:
@@ -38,8 +41,8 @@ def syntax_lines(code):
             return []
         start = f"{error.lineno:>3} | "
         column = max(0, (error.offset or 1) - 1)
-        sentence = friendly_error(f'File "main.py", line {error.lineno}\n'
-                                  f"{type(error).__name__}: {error.msg}").headline
+        sentence = friendly_for_source(f'File "main.py", line {error.lineno}\n'
+                                       f"{type(error).__name__}: {error.msg}", code).headline
         return ["  " + sentence, "  " + start + source[error.lineno - 1],
                 "  " + " " * (len(start) + column) + "^"]
     return []
@@ -71,7 +74,7 @@ def wave_result_lines(submission):
         return lines
     for check in result.checks:
         if not check.passed:
-            lines.extend(check_lines(check))
+            lines.extend(check_lines(check, submission.code))
 
     if result.quality is not None:
         passed = 0

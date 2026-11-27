@@ -18,7 +18,10 @@ terminal, and when the `NO_COLOR` variable is set.
 Optional: `pip install -e .` adds a `python-bytes` command that does the same.
 Your save is `~/.python-bytes/save.json` (`--save PATH` changes it).
 
-Inside a level you type your code line by line; commands start with a colon
-(`:submit`, `:run`, `:show`, `:undo`, `:edit`, `:help` ...). On the map, press `:` to
-type a command (in `--plain`, just type it). There, any line of Python just runs (`print("hi")`, `x = 5`, a `for` loop), like in
-the Python console. A level is cleared when every wave is passed.
+Inside a level you write code in an editor: arrows move, Ctrl-S submits, Ctrl-R
+runs, and Down from the last line reaches the buttons. Ctrl-G lists every key, and
+Ctrl-E takes a typed word (a power-up, `stats`, a line of Python). On the map, press
+`:` to type a command. A level is cleared when every wave is passed.
+
+In `--plain` you type code line by line, and commands start with a colon (`:submit`,
+`:run`, `:undo`, `:edit`, `:help` ...).

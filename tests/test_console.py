@@ -81,7 +81,7 @@ class TestQuickConsole(ConsoleTestCase):
 
     def test_a_name_error_for_a_name_with_more_to_it_is_a_python_error(self):
         """print(zzz) is Python, not a command."""
-        self.assertIn("I do not know the name zzz", self.type("print(zzz)"))
+        self.assertIn('Text needs quotes: try print("zzz")', self.type("print(zzz)"))
 
     def test_a_line_that_looks_like_python_but_is_not_gets_a_friendly_syntax_error(self):
         """print("a) is a mistake in Python, not a mistyped command."""
@@ -219,10 +219,10 @@ class TestRun(ConsoleTestCase):
 
     def test_run_shows_a_friendly_error_with_the_players_line(self):
         """The line number is the number on the screen."""
-        type_code(self.state, 'x = 1\nprint(y)')
+        type_code(self.state, 'x = 1\nprint(x + y)')
         text = self.type(":run")
         self.assertIn("Snek tripped on line 2: I do not know the name y", text)
-        self.assertIn("  2 | print(y)", text)
+        self.assertIn("  2 | print(x + y)", text)
 
     def test_run_that_never_ends(self):
         """The time limit."""

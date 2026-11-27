@@ -20,7 +20,7 @@ from engine.code_mode import (
     buffer_lines,
     current_context,
 )
-from engine.friendly import format_friendly, friendly_error, friendly_timeout
+from engine.friendly import format_friendly, friendly_for_source, friendly_timeout
 from engine.level_screen import separator
 from engine.predict_lock import locked_message
 from engine.suggest import MAP_WORDS, did_you_mean
@@ -65,7 +65,7 @@ def syntax_error_text(source):
 
 def show_error(state, source, error_text):
     """Return an error text as the friendly message, with the player's line and the real error."""
-    error = friendly_error(error_text)
+    error = friendly_for_source(error_text, source)
     return format_friendly(error, source, state.plain, state.color)
 
 

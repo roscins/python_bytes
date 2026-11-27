@@ -107,7 +107,10 @@ def use_power_up(state, name, text):
             return f"You have not earned {name} yet."
         return f"Clear {level.id} to earn {name}."
     if in_open_prediction(state):
-        return "Snek will not help with a prediction. Type your answer and :submit."
+        hand_in = ":submit"
+        if state.keys:
+            hand_in = "press Ctrl-S"
+        return f"Snek will not help with a prediction. Type your answer and {hand_in}."
     if power_up.runs_code(state):
         locked = locked_message(state)
         if locked:
@@ -122,5 +125,8 @@ def earned_help_lines(state):
         if is_earned(state, name):
             lines.append(f"  {name:<8} {POWER_UPS[name].description}")
     if lines:
-        lines.insert(0, "Power-ups you have earned (with a colon while coding):")
+        how = "with a colon while coding"
+        if state.keys:
+            how = "in a wave, press Ctrl-E first"
+        lines.insert(0, f"Power-ups you have earned ({how}):")
     return lines

@@ -8,6 +8,7 @@ from engine.code_mode import prompt_for, show_wave
 from engine.commands import do_map, handle_line
 from engine.footer import footer_for
 from engine.key_screens import MapScreen, is_map_answer
+from engine.wave_screen import WaveScreen
 from engine.screens import CONTINUE_PROMPT, SKIP_WORDS, split_screens, wrap_text
 
 # How long each frame of an animation stays on screen, in seconds.
@@ -171,10 +172,22 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
     if autosaver is None and save_path is not None:
         autosaver = AutoSaver(state, save_path)
     width = plain_width()
-    # With a keyboard, the map is walked with keys instead of typed commands.
+    # With a keyboard, the map and the waves are worked with keys instead of typed commands.
     map_screen = None
+    wave_screen = None
+
+    def save_now():
+        """Save while a wave is being edited; say once if that does not work."""
+        nonlocal failure_reported
+        failure_reported = save_and_report(autosaver, wave_report, failure_reported)
+
+    def wave_report(text):
+        """Show a save problem in the panel of the wave."""
+        wave_screen.say("SNEK", text)
+
     if getattr(display, "keys", None) is not None and state.slots():
         map_screen = MapScreen(display, state)
+        wave_screen = WaveScreen(display, state, save_now)
 
     def read(prompt):
         """Read one line through the guard and the display."""
@@ -205,12 +218,18 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
                 line, queued = queued, None
             elif map_screen is not None and not state.coding and state.pending is None:
                 line = map_screen.next_line()
+            elif wave_screen is not None and state.coding and state.pending is None:
+                line = wave_screen.run()
             else:
                 line = read(prompt_for(state))
         except (EOFError, KeyboardInterrupt):
             # Start on a fresh line, because the terminal is still on the prompt.
             write("")
             line = ":quit"
+        except OSError:
+            # The terminal is gone (the window was closed). Stop.
+            state.running = False
+            break
         combo_before = state.combo
         answer = handle_line(state, line)
         # Save before showing: a screen may wait at a pause for a long time.
