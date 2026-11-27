@@ -1,6 +1,6 @@
 # Phase 3 design: World 1 power-ups
 
-**Status: proposed. No code until this is approved.**
+**Status: approved**, with the decisions at the end.
 
 A power-up is a small tool that shows the idea a level has just taught. It is
 earned by clearing the level and stays for the rest of the game.
@@ -11,8 +11,9 @@ earned by clearing the level and stays for the rest of the game.
   `:calc 2 + 3 * 4`. Before its level is cleared it answers
   `Clear 1-3 to earn calc.`
 - **Free.** No coins, and no effect on score, stars or combo.
-- **Predict waves and boss fights:** refused in a predict wave, like `:run`.
-  Allowed in a boss fight, because it shows nothing about the hidden tests.
+- **Boss fights:** every power-up works there; none shows the hidden tests.
+- **Predict waves:** inside one, every power-up is refused, like `:run`. While
+  a predict wave is unanswered, nothing can run code anywhere (see below).
 - **Your own names still work.** Today a command name wins over Python, so
   `read = 5` would run the command. A line where the name is followed by `=`
   (or `+=` and so on) is Python.
@@ -21,16 +22,19 @@ earned by clearing the level and stays for the rest of the game.
 - **Safe:** nothing is passed to `eval` in the game process. Code runs in the
   separate runner, as player code does now.
 
-## 1-1 `status`: what does this line do?
+## 1-1 `explain`: what does this line do?
 
 Concepts: `print()`, string literals, comments.
 
-    > status print("# 1 ready")  # start-up
+    > explain print("# 1 ready")  # start-up
     print("# 1 ready")  # start-up
     ^^^^^                             call: show something
           ^^^^^^^^^^^                 string: this # is only text
                         ^^^^^^^^^^    comment: Python skips it
     SCREEN: # 1 ready
+
+`explain` runs nothing. The SCREEN line appears only when everything inside
+`print()` is written out as text or numbers.
 
 ## 1-2 `memory`: names and the values they point to
 
@@ -44,7 +48,10 @@ you have typed and draws what is left at the end.
     unit_name --+----> [ "Snek" ]  str
     twin      --+
 
-Two names share one box when they are the very same object (`is`). The same
+Two names share one box when they are the very same object (`is`). When the
+shared value is a small int or a short string, one note follows: `Python
+reuses small values as an optimisation. Compare values with ==, never rely on
+is.` The same
 drawing will show aliasing in 3-4, so it is built to draw several names per
 box from the start.
 
@@ -94,30 +101,38 @@ The exact digits come from `decimal.Decimal(x)`.
 The slice is optional. A variable name works in place of the text. Spaces are
 shown as `·` (`_` in plain mode). Long text wraps in blocks of 20.
 
+## While a predict wave is unanswered
+
+A predict wave is **unanswered** from the moment the player first sees it
+until they pass it. A wrong answer does not count: otherwise one guess would
+unlock running the code. It stays so after leaving the wave, and after
+restarting the game.
+
+Blocked meanwhile: Python in the quick console, `:run`, `calc`, `approx` and
+`memory` inside a wave. Still allowed: `explain`, `read` and `memory` at the
+map, which run nothing. The message names the wave to answer.
+
+Not covered: `:submit` of another code wave still runs that code.
+
 ## Build plan
 
 Small PRs, each with tests:
 
-1. The shared part (unlocking, routing, help, refusals) with `read`.
-2. `memory`.
-3. `calc`.
-4. `approx` and `status`.
+1. The lock during unanswered predict waves.
+2. The shared part (unlocking, routing, help, refusals) with `read`, and the
+   rename of `status` to `explain`.
+3. `memory`.
+4. `calc`.
+5. `approx` and `explain`.
 
 `engine/powerups/` holds one module per tool; `render/` holds the drawings.
 The level-clear screen already announces the new command. `help` lists the
 ones you have earned.
 
-## Please decide
+## Decisions
 
-1. **`status`.** Your list did not cover 1-1. Is the line explainer above
-   right, or should `status` be a progress report instead?
-2. **Shared boxes in `memory`.** Proposed: share when the objects are the same
-   (`is`). It is the truth, and shows that `backup = power` copies no value.
-   The catch: Python reuses small numbers and short texts, so `a = 5` and
-   `b = 5`, typed separately, also share a box. The tool would then add:
-   `Python reuses small values; this is safe because they cannot change.`
-   The other choice is to share only lists and other changeable values, which
-   hides binding until 3-4.
-3. **Power-ups in boss fights:** allowed, as proposed?
-4. **A way round predict waves.** You can type `map` and then run the code in
-   the quick console, which is already possible today. Leave it?
+1. `status` becomes `explain`, renamed in the curriculum and `concepts.toml`.
+   Progress belongs to `stats` (not built yet).
+2. Names share a box for the same object, with the one-line note above.
+3. Power-ups work in boss fights.
+4. Running code is blocked while a predict wave is unanswered.
