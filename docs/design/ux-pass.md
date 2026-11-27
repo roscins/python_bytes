@@ -1,6 +1,6 @@
 # Design: UX pass on World 1
 
-**Status: proposed. No code until this is approved.**
+**Status: approved** (see Decisions at the end). Built on one branch, `ux/pass`.
 
 ## How the audit was done
 
@@ -83,22 +83,23 @@ words with `+ - |` boxes. Hidden boss tests are never shown side by side.
 
 **Full screen.** The footer takes one row, leaving 18 rows of body at 80 x 24.
 
-## Build plan
+## Decisions
 
-One PR each, in this order: bugs B1 and B2; screens, wrapping and GOAL (2, 3);
-footer and window check (1, 9); fill-in (4); readline (5); results (6);
-commands and typos (7); tutorial (8). World 2 starts after the last is merged.
+1. In a wave, a line that is exactly `submit`, `hint` or `hint 2` is the
+   command. If your code has a name `submit` or `hint`, the line is code, and
+   one note says so and points to `:submit`.
+2. In plain mode the footer is one line printed after each screen, not before
+   every typed line.
+3. Every wave has a `goal` of at most 60 characters.
+4. Replaying a level shows story and tips again; `s` skips.
 
-## Please decide
+One pull request, with a commit per step, bugs first.
 
-1. **`submit` is valid Python** (a name), so "when the line isn't valid Python"
-   would never catch it. Proposed: in a wave, a line that is exactly `submit`,
-   `hint` or `hint 2` is the command, unless your code has a variable of that
-   name. `submit = 1` stays code.
-2. **A footer cannot be fixed in plain mode** (text scrolls). Proposed: print it
-   as one line above the prompt each time a screen is shown, not before every
-   typed line.
-3. **`goal` field:** a new required line in every level file (proposed), or the
-   first sentence of the brief?
-4. **Replaying a level:** story and tips again with `s` to skip (proposed), or
-   straight to the code?
+## How some of it works
+
+- A screen ends with "Enter to continue". `s` skips to the last screen. Any
+  other line skips too and is then treated as typed, so nothing is lost.
+- The footer replaces the long command line under the code.
+- The tutorial is four screens of text, shown when there is no save at all.
+- In full screen, a wave too tall for 18 rows is redrawn without its task
+  paragraph while you type; the GOAL box stays, and `:show` has it all.

@@ -19,7 +19,7 @@ from engine.code_mode import (
 from engine.console import continue_pending, do_cancel, do_run, run_python_line
 from engine.hints import ask_for_hint
 from engine.hud import map_status
-from engine.level_screen import HELP_LINE, boss_intro_text, intro_text
+from engine.level_screen import boss_intro_text, intro_text
 from engine.powerups import POWER_UPS, earned_help_lines, is_python_line, use_power_up
 from engine.results_screen import results_text
 from engine.rewards import apply_submission
@@ -145,7 +145,8 @@ def do_play(state, arguments):
     previous = state.find_level(state.current_level)
     start_coding(state, level)
     if level.boss:
-        intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level) + "\n\n" + HELP_LINE
+        intro = (boss_intro_text(level) + "\n\n" + start_boss_fight(state, level)
+                 + "\n\n" + show_wave(state))
     else:
         intro = intro_text(level) + "\n\n" + show_wave(state)
     # The plain mode has no pictures, so Snek does not slither there.
@@ -220,7 +221,10 @@ def do_submit(state, arguments):
     reward = apply_submission(state, level, [submission])
     results = results_text(level, [submission], [], reward)
     results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)
-    if not reward.cleared_now and reward.stars <= reward.old_stars:
+    # CLEARED is only said of a cleared level: when it is cleared now, or when
+    # a cleared level earns more stars.
+    more_stars = reward.is_cleared and reward.stars > reward.old_stars
+    if not reward.cleared_now and not more_stars:
         return results
     if state.plain:
         return level_clear_text(level.id, level.title, reward.best_score, reward.stars,
