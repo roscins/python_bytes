@@ -6,6 +6,7 @@ level that names it (power_up in level.toml). It is typed at the map as
 here; the table of tools is below.
 """
 
+from engine.powerups.memory import do_memory
 from engine.powerups.read import do_read
 from engine.predict_lock import locked_message
 from engine.predict_lock import unanswered_predict
@@ -36,7 +37,13 @@ def never(state):
     return False
 
 
+def inside_a_wave(state):
+    """Return True while coding: then memory runs the wave's code."""
+    return state.coding
+
+
 POWER_UPS = {
+    "memory": PowerUp(do_memory, "draws which names point to which values", inside_a_wave),
     "read": PowerUp(do_read, 'index numbers under a text, for example: read "ABC" [0:2]', never),
 }
 

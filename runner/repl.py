@@ -120,9 +120,14 @@ class ReplSession:
         """End the console for good (called when the game ends)."""
         self.stop()
 
-    def run(self, source):
-        """Run `source` in the console and return a ReplResult."""
-        return self.send({"source": source})
+    def run(self, source, whole_program=False):
+        """Run `source` in the console and return a ReplResult.
+
+        `source` is one statement, as typed at a prompt, or with
+        `whole_program` a whole file.
+        """
+        mode = "exec" if whole_program else "single"
+        return self.send({"source": source, "mode": mode})
 
     def variables(self):
         """Return the console's variables, as the worker describes them (see repl_worker.py)."""

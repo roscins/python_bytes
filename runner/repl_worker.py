@@ -75,7 +75,7 @@ def main():
         output = io.StringIO()
         errors = io.StringIO()
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
-            interpreter.runsource(request["source"], "<repl>", "single")
+            interpreter.runsource(request["source"], "<repl>", request.get("mode", "single"))
         printed, output_cut = cut(output.getvalue())
         reply = {"output": printed, "error": errors.getvalue()[:MAX_OUTPUT_CHARACTERS], "output_cut": output_cut}
         reply_channel.write(json.dumps(reply) + "\n")

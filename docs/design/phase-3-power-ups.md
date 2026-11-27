@@ -45,7 +45,7 @@ you have typed and draws what is left at the end.
     NAMES              VALUES
     power     -------> [ 9 ]  int
     backup    -------> [ 5 ]  int
-    unit_name --+----> [ "Snek" ]  str
+    unit_name --+----> [ 'Snek' ]  str
     twin      --+
 
 Two names share one box when they are the very same object (`is`). When the
