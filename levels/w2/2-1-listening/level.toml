@@ -1,0 +1,161 @@
+[level]
+id = "2-1"
+title = "Listening"
+world = 2
+new_concepts = ["input()", "converting input to numbers", "input, process, output"]
+power_up = "talk"
+
+cutscene = '''
+# >> The microphone works. Something is listening back.
+# >> Snek: "SPEAK. I AM LISTENING."
+# input: wait for a typed line, which arrives as text
+name = input("Sensor name? ")
+raw = input("Raw reading? ")
+print(type(raw))
+# process: turn the text into a number, then calculate
+reading = float(raw)
+count = int(input("How many samples? "))
+total = reading * count
+# output: show the result
+print(f"{name.strip()}: {total:.2f}")
+# >> Snek: "HEARD YOU."
+'''
+
+tips = [
+  "input() waits for one typed line and gives it back as text (str), even if it looks like a number.",
+  "float(text) makes a decimal number from text, int(text) a whole number.",
+  "Most programs go in order: input the data, process it, output the result.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Read two readings and print their offset."
+brief = '''
+The program reads the expected value first, then the measured value.
+Fill in the blanks so both become decimal numbers and the offset
+is expected minus measured.
+'''
+starter = '''
+expected = ___(input())
+measured = ___(input())
+offset = expected ___ measured
+print(f"{offset:.2f}")
+'''
+reference = '''
+expected = float(input())
+measured = float(input())
+offset = expected - measured
+print(f"{offset:.2f}")
+'''
+wrong = '''
+expected = float(input())
+measured = float(input())
+offset = expected + measured
+print(f"{offset:.2f}")
+'''
+hints = [
+  "input() gives text. Which conversion keeps the digits after the point?",
+  "Convert both input() calls to decimal numbers, then take one away from the other.",
+  "The first line is: expected = float(input())",
+]
+
+[[wave.test]]
+stdin = "20.5\n18.25\n"
+expected_stdout = "2.25\n"
+
+[[wave.test]]
+stdin = "3\n7.5\n"
+expected_stdout = "-4.50\n"
+
+[[wave.test]]
+require = ["Call", "BinOp"]
+
+[[wave]]
+kind = "build"
+goal = "Ask for two readings and print the calibrated offset."
+brief = '''
+Read two lines with input() and no prompt text: first the reference in volts, then the sensor reading in millivolts.
+Convert the sensor reading to volts (1000 mV is 1 V).
+The calibrated offset is the reference minus the sensor value in volts.
+Print only the offset, with 2 decimals.
+Add a comment saying what the program does.
+'''
+reference = '''
+# Print the offset that calibrates the sensor
+reference = float(input())
+sensor = float(input()) / 1000
+offset = reference - sensor
+print(f"{offset:.2f}")
+'''
+wrong = '''
+# Print the offset that calibrates the sensor
+reference = float(input())
+sensor = float(input())
+offset = reference - sensor
+print(f"{offset:.2f}")
+'''
+hints = [
+  "Think in three steps: input, process, output. What must happen to the text first?",
+  "Convert two input() lines with float(), divide the millivolts by 1000, subtract, then print with :.2f in an f-string.",
+  "Start with: reference = float(input())",
+]
+
+[[wave.test]]
+stdin = "5\n4750\n"
+expected_stdout = "0.25\n"
+
+[[wave.test]]
+stdin = "12.125\n15000\n"
+expected_stdout = "-2.88\n"
+
+[[wave.test]]
+stdin = " 3.5 \n3500\n"
+expected_stdout = "0.00\n"
+
+[[wave.test]]
+require = ["Call", "BinOp", "JoinedStr"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Fix the bug so the two readings are added."
+brief = "This should read two whole-number readings and print their total. Fix the bug."
+starter = '''
+# Add up two readings from the field
+first = input()
+second = input()
+total = first + second
+print(f"Total: {total}")
+'''
+reference = '''
+# Add up two readings from the field
+first = int(input())
+second = int(input())
+total = first + second
+print(f"Total: {total}")
+'''
+wrong = '''
+# Add up two readings from the field
+first = input()
+second = input()
+total = int(first + second)
+print(f"Total: {total}")
+'''
+hints = [
+  "What type does input() give back, and what does + do with that type?",
+  "Convert each reading to a whole number before adding them.",
+  "The first fixed line is: first = int(input())",
+]
+
+[[wave.test]]
+stdin = "12\n30\n"
+expected_stdout = "Total: 42\n"
+
+[[wave.test]]
+stdin = "7\n-2\n"
+expected_stdout = "Total: 5\n"
+
+[[wave.test]]
+require = ["Call", "BinOp"]

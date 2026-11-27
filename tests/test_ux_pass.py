@@ -132,8 +132,9 @@ class TestFooterAndGoal(GameCase):
             self.type_lines(line)
             self.assertLessEqual(len(footer_for(self.state)), 80)
 
-    def test_every_world_one_wave_has_a_short_goal_shown_in_a_box(self):
+    def test_every_wave_has_a_short_goal_shown_in_a_box(self):
         """At most 60 characters, above the code."""
+        self.state.cleared = [level.id for level in self.state.levels]
         for level in self.state.levels:
             for number, wave in enumerate(level.waves, 1):
                 with self.subTest(level=level.id, wave=number):

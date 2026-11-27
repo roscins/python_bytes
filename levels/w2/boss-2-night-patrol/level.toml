@@ -1,0 +1,171 @@
+[level]
+id = "boss-2"
+title = "The Night Patrol"
+world = 2
+boss = true
+time_limit = 900
+sprite = "boss-night-patrol"
+
+cutscene = '''
+# >> Midnight in the Sensor Fields. Something is moving between the sensors.
+signal = "  intruder  "
+print(signal.strip().upper(), "DETECTED")
+# >> A shape with glowing eyes steps over the fence.
+# >> Snek: "NIGHT PATROL REQUIRED. RUN THE ROUTE, TECHNICIAN."
+'''
+
+[[wave]]
+kind = "boss"
+goal = "Write the patrol program: report, charge, sweep, search."
+brief = """
+Read with input() (no prompt text), in this order: a unit name, a battery level,
+a number of sectors, then one whole-number heat reading per sector. Print UNIT
+and the name, stripped and in capitals; while the battery is under 60 add 25,
+then print BATTERY and the level. For each sector print SECTOR, its number from
+1, and ALARM (heat 70 or more), WARM (40 or more) or CLEAR, for example
+SECTOR 1 WARM; then print ALARMS and how many sectors raised ALARM. The
+intruder is at hiding, a whole number from 1 to 100: find it by bisection,
+starting with low 1 and high 100, trying (low + high) // 2 and printing PING
+and each try. After a try that is too low, set low to the try plus 1; after one
+that is too high, set high to the try minus 1. When a try equals hiding, stop and print, for example,
+FOUND 73 IN 6, where 6 is the number of pings.
+"""
+starter = '''
+# Night patrol
+hiding = 73
+'''
+reference = '''
+# Night patrol: report in, charge, sweep the sectors, find the signal
+hiding = 73
+
+name = input().strip().upper()
+print("UNIT", name)
+
+battery = int(input())
+while battery < 60:
+    battery += 25
+print("BATTERY", battery)
+
+sectors = int(input())
+alarms = 0
+for sector in range(1, sectors + 1):
+    heat = int(input())
+    if heat >= 70:
+        print(f"SECTOR {sector} ALARM")
+        alarms += 1
+    elif heat >= 40:
+        print(f"SECTOR {sector} WARM")
+    else:
+        print(f"SECTOR {sector} CLEAR")
+print("ALARMS", alarms)
+
+# Bisection: halve the range until the signal is found
+low = 1
+high = 100
+pings = 0
+while low <= high:
+    middle = (low + high) // 2
+    print("PING", middle)
+    pings += 1
+    if middle == hiding:
+        break
+    elif middle < hiding:
+        low = middle + 1
+    else:
+        high = middle - 1
+print("FOUND", hiding, "IN", pings)
+'''
+wrong = '''
+# Night patrol: report in, charge, sweep the sectors, find the signal
+hiding = 73
+
+name = input().strip().upper()
+print("UNIT", name)
+
+battery = int(input())
+while battery < 60:
+    battery += 25
+print("BATTERY", battery)
+
+sectors = int(input())
+alarms = 0
+for sector in range(1, sectors + 1):
+    heat = int(input())
+    if heat > 70:
+        print(f"SECTOR {sector} ALARM")
+        alarms += 1
+    elif heat >= 40:
+        print(f"SECTOR {sector} WARM")
+    else:
+        print(f"SECTOR {sector} CLEAR")
+print("ALARMS", alarms)
+
+# Bisection: halve the range until the signal is found
+low = 1
+high = 100
+pings = 0
+while low <= high:
+    middle = (low + high) // 2
+    print("PING", middle)
+    pings += 1
+    if middle == hiding:
+        break
+    elif middle < hiding:
+        low = middle + 1
+    else:
+        high = middle - 1
+print("FOUND", hiding, "IN", pings)
+'''
+hints = [
+  "Build it in four parts, in the order of the brief, and run after each one.",
+  "One while loop charges, one for loop with if/elif/else sweeps, and a second while loop moves low or high.",
+  "In the search: middle = (low + high) // 2, then low = middle + 1 or high = middle - 1, never just middle.",
+]
+
+[[wave.test]]
+expected_stdout_contains = ["UNIT BOLT\n"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+expected_stdout_contains = ["BATTERY 60\n"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+expected_stdout_contains = ["SECTOR 1 CLEAR\nSECTOR 2 WARM\nSECTOR 3 ALARM\n"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+expected_stdout_contains = ["ALARMS 1\n"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+expected_stdout_contains = ["PING 50\nPING 75\nPING 62\nPING 68\nPING 71\nPING 73\n"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+expected_stdout_contains = ["FOUND 73 IN 6"]
+stdin = "  bolt \n10\n3\n25\n55\n70\n"
+values = { hiding = 73 }
+
+[[wave.test]]
+require = ["While", "For"]
+
+[[wave.test]]
+expected_stdout = "UNIT SNEK\nBATTERY 60\nSECTOR 1 CLEAR\nSECTOR 2 WARM\nSECTOR 3 WARM\nSECTOR 4 ALARM\nALARMS 1\nPING 50\nPING 25\nPING 12\nFOUND 12 IN 3\n"
+stdin = "snek\n60\n4\n39\n40\n69\n90\n"
+values = { hiding = 12 }
+
+[[wave.test]]
+expected_stdout = "UNIT RUSTY\nBATTERY 84\nSECTOR 1 ALARM\nSECTOR 2 ALARM\nALARMS 2\nPING 50\nPING 75\nPING 88\nPING 94\nPING 97\nPING 99\nPING 100\nFOUND 100 IN 7\n"
+stdin = " Rusty\n59\n2\n100\n70\n"
+values = { hiding = 100 }
+
+[[wave.test]]
+expected_stdout = "UNIT ADA\nBATTERY 95\nALARMS 0\nPING 50\nPING 25\nPING 12\nPING 6\nPING 3\nPING 1\nFOUND 1 IN 6\n"
+stdin = "ada\n95\n0\n"
+values = { hiding = 1 }
