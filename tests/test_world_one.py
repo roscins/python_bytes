@@ -3,12 +3,15 @@
 tests/test_levels.py already checks the limits and the reference and wrong
 solutions of every level. These tests add what those cannot see: a predict
 wave's answer must be what Python really prints, and a fix-the-bug starter
-must really have a bug.
+must really have a bug. The last tests cover Boss 1 and play the whole world.
 """
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
+from engine.__main__ import run_game
 from engine.level_pack import load_levels
 from grader.checks import normalise_output
 from grader.wave_grader import grade_wave
@@ -61,6 +64,64 @@ class TestWorldOne(unittest.TestCase):
         for level in world_one():
             with self.subTest(level=level.id):
                 self.assertEqual(run_code(level.cutscene).exit_code, 0)
+
+class TestBossOne(unittest.TestCase):
+    """Boss 1, The Corrupted Bootloader."""
+
+    def setUp(self):
+        """Find the real boss."""
+        for level in load_levels(LEVELS_FOLDER):
+            if level.id == "boss-1":
+                self.boss = level
+
+    def test_reference_knocks_off_all_health(self):
+        """The reference solution passes every hidden test."""
+        wave = self.boss.waves[0]
+        self.assertTrue(grade_wave(wave, wave.reference).all_passed())
+
+    def test_wrong_solution_and_scrambled_report_fail(self):
+        """Neither the wrong solution nor the unchanged starter wins."""
+        wave = self.boss.waves[0]
+        for text in [wave.wrong, wave.starter]:
+            self.assertFalse(grade_wave(wave, text).all_passed())
+
+    def test_boss_has_its_own_sprite(self):
+        """The sprite is a 16 x 16 file in art/."""
+        path = LEVELS_FOLDER.parent / "art" / (self.boss.sprite + ".txt")
+        rows = path.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(len(rows), 16)
+        for row in rows:
+            self.assertEqual(len(row), 16)
+
+
+class TestWorldOneThroughTheGame(unittest.TestCase):
+    """A new player can clear the whole of World 1 in one sitting."""
+
+    def test_clear_every_level_and_the_boss(self):
+        """Type every reference solution, in order, into the real game."""
+        lines = ["1"]
+        for level in load_levels(LEVELS_FOLDER):
+            if level.world != 1:
+                continue
+            lines.append("play " + level.id)
+            for wave in level.waves:
+                text = wave.reference
+                if wave.mode == "predict":
+                    text = wave.answer
+                lines.append(":clear")
+                lines.extend(text.strip().splitlines())
+                lines.append(":submit")
+        lines.append(":quit")
+        with tempfile.TemporaryDirectory() as folder:
+            save_path = Path(folder) / "save.json"
+            typed = iter(lines)
+            output = []
+            run_game(save_path=save_path, workspace_root=Path(folder) / "workspace",
+                     read_line=lambda prompt: next(typed), write=output.append,
+                     plain=True, install_signals=False, pause=lambda seconds: None)
+            saved = json.loads(save_path.read_text(encoding="utf-8"))
+        self.assertEqual(saved["cleared"], WORLD_ONE_LEVELS + ["boss-1"])
+        self.assertIn("BOSS DEFEATED", "\n".join(output))
 
 
 if __name__ == "__main__":

@@ -29,3 +29,15 @@ plan approval, so this document records the decisions for review in the PR.
   only names its power-up), and the Codex screen is Phase 5.
 - **Tests:** predict answers are checked by running the code, and every
   fix-the-bug starter must fail as it stands.
+
+## Boss 1: The Corrupted Bootloader (branch `phase-3/boss-1`)
+
+- One scrambled program to repair: a missing `strip()`, a wrong slice, no
+  conversion to numbers, no `upper()`, no rounding and an exact float `==`.
+- 3.7 V times 3 cells is used because the float result is not exactly 11.1.
+- Eight hidden tests are the health bar. Time limit 15 minutes, because the
+  code is edited a line at a time.
+- Sprite `art/boss-bootloader.txt`: a chewed-up red chip (red, maroon, orange,
+  navy, slate outline).
+- The boss-door star rule is not built: a level is cleared only when every
+  wave passes, which already gives 2 stars or more.

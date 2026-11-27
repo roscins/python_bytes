@@ -1,0 +1,89 @@
+[level]
+id = "boss-1"
+title = "The Corrupted Bootloader"
+world = 1
+boss = true
+time_limit = 900
+sprite = "boss-bootloader"
+
+cutscene = '''
+# >> The screen flickers red. Something has chewed up the boot report.
+print("BO0T REP#RT ... ERR0R")
+# >> Snek: "BOOTLOADER CORRUPTED. REPAIR THE REPORT, TECHNICIAN."
+'''
+
+[[wave]]
+kind = "boss"
+brief = '''
+Repair the program so it prints these five lines, worked out from raw:
+UNIT SNEK, VOLTS 3.70, CELLS 3, TOTAL 11.1 and MATCH True (each on its own
+line). TOTAL is volts times cells to 1 decimal. MATCH compares the total with
+11.1 in a way that survives float round-off. Keep the f-string.
+'''
+starter = '''
+# Boot report, scrambled by the bootloader
+raw = "  unit:snek|volts:3.7|cells:3  "
+parts = raw.split("|")
+unit = parts[0][4:]
+volts = parts[1][6:]
+cells = parts[2][6:]
+total = volts * cells
+print("UNIT", unit)
+print(f"VOLTS {volts:.2f}")
+print("CELLS", cells)
+print("TOTAL", total)
+print("MATCH", total == 11.1)
+'''
+reference = '''
+# Boot report, repaired
+import math
+raw = "  unit:snek|volts:3.7|cells:3  "
+parts = raw.strip().split("|")
+unit = parts[0][5:].upper()
+volts = float(parts[1][6:])
+cells = int(parts[2][6:])
+total = volts * cells
+print("UNIT", unit)
+print(f"VOLTS {volts:.2f}")
+print("CELLS", cells)
+print("TOTAL", round(total, 1))
+print("MATCH", math.isclose(total, 11.1))
+'''
+wrong = '''
+# Boot report, almost repaired
+raw = "  unit:snek|volts:3.7|cells:3  "
+parts = raw.strip().split("|")
+unit = parts[0][5:].upper()
+volts = float(parts[1][6:])
+cells = int(parts[2][6:])
+total = volts * cells
+print("UNIT", unit)
+print(f"VOLTS {volts:.2f}")
+print("CELLS", cells)
+print("TOTAL", round(total, 1))
+print("MATCH", total == 11.1)
+'''
+
+[[wave.test]]
+expected_stdout_contains = ["UNIT SNEK\n"]
+
+[[wave.test]]
+expected_stdout_contains = ["VOLTS 3.70\n"]
+
+[[wave.test]]
+expected_stdout_contains = ["CELLS 3\n"]
+
+[[wave.test]]
+expected_stdout_contains = ["TOTAL 11.1\n"]
+
+[[wave.test]]
+expected_stdout_contains = ["MATCH True"]
+
+[[wave.test]]
+require = ["JoinedStr"]
+
+[[wave.test]]
+require = ["Subscript"]
+
+[[wave.test]]
+expected_stdout = "UNIT SNEK\nVOLTS 3.70\nCELLS 3\nTOTAL 11.1\nMATCH True\n"
