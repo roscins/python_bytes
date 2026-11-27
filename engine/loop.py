@@ -114,11 +114,11 @@ def plain_width(get_size=shutil.get_terminal_size):
 
 
 def read_one_line(read_line, guard, display, prompt):
-    """Read the player's next line: at the typing row of the full-screen display, and guarded against signals."""
+    """Read the player's next line: on the last row of the full screen, and guarded against signals."""
     reader = read_line
     if display is not None:
         def reader(text):
-            """Read through the display, which puts the cursor on the typing row."""
+            """Read through the display, which puts the cursor on the last row."""
             return display.read(read_line, text)
     if guard is not None:
         return guard.read_input(reader, prompt)
@@ -185,7 +185,7 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
         """Show a save problem in the panel of the wave."""
         wave_screen.say("SNEK", text)
 
-    if getattr(display, "keys", None) is not None and state.slots():
+    if display is not None and state.slots():
         map_screen = MapScreen(display, state)
         wave_screen = WaveScreen(display, state, save_now)
 

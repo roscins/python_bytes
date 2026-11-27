@@ -2,12 +2,12 @@
 
     rows 1-2        the HUD (see render/hud.py)
     row  3          a thin rule
-    rows 4 ...      the body: panels, the map, animations
+    rows 4 ...      the body: panels, the map, the editor, animations
     row  rows - 2   the status line (a short message)
-    row  rows - 1   the footer: the mode and its keys
-    row  rows       where the player types
+    row  rows - 1   the buttons
+    row  rows       the keys that work (a typed command is also read here)
 
-compose_screen() returns the rows as a list of text; draw_commands() turns
+compose_screen() and key_screen() return the rows as a list of text; draw_commands() turns
 them into escape codes that put each row at its place, so nothing scrolls.
 Both are pure functions: no terminal is needed to test them.
 """
@@ -18,7 +18,7 @@ WIDTH = 80
 MIN_COLUMNS = 80
 MIN_ROWS = 24
 
-# HUD (2) + rule (1) + status (1) + footer (1) + the row where the player types (1).
+# HUD (2) + rule (1) + status (1) + buttons (1) + keys (1).
 FIXED_ROWS = 6
 
 
@@ -40,9 +40,9 @@ def paginate(lines, height):
 def compose_screen(hud, body, status, rows, footer=""):
     """Return the frame: `rows - 1` rows, each exactly WIDTH cells wide.
 
-    The last row of the window is left for the player's typing. A body that
-    is taller than the room is cut; callers split long bodies with paginate
-    first.
+    The last row of the window is left out: key_screen puts the keys there.
+    A body that is taller than the room is cut; callers split long bodies
+    with paginate first.
     """
     frame = []
     for line in hud:

@@ -95,13 +95,12 @@ def add_code_line(state, line):
     return ""
 
 
-def show_wave(state, compact=False):
+def show_wave(state):
     """Return the screen of the current wave: the task and the numbered code so far."""
     level, number = current_context(state)
     if level is None:
         return NOT_PLAYING
-    return wave_screen_text(level, number, state.wave_text(level, number), state.plain, state.color,
-                            compact)
+    return wave_screen_text(level, number, state.wave_text(level, number), state.plain, state.color)
 
 
 def split_number(text):

@@ -24,36 +24,7 @@ from engine.shutdown import GameInterrupted, ShutdownGuard
 from engine.title import CONTINUE, NEW, QUIT, SaveInfo
 from render.ansi import strip_ansi
 from tests.helpers import make_levels, make_temporary_folder
-from tests.test_display import FakeTerminal
-
-
-class FakeKeyboard:
-    """Hands out the keys of a list; then the input ends.
-
-    Attributes:
-        started: True between start() and stop().
-    """
-
-    def __init__(self, keys=()):
-        """Remember the keys to press."""
-        self.keys = list(keys)
-        self.started = False
-
-    def start(self):
-        """Switch on."""
-        self.started = True
-
-    def stop(self):
-        """Switch off."""
-        self.started = False
-
-    def read_key(self, timeout=None):
-        """Return the next key; None for the look during an animation."""
-        if timeout == 0:
-            return None
-        if not self.keys:
-            raise EOFError
-        return self.keys.pop(0)
+from tests.test_display import FakeKeyboard, FakeTerminal
 
 
 def make_key_display(keys, state=None, terminal=None):
@@ -198,7 +169,7 @@ class TestWholeGameWithKeys(unittest.TestCase):
     """run_game with the real levels and a scripted keyboard."""
 
     def play(self, keys, lines=()):
-        """Play; `lines` are what is typed at the typing row. Return the exit code."""
+        """Play; `lines` are what is typed when a line is asked for. Return the exit code."""
         self.save_path = make_temporary_folder(self) / "save.json"
         self.terminal = FakeTerminal()
         self.keyboard = FakeKeyboard(keys)
