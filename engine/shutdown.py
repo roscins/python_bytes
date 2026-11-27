@@ -30,18 +30,20 @@ class ShutdownGuard:
 
     Attributes:
         requested: True after the first stop signal.
+        exit_code: 128 + the number of that signal, or 0.
         is_waiting: True while the game waits for the player to type.
     """
 
     def __init__(self):
         """Start with no stop requested and the old handlers not yet saved."""
         self.requested = False
+        self.exit_code = 0
         self.is_waiting = False
         self.old_handlers = {}
 
     def stop_signals(self):
         """Return the signals that mean "stop", for this operating system."""
-        names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGBREAK"]
+        names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT", "SIGBREAK"]
         signals = []
         for name in names:
             if hasattr(signal, name):
@@ -67,6 +69,7 @@ class ShutdownGuard:
         """Run when a stop signal arrives (see the module text for the rules)."""
         second_signal = self.requested
         self.requested = True
+        self.exit_code = 128 + number
         if self.is_waiting or second_signal:
             raise GameInterrupted(128 + number)
 
@@ -78,6 +81,11 @@ class ShutdownGuard:
             yield
         finally:
             self.is_waiting = False
+
+    def stop_if_requested(self):
+        """Leave now if a stop signal arrived earlier, before waiting for a key."""
+        if self.requested:
+            raise GameInterrupted(self.exit_code)
 
     def read_input(self, read_line, prompt):
         """Call read_line(prompt) while marked as waiting, and return what it returns."""

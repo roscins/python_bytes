@@ -15,9 +15,11 @@ from render.screen import size_problem
 from engine.loop import run, start_text
 from engine.save_file import DEFAULT_SAVE_PATH, load_progress, set_aside_broken_save
 from engine.display import Display
+from engine.key_display import KeyDisplay
+from engine.key_screens import FULL, PLAIN, title_menu, wait_for_window_keys
+from engine.keys import keyboard_available, make_keyboard
 from engine.shutdown import GameInterrupted, ShutdownGuard, install_windows_close_handler
 from engine.terminal import (
-    EnterWatcher,
     default_write,
     enable_line_editing,
     enable_virtual_terminal,
@@ -27,10 +29,6 @@ from engine.terminal import (
 from engine.title import NEW, QUIT, ask_title, inspect_save, keep_old_save
 from engine.workspace import WORKSPACE_FOLDER
 from grader.progression import CONCEPTS_FILE, load_curriculum
-
-# What wait_for_window can answer, besides QUIT.
-FULL = "full"
-PLAIN = "plain"
 
 # The levels folder, found from this file's folder so it works from anywhere.
 LEVELS_FOLDER = Path(__file__).parent.parent / "levels"
@@ -70,8 +68,8 @@ def make_real_display(state):
         return None
     if not enable_virtual_terminal():
         return None
-    return Display(state, default_write, size=terminal_size, sleep=time.sleep,
-                   skipped=EnterWatcher(sys.stdin).pressed, truecolor=supports_truecolor())
+    return KeyDisplay(state, default_write, make_keyboard(), size=terminal_size, sleep=time.sleep,
+                      truecolor=supports_truecolor())
 
 
 def wait_for_window(size, read_line, write):
@@ -93,14 +91,17 @@ def wait_for_window(size, read_line, write):
             return PLAIN
 
 
-def choose_how_to_start(state, info, save_path, read_line, write, plain):
+def choose_how_to_start(state, info, save_path, read_line, write, plain, display=None):
     """Show the title screen and set the game up as the player chose.
 
     Returns "play" to start the command loop, or "quit". A save that cannot
     be read is never deleted: it is set aside as .broken (or kept as .old
     for a new game over a good save).
     """
-    choice = ask_title(info, read_line, write, plain)
+    if getattr(display, "keys", None) is not None:
+        choice = title_menu(display, info)
+    else:
+        choice = ask_title(info, read_line, write, plain)
     if choice == QUIT:
         return "quit"
     if choice == NEW:
@@ -160,7 +161,11 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
     elif not plain:
         display = make_real_display(state)
     if display is not None:
-        choice = wait_for_window(display.size, read_line, write)
+        keyboard = getattr(display, "keys", None)
+        if keyboard is None:
+            choice = wait_for_window(display.size, read_line, write)
+        else:
+            choice = wait_for_window_keys(keyboard, display.size, display.raw_write)
         if choice == QUIT:
             return 0
         if choice == PLAIN:
@@ -171,6 +176,7 @@ def run_game(levels_folder=LEVELS_FOLDER, save_path=DEFAULT_SAVE_PATH,
         else:
             state.plain = False
             state.color = True
+            state.keys = keyboard is not None
     guard = ShutdownGuard()
     autosaver = AutoSaver(state, save_path)
     close_handler = None
@@ -203,6 +209,7 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
     say = write
     if display is not None:
         display.read_line = lambda prompt: guard.read_input(read_line, prompt)
+        display.guard = guard
         display.start()
         display.show_title()
         say = display.show
@@ -210,7 +217,10 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
         guarded_read = guard.read_input
         how = choose_how_to_start(
             state, info, save_path, lambda prompt: reader_for(display, guarded_read, read_line, prompt),
-            say, plain)
+            say, plain, display)
+    except EOFError:
+        # Ctrl-D on a screen before the game starts.
+        how = "quit"
     except OSError as error:
         # The file is there but cannot be opened, for example because of its
         # permissions. Moving it would fail too, so the game stops.
@@ -226,7 +236,7 @@ def play_session(state, autosaver, guard, read_line, write, plain, pause, displa
     first = start_text(state)
     # A brand new player (no save at all) gets the tutorial first.
     if info.status == "none":
-        first = join_screens([tutorial_text(), first])
+        first = join_screens([tutorial_text(state.keys), first])
     autosaver.save()
     if display is not None:
         display.show_footer = True
@@ -277,7 +287,9 @@ def main(argv=None):
     """Start the game from the command line (python play.py) and return the exit code."""
     arguments = parse_arguments(sys.argv[1:] if argv is None else argv)
     enable_line_editing()
-    return run_game(save_path=Path(arguments.save), plain=wants_plain(arguments))
+    # Without single keys (an unusual terminal) the plain line mode is used.
+    plain = wants_plain(arguments) or not keyboard_available()
+    return run_game(save_path=Path(arguments.save), plain=plain)
 
 
 if __name__ == "__main__":

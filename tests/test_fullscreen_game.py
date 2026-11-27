@@ -222,7 +222,8 @@ class TestRealTerminal(unittest.TestCase):
         self.read_until(master, "PRESS ENTER")
         os.write(master, b"\r")
         self.read_until(master, "NEW GAME")
-        os.write(master, b"2\r")
+        os.write(master, b"\x1b[B")          # down to QUIT
+        os.write(master, b"\r")
         data = self.read_until(master, "\x1b[?1049l")
         _, status = os.waitpid(pid, 0)
         self.assertEqual(os.waitstatus_to_exitcode(status), 0)
@@ -266,14 +267,13 @@ class TestRealTerminal(unittest.TestCase):
         os.write(master, text.encode() + b"\r")
 
     def test_playing_a_level_from_the_title_to_quit(self):
-        """New game, the map, play 1-1, the story, type code, :run, :submit, quit; the terminal is restored."""
+        """New game, the map, Enter on 1-1, the story, type code, :run, :submit, :map, Quit button."""
         pid, master, save_path = self.start()
         self.read_until(master, "PRESS ENTER")
         self.press_enter_until(master, "NEW GAME")
-        self.type_line(master, "1")
-        self.press_enter_until(master, "[1-1]")        # the tutorial comes first
-        self.type_line(master, "play 1-1")
-        self.press_enter_until(master, "WAVE 1 of 3")
+        os.write(master, b"\r")                       # NEW GAME
+        self.press_enter_until(master, "[1-1] ")       # the tutorial comes first
+        self.press_enter_until(master, "WAVE 1 of 3")  # Enter plays; story and tips
         self.type_line(master, ':edit 1 print("SNEK ONLINE")')
         self.read_until(master, 'SNEK ONLINE")')
         self.type_line(master, ":run")
@@ -281,7 +281,9 @@ class TestRealTerminal(unittest.TestCase):
         self.type_line(master, ":submit")
         self.read_until(master, "tests passed")
         self.press_enter_until(master, "WAVE 2 of 3")
-        self.type_line(master, ":quit")
+        self.type_line(master, ":map")
+        self.read_until(master, ": command")
+        os.write(master, b"\x1b[B\x1b[C\x1b[C\x1b[C\r")  # buttons, then Quit
         data = self.read_until(master, "\x1b[?1049l")
         _, status = os.waitpid(pid, 0)
         self.assertEqual(os.waitstatus_to_exitcode(status), 0)

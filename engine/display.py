@@ -245,12 +245,16 @@ class Display:
             self.write("\x1b[2J\x1b[H" + too_small_message(columns, rows))
             self.last_frame = None
             return
+        frame = self.frame(body, status, rows)
+        self.last_frame = frame
+        self.write(draw_commands(frame))
+
+    def frame(self, body, status, rows):
+        """Return the rows of a screen with a row left for typing."""
         footer = ""
         if self.show_footer:
             footer = footer_for(self.state)
-        frame = compose_screen(self.hud(), body, status, rows, footer)
-        self.last_frame = frame
-        self.write(draw_commands(frame))
+        return compose_screen(self.hud(), body, status, rows, footer)
 
     def redraw(self):
         """Draw the last screen again (after the player pressed Enter, which scrolls the window)."""
@@ -455,4 +459,8 @@ class Display:
                               self.skipped, self.delay)
         self.fullscreen.show_cursor()
         if not skipped:
-            self.wait_for_enter()
+            self.wait_at_title()
+
+    def wait_at_title(self):
+        """Wait for Enter on the finished title screen."""
+        self.wait_for_enter()

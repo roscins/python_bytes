@@ -7,6 +7,7 @@ from engine.autosave import AutoSaver
 from engine.code_mode import prompt_for, show_wave
 from engine.commands import do_map, handle_line
 from engine.footer import footer_for
+from engine.key_screens import MapScreen, is_map_answer
 from engine.screens import CONTINUE_PROMPT, SKIP_WORDS, split_screens, wrap_text
 
 # How long each frame of an animation stays on screen, in seconds.
@@ -123,6 +124,23 @@ def read_one_line(read_line, guard, display, prompt):
     return reader(prompt)
 
 
+def keep_on_the_map(state, map_screen, answer):
+    """Return True if `answer` needs no screen of its own: the map shows it.
+
+    That is the map itself, or a short message, which goes under the map.
+    Only used in the key-driven mode.
+    """
+    if map_screen is None or state.coding or not state.running or isinstance(answer, list):
+        return False
+    if answer == "" or is_map_answer(state, answer):
+        return True
+    lines = answer.split("\n")
+    if len(lines) == 1 and len(answer) <= PLAIN_WIDTH - 2 and "\f" not in answer:
+        map_screen.message = answer
+        return True
+    return False
+
+
 def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
         guard=None, autosaver=None, display=None, first_answer=None):
     """Keep asking for lines until the player quits.
@@ -153,6 +171,10 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
     if autosaver is None and save_path is not None:
         autosaver = AutoSaver(state, save_path)
     width = plain_width()
+    # With a keyboard, the map is walked with keys instead of typed commands.
+    map_screen = None
+    if getattr(display, "keys", None) is not None and state.slots():
+        map_screen = MapScreen(display, state)
 
     def read(prompt):
         """Read one line through the guard and the display."""
@@ -160,6 +182,8 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
 
     def present(answer):
         """Show an answer; return a line typed at a pause, or None."""
+        if keep_on_the_map(state, map_screen, answer):
+            return None
         if display is not None:
             return display.show(answer)
         typed = show_answer(answer, write, pause, read, width)
@@ -179,6 +203,8 @@ def run(state, read_line=input, write=print, save_path=None, pause=time.sleep,
         try:
             if queued is not None:
                 line, queued = queued, None
+            elif map_screen is not None and not state.coding and state.pending is None:
+                line = map_screen.next_line()
             else:
                 line = read(prompt_for(state))
         except (EOFError, KeyboardInterrupt):
