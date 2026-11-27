@@ -34,6 +34,7 @@ from engine.stats import stats_text
 from engine.submission import grade_text
 from engine.suggest import CODE_WORDS, closest, did_you_mean
 from engine.workspace import export_wave
+from grader.answer_sheet import LETTERS
 from render.level_clear import level_clear_frames, level_clear_text, load_clear_art
 from render.world_map import load_map_art, map_screen, slither_frames, text_map
 
@@ -194,14 +195,21 @@ def do_play(state, arguments):
 
 
 def reveal_text(wave):
-    """Return the right output of a predict wave and why, for after the last guess."""
-    lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The program prints:"]
-    for line in wave.answer.rstrip("\n").split("\n"):
-        lines.append("    " + line)
-    if wave.explanation:
-        lines.append("Why:")
-        for line in wave.explanation.strip().split("\n"):
-            lines.append("  " + line)
+    """Return the right answer of a wave and why, for after the last guess."""
+    if wave.mode == "choice":
+        lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The answers are:"]
+        for number, question in enumerate(wave.questions, start=1):
+            option = question["options"][LETTERS.index(question["answer"])]
+            lines.append(f"  {number}: {question['answer']}) {option}")
+            lines.append(f"     {question['explanation'].strip()}")
+    else:
+        lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The program prints:"]
+        for line in wave.answer.rstrip("\n").split("\n"):
+            lines.append("    " + line)
+        if wave.explanation:
+            lines.append("Why:")
+            for line in wave.explanation.strip().split("\n"):
+                lines.append("  " + line)
     lines.append("The wave counts as done, at half of its score.")
     return "\n".join(lines)
 
@@ -212,7 +220,7 @@ def advance_after_submit(state, level, number, result):
     progress = state.progress_for(level)
     revealed = progress.revealed[number - 1]
     if not result.all_passed() and not revealed:
-        if wave.mode == "predict":
+        if wave.mode == "predict" or wave.is_quiz():
             left = GUESSES_BEFORE_REVEAL - progress.wave_attempts[number - 1]
             return (f"Not yet. Change your answer and :submit again, or buy a :hint.\n"
                     f"Wrong guesses left before Snek shows the output: {left}")
@@ -257,7 +265,7 @@ def do_submit(state, arguments):
         return f"Wave {number} already passed \u2713. Type :wave <n> to go to another wave."
     submission = grade_text(wave, number, state.wave_text(level, number))
     if submission.result is None:
-        return "Your code is empty. Type your first line, then :submit."
+        return submission.problem or "Your code is empty. Type your first line, then :submit."
     reward = apply_submission(state, level, [submission])
     results = results_text(level, [submission], [], reward)
     results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)

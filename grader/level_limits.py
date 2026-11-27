@@ -7,7 +7,7 @@ count, such as the number of bugs in a debug wave, are not checked.
 
 import re
 
-from grader.wave_grader import BLANK
+from grader.wave_grader import BLANK, grade_wave
 
 # The waves every normal level has, in this order. A boss has one boss wave.
 WAVE_ORDER = ["fill-in", "build", "debug"]
@@ -17,6 +17,7 @@ MAX_BLANKS = 3
 MAX_BRIEF_SENTENCES = 5
 MIN_TESTS_PER_WAVE = 2
 MAX_GOAL_LENGTH = 60
+MAX_QUESTION_CODE_LINES = 8
 STORY_MARK = "# >>"
 
 # A debug wave holds at most this much code: 10 lines, and from World 3, 30.
@@ -77,6 +78,9 @@ def player_texts(level):
             texts.append((place + " goal", wave.goal))
         for hint in wave.hints:
             texts.append((place + " hint", hint))
+        for question in wave.questions:
+            for text in [question["ask"], question["explanation"]] + question["options"]:
+                texts.append((place + " question", text))
     return texts
 
 
@@ -104,7 +108,11 @@ def check_wave(world, number, wave):
     """Return the problems of one wave, whatever its kind."""
     place = wave_place(number, wave)
     problems = []
-    if wave.mode == "predict":
+    if wave.is_quiz():
+        if grade_wave(wave, wave.wrong).all_passed():
+            problems.append(f"{place} wrong answers are right")
+        problems.extend(check_question_code(place, wave))
+    elif wave.mode == "predict":
         if wave.answer.strip() == wave.wrong.strip():
             problems.append(f"{place} answer and wrong are the same")
         if not is_valid_python(wave.code):
@@ -123,6 +131,8 @@ def check_wave(world, number, wave):
         problems.append(f"{place} has no goal")
     elif len(wave.goal) > MAX_GOAL_LENGTH or "\n" in wave.goal:
         problems.append(f"{place} goal must be one line of at most {MAX_GOAL_LENGTH} characters")
+    if wave.is_quiz():
+        return problems
     if wave.kind == "fill-in":
         problems.extend(check_fill_in(place, wave))
     if wave.kind == "build":
@@ -131,6 +141,21 @@ def check_wave(world, number, wave):
             problems.append(f"{place} brief has {sentences} sentences (at most {MAX_BRIEF_SENTENCES})")
     if wave.kind == "debug":
         problems.extend(check_debug_size(world, place, wave))
+    return problems
+
+
+def check_question_code(place, wave):
+    """Return the problems of the code shown with a choice wave's questions."""
+    problems = []
+    for number, question in enumerate(wave.questions, start=1):
+        code = question.get("code")
+        if code is None:
+            continue
+        if not is_valid_python(code):
+            problems.append(f"{place} question {number} code is not valid Python")
+        if count_lines(code) > MAX_QUESTION_CODE_LINES:
+            problems.append(f"{place} question {number} code has more than "
+                            f"{MAX_QUESTION_CODE_LINES} lines")
     return problems
 
 

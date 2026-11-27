@@ -85,7 +85,7 @@ def is_earned(state, name):
 
 
 def in_open_prediction(state):
-    """Return True if the player is inside a predict wave that is not passed yet."""
+    """Return True if the player is inside a locking wave that is not passed yet."""
     found = unanswered_predict(state)
     if found is None or not state.coding:
         return False
@@ -93,7 +93,7 @@ def in_open_prediction(state):
     if level is None:
         return False
     wave = level.waves[state.current_wave - 1]
-    if wave.mode != "predict":
+    if not wave.locks_console():
         return False
     return not state.progress_for(level).wave_is_perfect(state.current_wave, wave)
 
@@ -110,7 +110,7 @@ def use_power_up(state, name, text):
         hand_in = ":submit"
         if state.keys:
             hand_in = "press Ctrl-S"
-        return f"Snek will not help with a prediction. Type your answer and {hand_in}."
+        return f"Snek will not help with this question. Answer it and {hand_in}."
     if power_up.runs_code(state):
         locked = locked_message(state)
         if locked:

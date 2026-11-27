@@ -110,7 +110,7 @@ def submit_report(level, submission, reward, progress):
     # The first two lines are the heading, which the panel's title replaces.
     full = results_text(level, [submission], [], reward)[len(f"LEVEL {level.id} · RESULTS\n\n"):]
     error_text = ""
-    if wave.mode != "predict" and "___" not in submission.code:
+    if wave.mode is None and "___" not in submission.code:
         error_text = error_text_of(result, submission.code)
     if error_text:
         lines, mark = explain_error(error_text, submission.code)
@@ -127,7 +127,7 @@ def submit_report(level, submission, reward, progress):
         lines.insert(0, f"{TICK} Wave {number} passed!")
     elif progress.revealed[number - 1]:
         lines.insert(0, f"Wave {number} is done: Snek shows the output below.")
-    elif wave.mode == "predict":
+    elif wave.mode == "predict" or wave.is_quiz():
         left = GUESSES_BEFORE_REVEAL - progress.wave_attempts[number - 1]
         lines.insert(0, f"Not yet. Wrong guesses left before Snek shows the output: {left}")
     else:

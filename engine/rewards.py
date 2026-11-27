@@ -105,9 +105,10 @@ def update_wave(state, progress, submission):
     else:
         state.combo = 0
 
-    # The third wrong prediction: the answer is shown and the wave is done.
+    # The third wrong prediction or answer sheet: the answer is shown and the wave is done.
     # A passed wave is never graded again, so every earlier attempt was wrong.
-    if (submission.wave.mode == "predict" and not result.all_passed()
+    if ((submission.wave.mode == "predict" or submission.wave.is_quiz())
+            and not result.all_passed()
             and progress.wave_attempts[index] >= GUESSES_BEFORE_REVEAL):
         progress.revealed[index] = True
         progress.wave_best[index] = 1.0

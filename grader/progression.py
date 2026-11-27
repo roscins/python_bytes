@@ -338,6 +338,11 @@ def code_fields(level):
         if wave.mode == "predict":
             fields.append((place + " code", wave.code))
             continue
+        if wave.is_quiz():
+            for question in wave.questions:
+                if "code" in question:
+                    fields.append((place + " question code", question["code"]))
+            continue
         if wave.starter is not None:
             fields.append((place + " starter", wave.starter))
         if wave.reference is not None:

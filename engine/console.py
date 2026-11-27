@@ -200,6 +200,8 @@ def do_run(state, text):
     wave = level.waves[number - 1]
     if wave.mode == "predict":
         return "Snek will not tell you what that code prints. Type your answer and :submit."
+    if wave.is_quiz():
+        return "There is nothing to run here. Write your answers, then :submit."
     locked = locked_message(state)
     if locked:
         return locked

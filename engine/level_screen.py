@@ -7,6 +7,7 @@ prints, so it is easy to test.
 
 from engine.fill import all_blanks_filled, blank_marker, is_filling
 from engine.screens import join_screens
+from grader.answer_sheet import LETTERS
 from render.highlight import highlight_lines
 from render.panel import panel
 
@@ -79,6 +80,19 @@ def goal_box(goal, plain=False):
     return panel("GOAL", [goal], GOAL_WIDTH, ascii_only=plain)
 
 
+def question_lines(wave, color=False):
+    """Return a choice wave's questions and lettered options, for the typed mode."""
+    lines = []
+    for number, question in enumerate(wave.questions, start=1):
+        lines.append("")
+        lines.append(f"{number}. {question['ask']}")
+        if "code" in question:
+            lines.extend(code_lines(question["code"], color))
+        for letter, option in zip(LETTERS, question["options"]):
+            lines.append(f"   {letter}) {option}")
+    return lines
+
+
 def wave_screen_text(level, number, buffer_text, plain=False, color=False):
     """Return the screen of one wave: its goal, its task and the numbered code typed so far."""
     wave = level.waves[number - 1]
@@ -97,6 +111,10 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False):
         lines.extend(code_lines(wave.code, color))
         lines.append("")
         lines.append("YOUR ANSWER (what it prints):")
+    elif wave.is_quiz():
+        lines.extend(question_lines(wave, color))
+        lines.append("")
+        lines.append("YOUR ANSWERS (number: letter, for example 1: a):")
     else:
         lines.append("")
         lines.append("YOUR CODE:")

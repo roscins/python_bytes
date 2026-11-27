@@ -176,3 +176,17 @@ hints = [
 ```
 
 This is the format the level loader (`engine/level_pack.py`) reads. The loader checks the structure, and `tests/test_levels.py` checks every level in `levels/` against the limits in this guide. This example is saved as `levels/w1/1-1-hello-terminal/level.toml`.
+
+## Choice waves
+
+A `fill-in` or `debug` wave with `mode = "choice"` asks multiple-choice questions. The player picks with the arrow keys; in plain mode they type `1: a`. It has `wrong` (a sheet that must fail, such as `"1: b"`) and 1 to 6 questions; the right sheet comes from the questions. It has no `reference`, `starter` or tests.
+
+```toml
+[[wave.question]]
+ask = "Part names in delivery order, repeats kept."
+options = ["list", "set", "dict"]
+answer = "a"
+explanation = "A list keeps order and repeats."
+```
+
+A question has 2 to 5 options and one right letter, and may show `code` of at most 8 lines. The console is locked while a wave with question code is open; set `lock = true` for a question about code behaviour that shows none. After 3 failed submits the answers are shown.

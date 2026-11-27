@@ -27,6 +27,8 @@ def footer_for(state):
         return "BOSS · :run is free · :submit uses a try · :show code · :help"
     if wave.mode == "predict":
         return "ANSWER · one printed line per Enter · :submit check · :hint · :help"
+    if wave.is_quiz():
+        return "ANSWER · number: letter, for example 1: a · :submit check · :hint · :help"
     if is_filling(wave, state.wave_text(level, state.current_wave)):
         return "FILL · type what goes in the blank · :submit check · :hint · :help"
     return "CODE · Enter = new line · :submit check · :hint · :help"

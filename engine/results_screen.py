@@ -63,7 +63,7 @@ def wave_result_lines(submission):
         tests_word = "test"
     lines = [f"{title}  {result.passed_count()}/{result.test_count()} {tests_word} passed {mark}"]
     broken = []
-    if submission.wave.mode != "predict":
+    if submission.wave.mode is None:
         broken = syntax_lines(submission.code)
     if broken and "___" not in submission.code:
         # One explanation with the column; the tests only by name.
