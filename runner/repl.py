@@ -84,7 +84,14 @@ class ReplSession:
         self.copied = {}
 
     def copy_data(self):
-        """Put new data files in the folder; a file already copied is left alone."""
+        """Put new data files in the folder; a file already copied is left alone.
+
+        Files copied for another wave, and not part of this one, are removed.
+        """
+        for name in list(self.copied):
+            if name not in self.data:
+                (Path(self.folder) / name).unlink(missing_ok=True)
+                del self.copied[name]
         for name, text in self.data.items():
             if self.copied.get(name) != text:
                 (Path(self.folder) / name).write_text(text, encoding="utf-8")

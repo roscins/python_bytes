@@ -73,6 +73,11 @@ class TestLoadingAndGrading(unittest.TestCase):
         self.assertEqual(grade_wave(wave, wave.wrong).passed_count(), 1)
         self.assertEqual(check_wave(4, 3, wave), [])
 
+    def test_an_unreadable_wrong_sheet_is_a_problem(self):
+        """It would fail for the wrong reason."""
+        wave = make_wave(choice_table(wrong="1: b, 2: a"), "test")
+        self.assertIn("cannot be graded", " ".join(check_wave(4, 3, wave)))
+
     def test_bad_waves_are_rejected(self):
         """Wrong kind, unknown mode, bad answer letter, no questions."""
         bad_question = dict(choice_table()["question"][0], answer="c")

@@ -7,6 +7,7 @@ count, such as the number of bugs in a debug wave, are not checked.
 
 import re
 
+from grader.answer_sheet import sheet_problem
 from grader.wave_grader import BLANK, grade_wave
 
 # The waves every normal level has, in this order. A boss has one boss wave.
@@ -113,7 +114,10 @@ def check_wave(world, number, wave):
     place = wave_place(number, wave)
     problems = []
     if wave.is_quiz():
-        if grade_wave(wave, wave.wrong).all_passed():
+        unreadable = sheet_problem(wave, wave.wrong)
+        if unreadable:
+            problems.append(f"{place} wrong answers cannot be graded: {unreadable}")
+        elif grade_wave(wave, wave.wrong).all_passed():
             problems.append(f"{place} wrong answers are right")
         problems.extend(check_question_code(place, wave))
         if wave.mode == "review":

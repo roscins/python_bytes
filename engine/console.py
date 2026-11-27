@@ -22,7 +22,6 @@ from engine.code_mode import (
     current_context,
 )
 from engine.friendly import format_friendly, friendly_for_source, friendly_timeout
-from engine.level_screen import separator
 from engine.predict_lock import locked_message
 from engine.suggest import MAP_WORDS, did_you_mean
 from runner.process import DEFAULT_TIME_LIMIT, run_code
