@@ -11,6 +11,8 @@ for in state.pending (a dict with a "kind") and the next line goes there.
 Like the other command modules, this one returns text and never prints.
 """
 
+import builtins
+
 from engine.code_mode import (
     NOT_PLAYING,
     apply_edit,
@@ -20,6 +22,7 @@ from engine.code_mode import (
 )
 from engine.friendly import format_friendly, friendly_error, friendly_timeout
 from engine.level_screen import separator
+from engine.predict_lock import locked_message
 from runner.process import DEFAULT_TIME_LIMIT, run_code
 from runner.repl import ReplSession, classify
 
@@ -79,6 +82,13 @@ def run_python_line(state, line):
 
 def run_source(state, source):
     """Run `source` in the quick console and return what to show."""
+    locked = locked_message(state)
+    if locked:
+        # A single unknown word is a mistyped command, not code to refuse.
+        word = source.strip()
+        if word.isidentifier() and not hasattr(builtins, word):
+            return unknown_command_text(word)
+        return locked
     result = get_repl(state).run(source)
     parts = []
     if result.output:
@@ -165,6 +175,9 @@ def continue_pending(state, line):
 def run_wave_code(state, code, stdin_text):
     """Run the code of a wave (not graded) and return what it printed, or the friendly error."""
     result = run_code(code, stdin_text)
+    locked = locked_message(state)
+    if locked:
+        return locked
     lines = ["RUN (this is not graded)"]
     if result.stdout.strip() != "":
         lines.append(result.stdout.rstrip("\n"))
@@ -185,6 +198,9 @@ def do_run(state, text):
     wave = level.waves[number - 1]
     if wave.mode == "predict":
         return "Snek will not tell you what that code prints. Type your answer and :submit."
+    locked = locked_message(state)
+    if locked:
+        return locked
     code = state.wave_text(level, number)
     if code.strip() == "":
         return "Your code is empty. Type your first line, then :run."
