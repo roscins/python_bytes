@@ -43,7 +43,7 @@ constructs = ["call:print", "Constant:str"]
 recycles = []
 difficulty = 1
 outcomes = ["B1", "B8"]
-power_up = "status"
+power_up = "explain"
 story = "The lab is dark. One terminal blinks; the voice module is offline."
 mission = "Print a three-line start-up message."
 

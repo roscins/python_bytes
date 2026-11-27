@@ -231,7 +231,7 @@ Boot Sector
 Hello, Terminal
 print(), string literals, comments
 Print a three-line start-up message.
-status
+explain
 1-2
 Memory Cells
 variables and assignment, the types int, float, str and bool, type(), snake_case names

@@ -98,7 +98,9 @@ The exact digits come from `decimal.Decimal(x)`.
     [0:5]   ^  ^  ^  ^  ^
     gives   '09:42'      len = 9
 
-The slice is optional. A variable name works in place of the text. Spaces are
+The slice is optional. A variable name works in place of the text: at the map a
+quick console variable; in a wave a line `name = "..."` of your code, read
+without running it. At most 99 characters. Spaces are
 shown as `·` (`_` in plain mode). Long text wraps in blocks of 20.
 
 ## While a predict wave is unanswered

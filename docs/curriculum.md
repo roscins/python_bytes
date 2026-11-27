@@ -86,7 +86,7 @@ This replaces the earlier 29-level layout in `docs/plan.md` (worlds had 2–4 le
 
 | Level | Title | Concepts | Difficulty | Outcomes | Power-up |
 | --- | --- | --- | --- | --- | --- |
-| 1-1 | Hello, Terminal | print(); string literals; comments | 1 | B1, B8 | `status` |
+| 1-1 | Hello, Terminal | print(); string literals; comments | 1 | B1, B8 | `explain` |
 | 1-2 | Memory Cells | variables and assignment; the types int, float, str and bool; type(); snake_case names | 1 | B1, B8, R4 | `memory` |
 | 1-3 | Power Calculations | arithmetic operators and precedence; //, % and **; converting between int, float and str; round() | 2 | B2 | `calc` |
 | 1-4 | Floating Truth | why 0.1 + 0.2 != 0.3; comparison operators; absolute and relative tolerance; math.isclose() and abs() | 2 | B2, R1 | `approx` |
