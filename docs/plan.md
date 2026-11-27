@@ -96,7 +96,7 @@ Define and call functions, pass arguments
 Wave 2 in 3-2 and 3-3, Boss 3
 Lists, tuples, sets, dictionaries
 3-1, 3-5, 4-1
-Multiple-choice "choose the structure" wave in 4-1, Bosses 3 and 4
+Multiple-choice "choose the structure" wave in 4-1
 Algorithmic thinking
 2-2 onwards, 2-5
 Plan-first missions, Boss 2, Boss 4
@@ -111,10 +111,10 @@ File input and output
 Wave 2 in 4-3, Boss 4
 Break real problems into sub-tasks
 3-3, 4-3, Boss 4
-Boss 4, phase 2 (project)
+Boss 4 (project)
 Collaborate, review code, give feedback
 4-4
-Review of a provided solution in 4-4 and Boss 4
+Review of a provided solution in 4-4
 Advanced tier – Advanced Python Programming for Engineers
 Outcome (from course description)
 Taught in
@@ -350,7 +350,7 @@ save
 4-4
 The Test Bench
 black-box and glass-box test design, boundary cases, assert-based test functions, systematic debugging and reviewing a provided solution
-Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by choosing the right feedback for each fault.
+Design boundary tests for given functions, find two hidden bugs by experiment, then review a provided solution by marking each faulty line and choosing its feedback category.
 test
 4-5
 Echo Chamber
@@ -359,8 +359,8 @@ Recursive sum, reverse and palindrome; Fibonacci with and without a memo dict, w
 echo
 Boss 4
 Systems Online (tier final)
-Phase 1: timed mixed waves. Phase 2: a small single-file project plus a review
-Phase 1: timed mixed waves. Phase 2: a single-file sensor-warning project with tests; review a provided solution.
+One timed project wave using data files
+A single-file sensor-warning project with assert tests that reads data files and writes a report.
 –
 Advanced tier
 Two threads run through every level rather than belonging to one:
@@ -604,9 +604,10 @@ Phase 4 – Playtest round 1
 Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
 [x] Write Levels 3-1 to 3-5 and Boss 3
-[ ] Add the peer-review mode, just before World 4
-[ ] Write Levels 4-1 to 4-5 and Boss 4 (both phases)
-[ ] Data files for waves (the sensor CSVs of Level 4-3 and Boss 4)
+[ ] Add choice waves (design: docs/design/phase-5-wave-modes.md)
+[ ] Add review waves (the peer-review mode)
+[ ] Add wave data files (the sensor CSVs of Level 4-3 and Boss 4)
+[ ] Write Levels 4-1 to 4-5 and Boss 4
 Gate: Basic tier complete; every Basic outcome in the mapping table is tested.
 Postponed until after World 4
 [ ] Add the shop, badges and the Codex screen

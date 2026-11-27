@@ -124,7 +124,7 @@ This replaces the earlier 29-level layout in `docs/plan.md` (worlds had 2–4 le
 | 4-3 | The Archive | reading and writing files with open() and with; the csv module; pathlib.Path; validating input data | 3 | B10, B11 | `save` |
 | 4-4 | The Test Bench | black-box and glass-box test design; boundary cases; assert-based test functions; systematic debugging and reviewing a provided solution | 3 | B8, B9, B12, R5 | `test` |
 | 4-5 | Echo Chamber | recursion: base case and recursive case; inductive reasoning; recursion on lists and strings; memoisation with a dictionary | 4 | B5, B7, R3 | `echo` |
-| Boss 4 | Systems Online | No new concepts. Phase 1: timed mixed waves. Phase 2: a single-file sensor-warning project with tests; review a provided solution. | 5 | B11, B12, R5 | – |
+| Boss 4 | Systems Online | No new concepts. A single-file sensor-warning project with assert tests that reads data files and writes a report. | 5 | B11, R5 | – |
 
 Notes on the Basic tier:
 
@@ -133,7 +133,7 @@ Notes on the Basic tier:
 - **4-1** is where timing (`time`) and the first Big-O words come in, because "choose the right structure" needs a measurement to argue with. The "justify" waves are multiple choice; written answers belong to Worlds 7–8.
 - **4-4** teaches B12 without written answers: the player reviews a provided solution by choosing the right feedback for each fault and marking the line that holds it.
 - **4-5** (recursion) is the last level of the world on purpose. Call counts are kept through return values or a mutable counter, because `global` is never taught (see the level style guide). There is no nested-list flattening: it needs `isinstance`, which comes in 6-1.
-- **Boss 4** is one file. The player cannot import their own modules before 5-1.
+- **Boss 4** is one project wave using data files. It is one file. The player cannot import their own modules before 5-1.
 
 ## 5. Advanced tier
 
