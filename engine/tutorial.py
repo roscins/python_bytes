@@ -21,6 +21,16 @@ The line at the bottom always shows where you are and what you can type.""",
 ]
 
 
-def tutorial_text():
-    """Return the whole tutorial, one screen after the other."""
-    return join_screens(SCREENS)
+# The first screen of the key-driven mode, where the map is not typed.
+KEY_MAP_SCREEN = """TUTORIAL 1 of 4 · THE MAP
+You start at the map. Left and Right move Snek; Enter plays the level.
+Stars show how well you did. A locked level opens when you clear the one before.
+Press Esc to skip this tutorial."""
+
+
+def tutorial_text(keys=False):
+    """Return the whole tutorial, one screen after the other; `keys` for the key-driven mode."""
+    screens = list(SCREENS)
+    if keys:
+        screens[0] = KEY_MAP_SCREEN
+    return join_screens(screens)

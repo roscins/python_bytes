@@ -32,6 +32,7 @@ class GameState:
         repl: the quick console (runner/repl.py), started when first needed.
         repl_timeout: seconds one line of the quick console may run.
         plain: True for the ASCII look (no box characters).
+        keys: True in the key-driven mode (see engine/key_display.py).
         color: True to colour code with ANSI colours (off for tests, pipes and NO_COLOR).
         cleared: the ids of the levels the player has cleared (every wave passed).
         xp: the player's experience points.
@@ -65,6 +66,7 @@ class GameState:
         self.repl_timeout = 2.0
         self.plain = False
         self.color = False
+        self.keys = False
         self.cleared = []
         self.xp = 0
         self.coins = STARTING_COINS

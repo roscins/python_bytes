@@ -140,6 +140,14 @@ Three pull requests, each with its own roadmap checkbox:
 3. `ui/waves`: fill-in, predict, boss, run input, restart level, key wording;
    remove the typing row.
 
+## Changes while building step 1
+
+- Long texts turn by page, not by line (Up/Down), so panels stay whole.
+- The command line (`:` at the map) is the ordinary typing row, so it has the
+  same editing keys as today.
+- The keyboard reads one byte at a time, so that text typed right after `:`
+  reaches the typing row.
+
 ## Decisions
 
 The six questions of the proposal were answered "OK" to every recommendation.

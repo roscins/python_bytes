@@ -67,7 +67,10 @@ def do_help(state, arguments):
     """Return a list of all commands with a short description of each."""
     if arguments:
         return extra_words_message("help")
-    lines = ["Commands. At the map type the word; in a wave put a colon first, like :submit."]
+    at_the_map = "type the word"
+    if state.keys:
+        at_the_map = "press : and type the word"
+    lines = [f"Commands. At the map {at_the_map}; in a wave put a colon first, like :submit."]
     # COMMANDS is defined further down in this file. That is fine: Python
     # only looks the name up when do_help runs, and by then the whole file
     # has been read.

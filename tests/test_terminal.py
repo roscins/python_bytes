@@ -9,7 +9,6 @@ from engine.shutdown import GameInterrupted
 from engine.terminal import (
     ENTER_FULLSCREEN,
     LEAVE_FULLSCREEN,
-    EnterWatcher,
     Fullscreen,
     terminal_size,
 )
@@ -140,63 +139,6 @@ class TestTerminalSize(unittest.TestCase):
         seen = []
         terminal_size(lambda fallback: seen.append(fallback) or fallback)
         self.assertEqual(seen, [(80, 24)])
-
-
-class TestEnterWatcher(unittest.TestCase):
-    """Skipping an animation by pressing Enter, without stealing typed lines."""
-
-    def test_enter_pressed_on_a_unix_terminal(self):
-        """The terminal has a line ready: that is Enter."""
-        stdin = FakeStdin([""])
-        watcher = EnterWatcher(stdin, system="posix", select_function=lambda r, w, x, t: (r, [], []))
-        self.assertTrue(watcher.pressed())
-        self.assertEqual(stdin.read_count, 1)
-
-    def test_nothing_typed(self):
-        """No line is ready."""
-        stdin = FakeStdin([""])
-        watcher = EnterWatcher(stdin, system="posix", select_function=lambda r, w, x, t: ([], [], []))
-        self.assertFalse(watcher.pressed())
-        self.assertEqual(stdin.read_count, 0)
-
-    def test_never_reads_when_input_is_not_a_terminal(self):
-        """With piped input the typed lines belong to the game, not to the animation."""
-        stdin = FakeStdin(["play 1-1"], tty=False)
-        watcher = EnterWatcher(stdin, system="posix", select_function=lambda r, w, x, t: (r, [], []))
-        self.assertFalse(watcher.pressed())
-        self.assertEqual(stdin.read_count, 0)
-
-    def test_windows_key_reading(self):
-        """msvcrt tells if a key is waiting and which."""
-        class FakeMsvcrt:
-            keys = ["x", "\r"]
-
-            def kbhit(self):
-                return bool(self.keys)
-
-            def getwch(self):
-                return self.keys.pop(0)
-
-        watcher = EnterWatcher(FakeStdin(), system="nt", msvcrt_module=FakeMsvcrt())
-        self.assertTrue(watcher.pressed())
-
-    def test_windows_other_keys_do_not_skip(self):
-        """Only Enter counts."""
-        class FakeMsvcrt:
-            keys = ["x"]
-
-            def kbhit(self):
-                return bool(self.keys)
-
-            def getwch(self):
-                return self.keys.pop(0)
-
-        watcher = EnterWatcher(FakeStdin(), system="nt", msvcrt_module=FakeMsvcrt())
-        self.assertFalse(watcher.pressed())
-
-    def test_a_watcher_with_nothing_to_watch(self):
-        """No stdin at all (closed): never pressed."""
-        self.assertFalse(EnterWatcher(None, system="posix").pressed())
 
 
 if __name__ == "__main__":

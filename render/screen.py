@@ -59,6 +59,17 @@ def compose_screen(hud, body, status, rows, footer=""):
     return frame
 
 
+def key_screen(hud, body, status, rows, buttons, keys_footer):
+    """Return a screen of the key-driven mode: `rows` rows, with no row for typing.
+
+    The buttons are on the row above the last one, and the last row says
+    which keys work. It is not padded, so the window never scrolls.
+    """
+    frame = compose_screen(hud, body, status, rows, buttons)
+    frame.append(fit(keys_footer, WIDTH - 1))
+    return frame
+
+
 def draw_commands(lines):
     """Return the escape codes that draw `lines` from the top row down, clearing each row's end."""
     parts = []

@@ -1,4 +1,4 @@
-"""The real terminal: full-screen mode, the window size, and the "skip" key.
+"""The real terminal: full-screen mode and the window size. Keys are read in engine/keys.py.
 
 Everything that depends on the operating system lives here, so the rest of
 the game can be tested with plain text.
@@ -13,7 +13,6 @@ safety net, atexit. Only kill -9 cannot be caught; then the player types
 
 import atexit
 import os
-import select
 import shutil
 import sys
 
@@ -99,48 +98,6 @@ def enable_virtual_terminal():
         return bool(kernel.SetConsoleMode(handle, mode.value | 0x0004))
     except (ImportError, AttributeError, OSError):
         return False
-
-
-class EnterWatcher:
-    """Tells an animation if the player pressed Enter, so it can be skipped.
-
-    It only looks at a real terminal. When the input is a pipe (a test, a
-    script) the typed lines belong to the game, so the watcher never reads.
-    In a terminal the line is read only when the player has pressed Enter,
-    so no raw-mode switch is needed.
-    """
-
-    def __init__(self, stdin=None, system=os.name, select_function=select.select, msvcrt_module=None):
-        """Remember what to watch; the last three are parameters so tests can fake them."""
-        self.stdin = stdin
-        self.system = system
-        self.select_function = select_function
-        self.msvcrt_module = msvcrt_module
-
-    def pressed(self):
-        """Return True if the player pressed Enter since the last call."""
-        if self.stdin is None:
-            return False
-        if self.system == "nt":
-            return self.windows_pressed()
-        if not self.stdin.isatty():
-            return False
-        ready, _, _ = self.select_function([self.stdin], [], [], 0)
-        if not ready:
-            return False
-        self.stdin.readline()
-        return True
-
-    def windows_pressed(self):
-        """Look for the Enter key on Windows, ignoring every other key."""
-        module = self.msvcrt_module
-        if module is None:
-            import msvcrt as module
-        found = False
-        while module.kbhit():
-            if module.getwch() in ("\r", "\n"):
-                found = True
-        return found
 
 
 def enable_line_editing(importer=__import__):

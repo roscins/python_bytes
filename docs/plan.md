@@ -585,6 +585,11 @@ Phase 2.5 – Breakthrough: it must feel like a real game (design: docs/design/b
 [x] B: code inside the game (quick console, :run, highlighting, friendly errors, a level clears only when every wave is passed); no external folders
 [x] C: full-screen look: alternate screen, HUD, framed panels, typed story, Snek reactions, level-clear animation, title with logo (--plain keeps the old look)
 Gate: a new player starts with one command, types a level's code in the game, and closing the window never loses work.
+Phase 2.6 – Key-driven interface, before World 2 (design: docs/design/editor.md)
+[x] 1: keys for the title, menus, the map and continue screens
+[ ] 2: code editor with buttons, shortcuts, command line and autosave
+[ ] 3: fill-in, predict, boss, run input, restart level, key wording; remove the typing row
+
 Phase 3 – Worlds 1–2 (content and art)
 [ ] Write Levels 1-1 to 2-5 in order: cutscene, tips, three waves, tests, power-up
 [ ] Build Boss 1 and Boss 2
