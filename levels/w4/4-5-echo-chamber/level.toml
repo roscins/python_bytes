@@ -1,0 +1,419 @@
+[level]
+id = "4-5"
+title = "Echo Chamber"
+world = 4
+new_concepts = ["recursion: base case and recursive case", "inductive reasoning", "recursion on lists and strings", "memoisation with a dictionary"]
+power_up = "echo"
+
+cutscene = '''
+# >> A message bounces between relay stations, each passing it on.
+def count_letters(message):
+    """Return how many characters message has."""
+    if message == "":                           # base case
+        return 0
+    return 1 + count_letters(message[1:])       # recursive case
+
+def paths(stairs, memo):
+    """Return the ways to climb stairs in steps of 1 or 2."""
+    if stairs <= 1:
+        return 1
+    if stairs not in memo:
+        memo[stairs] = paths(stairs - 1, memo) + paths(stairs - 2, memo)
+    return memo[stairs]
+
+print(count_letters("PING"))
+print(paths(30, {}))
+# >> Snek: "EACH STATION DOES ONE SMALL PART."
+'''
+
+tips = [
+  "A recursive function calls itself. The base case returns without a call; the recursive case moves toward it.",
+  "Reason by induction: check the base case, then trust the smaller call and check the one step built on it.",
+  "text[0] or items[0] is the first item and text[1:] or items[1:] the rest; an empty one is a usual base case.",
+  "Memoisation: look the argument up in a dict first; if it is missing, compute it, store it, then return it.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Complete the recursive sum and reverse."
+brief = "Fill in the blanks: total adds up a list and reverse turns a string around, each by calling itself on everything after the first item."
+starter = '''
+def total(loads):
+    """Return the sum of the numbers in loads."""
+    if len(loads) == 0:
+        return ___
+    return loads[0] + ___(loads[1:])
+
+def reverse(text):
+    """Return text backwards."""
+    if text == "":
+        return ""
+    return reverse(text[1:]) + ___
+
+first = 5
+word = "RELAY"
+print("Total:", total([first, 2, 8]))
+print("Echo:", reverse(word))
+'''
+reference = '''
+def total(loads):
+    """Return the sum of the numbers in loads."""
+    if len(loads) == 0:
+        return 0
+    return loads[0] + total(loads[1:])
+
+def reverse(text):
+    """Return text backwards."""
+    if text == "":
+        return ""
+    return reverse(text[1:]) + text[0]
+
+first = 5
+word = "RELAY"
+print("Total:", total([first, 2, 8]))
+print("Echo:", reverse(word))
+'''
+wrong = '''
+def total(loads):
+    """Return the sum of the numbers in loads."""
+    if len(loads) == 0:
+        return 0
+    return loads[0] + total(loads[1:])
+
+def reverse(text):
+    """Return text backwards."""
+    if text == "":
+        return ""
+    return reverse(text[1:]) + text[-1]
+
+first = 5
+word = "RELAY"
+print("Total:", total([first, 2, 8]))
+print("Echo:", reverse(word))
+'''
+hints = [
+  "What is the sum of an empty list? And which character is missing from reverse(text[1:])?",
+  "The base case gives a number, the recursive call uses the function's own name, and the first character goes last.",
+  "The sum's recursive line is: return loads[0] + total(loads[1:])",
+]
+
+[[wave.test]]
+expected_stdout = "Total: 15\nEcho: YALER\n"
+
+[[wave.test]]
+expected_stdout = "Total: 110\nEcho: EDON\n"
+values = { first = 100, word = "NODE" }
+
+[[wave.test]]
+call = "total"
+args = [[]]
+expected = 0
+
+[[wave.test]]
+call = "total"
+args = [[4, 4, 1, 6]]
+expected = 15
+
+[[wave.test]]
+call = "reverse"
+args = ["ab c"]
+expected = "c ba"
+
+[[wave.test]]
+forbid = ["For", "While"]
+
+[[wave]]
+kind = "build"
+goal = "Write is_palindrome, fib and fib_memo with call counts."
+brief = """
+Without loops, write recursive is_palindrome(text), returning True or False, plus fib(n, calls) and fib_memo(n, memo, calls), where fib(0) is 0, fib(1) is 1 and later numbers add the two before.
+Both Fibonacci functions add 1 to calls[0] every time they are called, and fib_memo returns a stored memo[n] if there is one, otherwise stores each result it adds up.
+Keep word = "LEVEL" and n = 10 as the top lines, then print Palindrome: and is_palindrome(word).
+Call fib(n, calls) with calls = [0] and print Plain:, the result and calls[0]; then do the same with fib_memo, an empty dict and a new counter, printing Memo:.
+Keep the docstrings and a # comment.
+"""
+starter = '''
+word = "LEVEL"
+n = 10
+
+def is_palindrome(text):
+    """Return True if text reads the same both ways."""
+    pass
+
+def fib(n, calls):
+    """Return Fibonacci number n, counting calls in calls[0]."""
+    pass
+
+def fib_memo(n, memo, calls):
+    """Return Fibonacci number n, remembering results in memo."""
+    pass
+
+# Print the three result lines below.
+'''
+reference = '''
+word = "LEVEL"
+n = 10
+
+def is_palindrome(text):
+    """Return True if text reads the same both ways."""
+    if len(text) <= 1:
+        return True
+    if text[0] != text[-1]:
+        return False
+    return is_palindrome(text[1:-1])
+
+def fib(n, calls):
+    """Return Fibonacci number n, counting calls in calls[0]."""
+    calls[0] += 1
+    if n <= 1:
+        return n
+    return fib(n - 1, calls) + fib(n - 2, calls)
+
+def fib_memo(n, memo, calls):
+    """Return Fibonacci number n, remembering results in memo."""
+    calls[0] += 1
+    if n <= 1:
+        return n
+    if n in memo:
+        return memo[n]
+    memo[n] = fib_memo(n - 1, memo, calls) + fib_memo(n - 2, memo, calls)
+    return memo[n]
+
+# Compare the call counts
+print("Palindrome:", is_palindrome(word))
+calls = [0]
+result = fib(n, calls)
+print("Plain:", result, calls[0])
+calls = [0]
+result = fib_memo(n, {}, calls)
+print("Memo:", result, calls[0])
+'''
+wrong = '''
+word = "LEVEL"
+n = 10
+
+def is_palindrome(text):
+    """Return True if text reads the same both ways."""
+    if len(text) <= 1:
+        return True
+    if text[0] != text[-1]:
+        return False
+    return is_palindrome(text[1:-1])
+
+def fib(n, calls):
+    """Return Fibonacci number n, counting calls in calls[0]."""
+    calls[0] += 1
+    if n <= 1:
+        return n
+    return fib(n - 1, calls) + fib(n - 2, calls)
+
+def fib_memo(n, memo, calls):
+    """Return Fibonacci number n, forgetting to store results."""
+    calls[0] += 1
+    if n <= 1:
+        return n
+    if n in memo:
+        return memo[n]
+    return fib_memo(n - 1, memo, calls) + fib_memo(n - 2, memo, calls)
+
+# Compare the call counts
+print("Palindrome:", is_palindrome(word))
+calls = [0]
+result = fib(n, calls)
+print("Plain:", result, calls[0])
+calls = [0]
+result = fib_memo(n, {}, calls)
+print("Memo:", result, calls[0])
+'''
+hints = [
+  "For each function ask: which input needs no further call? Otherwise, which smaller input helps?",
+  "A palindrome has matching ends and a palindrome between them. The counter is a list, so every call changes the same one.",
+  "fib begins: calls[0] += 1, then if n <= 1: return n",
+]
+
+[[wave.test]]
+expected_stdout = "Palindrome: True\nPlain: 55 177\nMemo: 55 19\n"
+
+[[wave.test]]
+expected_stdout = "Palindrome: False\nPlain: 610 1973\nMemo: 610 29\n"
+values = { word = "RELAY", n = 15 }
+
+[[wave.test]]
+expected_stdout = "Palindrome: True\nPlain: 1 1\nMemo: 1 1\n"
+values = { word = "NOON", n = 1 }
+
+[[wave.test]]
+call = "is_palindrome"
+args = [""]
+expected = true
+
+[[wave.test]]
+call = "is_palindrome"
+args = ["ABCA"]
+expected = false
+
+[[wave.test]]
+call = "is_palindrome"
+args = ["ABBA"]
+expected = true
+
+[[wave.test]]
+call = "fib"
+args = [12, [0]]
+expected = 144
+
+[[wave.test]]
+call = "fib_memo"
+args = [60, {}, [0]]
+expected = 1548008755920
+
+[[wave.test]]
+forbid = ["For", "While", "Global"]
+
+[[wave.test]]
+require = ["FunctionDef", "Return", "Dict"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs in the relay report."
+brief = """
+mirror must return text backwards, loudest must return the largest number in a non-empty list, and relays must count each call in calls[0] and reuse results through memo.
+There are three bugs; fix them.
+"""
+starter = '''
+def mirror(text):
+    """Return text backwards."""
+    if len(text) <= 1:
+        return text
+    return text[-1] + mirror(text[1:-1]) + text[-1]
+
+def loudest(levels):
+    """Return the largest number in a non-empty list."""
+    if len(levels) == 1:
+        return levels[0]
+    best = loudest(levels[1:])
+    if levels[0] > best:
+        return levels[0]
+
+def relays(n, memo, calls):
+    """Return the signals at station n; 1 at stations 0 and 1."""
+    calls[0] += 1
+    if n <= 1:
+        return 1
+    if n in memo:
+        return memo[n]
+    result = relays(n - 1, memo, calls) + relays(n - 2, memo, calls)
+    return result
+
+word = "ECHO"
+station = 12
+print("Mirror:", mirror(word))
+print("Loudest:", loudest([3, 9, 4]))
+calls = [0]
+print("Signals:", relays(station, {}, calls), calls[0])
+'''
+reference = '''
+def mirror(text):
+    """Return text backwards."""
+    if len(text) <= 1:
+        return text
+    return text[-1] + mirror(text[1:-1]) + text[0]
+
+def loudest(levels):
+    """Return the largest number in a non-empty list."""
+    if len(levels) == 1:
+        return levels[0]
+    best = loudest(levels[1:])
+    if levels[0] > best:
+        return levels[0]
+    return best
+
+def relays(n, memo, calls):
+    """Return the signals at station n; 1 at stations 0 and 1."""
+    calls[0] += 1
+    if n <= 1:
+        return 1
+    if n in memo:
+        return memo[n]
+    result = relays(n - 1, memo, calls) + relays(n - 2, memo, calls)
+    memo[n] = result
+    return result
+
+word = "ECHO"
+station = 12
+print("Mirror:", mirror(word))
+print("Loudest:", loudest([3, 9, 4]))
+calls = [0]
+print("Signals:", relays(station, {}, calls), calls[0])
+'''
+wrong = '''
+def mirror(text):
+    """Return text backwards."""
+    if len(text) <= 1:
+        return text
+    return text[-1] + mirror(text[1:-1]) + text[0]
+
+def loudest(levels):
+    """Return the largest number in a non-empty list."""
+    if len(levels) == 1:
+        return levels[0]
+    best = loudest(levels[1:])
+    if levels[0] > best:
+        return levels[0]
+    return best
+
+def relays(n, memo, calls):
+    """Return the signals at station n; 1 at stations 0 and 1."""
+    calls[0] += 1
+    if n <= 1:
+        return 1
+    if n in memo:
+        return memo[n]
+    result = relays(n - 1, memo, calls) + relays(n - 2, memo, calls)
+    return result
+
+word = "ECHO"
+station = 12
+print("Mirror:", mirror(word))
+print("Loudest:", loudest([3, 9, 4]))
+calls = [0]
+print("Signals:", relays(station, {}, calls), calls[0])
+'''
+hints = [
+  "Check each function's base case, then assume the smaller call is right and check the step built on it.",
+  "Look at which end mirror adds last, what loudest returns when the first item is not larger, and what relays stores.",
+  "In relays, put memo[n] = result before the last return.",
+]
+
+[[wave.test]]
+expected_stdout = "Mirror: OHCE\nLoudest: 9\nSignals: 233 23\n"
+
+[[wave.test]]
+expected_stdout = "Mirror: EDON\nLoudest: 9\nSignals: 1597 31\n"
+values = { word = "NODE", station = 16 }
+
+[[wave.test]]
+call = "mirror"
+args = ["RELAY"]
+expected = "YALER"
+
+[[wave.test]]
+call = "loudest"
+args = [[2, 5, 11]]
+expected = 11
+
+[[wave.test]]
+call = "loudest"
+args = [[8, 1, 3]]
+expected = 8
+
+[[wave.test]]
+call = "relays"
+args = [50, {}, [0]]
+expected = 20365011074
+
+[[wave.test]]
+forbid = ["For", "While", "Global"]

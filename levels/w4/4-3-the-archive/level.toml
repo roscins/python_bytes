@@ -1,0 +1,284 @@
+[level]
+id = "4-3"
+title = "The Archive"
+world = 4
+new_concepts = ["reading and writing files with open() and with", "the csv module", "pathlib.Path", "validating input data"]
+power_up = "save"
+
+cutscene = '''
+# >> Deep in the Core, Snek finds long-term memory: a folder of logs.
+import csv
+from pathlib import Path
+
+path = Path("memo.csv")       # a file name as a Path object
+with open(path, "w", encoding="utf-8") as memo:   # "w" writes
+    memo.write("name,charge\n")
+    memo.write("snek,80\n")
+    memo.write("drone,??\n")
+print(path.exists())
+with open(path, encoding="utf-8", newline="") as memo:
+    reader = csv.reader(memo)
+    header = next(reader)     # take the first row
+    for row in reader:        # each row is a list of strings
+        if row[1].isdigit():  # check before converting
+            print(row[0], int(row[1]))
+        else:
+            print("skipped", row)
+# >> Snek: "SOME OF MY MEMORIES ARE CORRUPT. CHECK BEFORE TRUSTING."
+'''
+
+tips = [
+  "with open(name, \"w\", encoding=\"utf-8\") as f: f.write(text). The file closes after the block.",
+  "csv.reader(f) gives each row as a list of strings. next(reader) takes one row, such as the header.",
+  "Path(\"memo.csv\") is a file name as an object. Its exists() says if the file is there.",
+  "Check data before using it: count the fields, test with isdigit() or catch ValueError.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Total the temperatures and count the bad rows."
+brief = "Fill the blanks to read temps.csv, add up the temperatures and count the rows that are not numbers."
+files = ["temps.csv"]
+starter = '''
+import csv
+
+total = 0.0
+skipped = 0
+with ___("temps.csv", encoding="utf-8", newline="") as log:
+    reader = csv.___(log)
+    next(reader)  # the header row
+    for row in reader:
+        try:
+            total = total + float(row[1])
+        except ___:
+            skipped = skipped + 1
+print(f"total: {total:.2f}")
+print(f"skipped: {skipped}")
+'''
+reference = '''
+import csv
+
+total = 0.0
+skipped = 0
+with open("temps.csv", encoding="utf-8", newline="") as log:
+    reader = csv.reader(log)
+    next(reader)  # the header row
+    for row in reader:
+        try:
+            total = total + float(row[1])
+        except ValueError:
+            skipped = skipped + 1
+print(f"total: {total:.2f}")
+print(f"skipped: {skipped}")
+'''
+wrong = '''
+import csv
+
+total = 0.0
+skipped = 0
+with open("temps.csv", encoding="utf-8", newline="") as log:
+    reader = csv.reader(log)
+    next(reader)  # the header row
+    for row in reader:
+        try:
+            total = total + float(row[1])
+        except TypeError:
+            skipped = skipped + 1
+print(f"total: {total:.2f}")
+print(f"skipped: {skipped}")
+'''
+hints = [
+  "Which function opens a file, and which error does float(\"ERR\") raise?",
+  "The blanks are: the built-in that opens, the csv function that reads rows, the error name.",
+  "The first two are open and reader.",
+]
+
+[[wave.test]]
+expected_stdout = "total: 64.00\nskipped: 2\n"
+
+[[wave.test]]
+expected_stdout = "total: 70.00\nskipped: 3\n"
+files = { "temps.csv" = "temps-b.csv" }
+
+[[wave]]
+kind = "build"
+goal = "Report bad rows, save a summary, draw a bar chart."
+brief = '''
+If Path(log_name) does not exist(), print NO LOG and stop there. It has a header, then sensor,value rows,
+valid with exactly 2 fields and a whole number from 0 to 100 (isdigit() helps).
+For each invalid row print SKIP and its line number, such as SKIP 3 (the header is line 1).
+Then print a chart line for each valid row, in file order: the sensor left-aligned
+in 8, then one # for every full 10 units. Write summary.txt with two lines,
+valid: and skipped:, each followed by a space and its count.
+'''
+files = ["readings.csv"]
+starter = '''
+import csv
+from pathlib import Path
+
+log_name = "readings.csv"
+'''
+reference = '''
+import csv
+from pathlib import Path
+
+log_name = "readings.csv"
+# Check every row, then chart the good ones and save the counts
+source = Path(log_name)
+if source.exists():
+    names = []
+    values = []
+    skipped = 0
+    with open(source, encoding="utf-8", newline="") as log:
+        reader = csv.reader(log)
+        next(reader)
+        for number, row in enumerate(reader, start=2):
+            if len(row) == 2 and row[1].isdigit() and int(row[1]) <= 100:
+                names.append(row[0])
+                values.append(int(row[1]))
+            else:
+                print(f"SKIP {number}")
+                skipped += 1
+    for name, value in zip(names, values):
+        bar = "#" * (value // 10)
+        print(f"{name:<8}{bar}")
+    with open("summary.txt", "w", encoding="utf-8") as summary:
+        summary.write(f"valid: {len(names)}\n")
+        summary.write(f"skipped: {skipped}\n")
+else:
+    print("NO LOG")
+'''
+wrong = '''
+import csv
+from pathlib import Path
+
+log_name = "readings.csv"
+# Forgets that a value above 100 is invalid
+source = Path(log_name)
+if source.exists():
+    names = []
+    values = []
+    skipped = 0
+    with open(source, encoding="utf-8", newline="") as log:
+        reader = csv.reader(log)
+        next(reader)
+        for number, row in enumerate(reader, start=2):
+            if len(row) == 2 and row[1].isdigit():
+                names.append(row[0])
+                values.append(int(row[1]))
+            else:
+                print(f"SKIP {number}")
+                skipped += 1
+    for name, value in zip(names, values):
+        bar = "#" * (value // 10)
+        print(f"{name:<8}{bar}")
+    with open("summary.txt", "w", encoding="utf-8") as summary:
+        summary.write(f"valid: {len(names)}\n")
+        summary.write(f"skipped: {skipped}\n")
+else:
+    print("NO LOG")
+'''
+hints = [
+  "Which checks must pass before int(row[1]) is safe, and what limit comes after?",
+  "Loop with enumerate(reader, start=2). Keep good rows in lists, print SKIP for others, then chart and write.",
+  "Inside if source.exists(): the row check is: if len(row) == 2 and row[1].isdigit() and int(row[1]) <= 100:",
+]
+
+[[wave.test]]
+expected_stdout = "SKIP 3\nSKIP 5\nSKIP 6\nSKIP 8\ncore    #######\npump    ####\nlens\ngrid    ##########\n"
+
+[[wave.test]]
+expected_stdout = "SKIP 3\nSKIP 5\nSKIP 6\narm     ###\neye\nhub     #########\n"
+files = { "readings.csv" = "readings-b.csv" }
+
+[[wave.test]]
+expected_file = { name = "summary.txt", contents = "valid: 4\nskipped: 4\n" }
+
+[[wave.test]]
+expected_file = { name = "summary.txt", contents = "valid: 3\nskipped: 3\n" }
+files = { "readings.csv" = "readings-b.csv" }
+
+[[wave.test]]
+expected_stdout = "NO LOG\n"
+values = { log_name = "missing.csv" }
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs so report.txt is right."
+brief = "This should skip invalid rows, then write the number of good rows and their crate total to report.txt on two lines. Fix the three bugs."
+files = ["archive.csv"]
+starter = '''
+import csv
+from pathlib import Path
+
+# Count the good rows of the archive and add up their crates
+source = Path("archive.csv")
+count = 0
+total = 0
+if source.exists():
+    with open(source, encoding="utf-8", newline="") as archive:
+        reader = csv.reader(archive)
+        next(reader)
+        for row in reader:
+            if len(row) == 2 or row[1].isdigit():
+                count += 1
+                total = int(row[1])
+with open("report.txt", "w", encoding="utf-8") as report:
+    report.write(f"rows: {count}")
+    report.write(f"total: {total}")
+print("saved")
+'''
+reference = '''
+import csv
+from pathlib import Path
+
+# Count the good rows of the archive and add up their crates
+source = Path("archive.csv")
+count = 0
+total = 0
+if source.exists():
+    with open(source, encoding="utf-8", newline="") as archive:
+        reader = csv.reader(archive)
+        next(reader)
+        for row in reader:
+            if len(row) == 2 and row[1].isdigit():
+                count += 1
+                total += int(row[1])
+with open("report.txt", "w", encoding="utf-8") as report:
+    report.write(f"rows: {count}\n")
+    report.write(f"total: {total}\n")
+print("saved")
+'''
+wrong = '''
+import csv
+from pathlib import Path
+
+# The total is still replaced instead of added to
+source = Path("archive.csv")
+count = 0
+total = 0
+if source.exists():
+    with open(source, encoding="utf-8", newline="") as archive:
+        reader = csv.reader(archive)
+        next(reader)
+        for row in reader:
+            if len(row) == 2 and row[1].isdigit():
+                count += 1
+                total = int(row[1])
+with open("report.txt", "w", encoding="utf-8") as report:
+    report.write(f"rows: {count}\n")
+    report.write(f"total: {total}\n")
+print("saved")
+'''
+hints = [
+  "Check three places: the row test, the running total and what write() puts between lines.",
+  "Both row checks must hold. The total must grow. write() adds no new line by itself.",
+  "The row test should be: if len(row) == 2 and row[1].isdigit():",
+]
+
+[[wave.test]]
+expected_file = { name = "report.txt", contents = "rows: 3\ntotal: 13\n" }
+
+[[wave.test]]
+expected_file = { name = "report.txt", contents = "rows: 4\ntotal: 42\n" }
+files = { "archive.csv" = "archive-b.csv" }

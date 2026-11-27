@@ -1,0 +1,187 @@
+[level]
+id = "4-1"
+title = "The Catalogue"
+world = 4
+new_concepts = ["dictionaries: keys, values and get()", "looping over dictionaries and nesting", "the counting pattern", "choosing a data structure, with timing and Big-O vocabulary"]
+power_up = "lookup"
+
+cutscene = '''
+# >> The knowledge base stores everything by name.
+import time
+bins = {"bolt": {"count": 40, "shelf": "A1"}}   # a dict inside a dict
+bins["gear"] = {"count": 12, "shelf": "B2"}
+print(bins["gear"]["count"], bins.get("laser", "none"))
+for name, info in bins.items():
+    print(name, info["shelf"])
+seen = {}
+for part in ["nut", "cog", "nut"]:
+    seen[part] = seen.get(part, 0) + 1       # counting
+print(seen, list(seen.keys()), list(seen.values()))
+numbers = list(range(100000))
+stores = [("list", numbers), ("set", set(numbers)), ("dict", dict(zip(numbers, numbers)))]
+for kind, store in stores:
+    start = time.perf_counter()
+    for attempt in range(200):
+        found = 99999 in store
+    print(kind, time.perf_counter() - start, "seconds")
+# >> Snek: "THE LIST SEARCHES. THE SET AND DICT JUMP."
+'''
+
+tips = [
+  "A dict maps keys to values: d[key] reads or stores; d.get(key, default) is safe for a missing key.",
+  "for key, value in d.items() visits each pair; keys() and values() give one side. A value may be a dict.",
+  "To count: counts[x] = counts.get(x, 0) + 1.",
+  "in scans a list: O(n), time grows with size. A set or dict jumps to the key: O(1) on average.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Count the parts and look up a missing one."
+brief = "Fill the blanks so counts holds how often each part appears, and a part that never appeared shows 0."
+starter = '''
+parts = ["bolt", "gear", "bolt", "bolt"]
+wanted = "laser"
+counts = {}
+for part in parts:
+    counts[part] = counts.___(part, 0) + 1
+for name, total in counts.___():
+    print(name, total)
+print(counts.get(wanted, ___))
+'''
+reference = '''
+parts = ["bolt", "gear", "bolt", "bolt"]
+wanted = "laser"
+counts = {}
+for part in parts:
+    counts[part] = counts.get(part, 0) + 1
+for name, total in counts.items():
+    print(name, total)
+print(counts.get(wanted, 0))
+'''
+wrong = '''
+parts = ["bolt", "gear", "bolt", "bolt"]
+wanted = "laser"
+counts = {}
+for part in parts:
+    counts[part] = counts.get(part, 0) + 1
+for name, total in counts.items():
+    print(name, total)
+print(counts.get(wanted, None))
+'''
+hints = [
+  "Which dict method gives a fallback for a missing key? Which one gives pairs?",
+  "The first blank reads a count, the second gives (name, total) pairs, the third is the fallback.",
+  "The loop line is: for name, total in counts.items():",
+]
+
+[[wave.test]]
+expected_stdout = "bolt 3\ngear 1\n0\n"
+
+[[wave.test]]
+expected_stdout = "cog 1\nnut 2\n2\n"
+values = { parts = ["cog", "nut", "nut"], wanted = "nut" }
+
+[[wave]]
+kind = "build"
+goal = "Build a parts catalogue, then time a search."
+brief = '''
+Delivery i brought counts[i] parts called names[i]; build the dict catalogue of totals, print name: total per part in order of first delivery, then the total for wanted (0 if absent).
+Print TOTAL with the sum of its values(), and PARTS with the sorted list of its keys().
+Then time wanted in a list, a set and the dict, using time.perf_counter() before and after.
+Print TIME list, TIME set and TIME dict, each followed by its seconds.
+'''
+starter = '''
+import time
+
+names = ["bolt", "gear", "bolt"]
+counts = [10, 4, 5]
+wanted = "laser"
+'''
+reference = '''
+import time
+
+names = ["bolt", "gear", "bolt"]
+counts = [10, 4, 5]
+wanted = "laser"
+# add up the count for each part name
+catalogue = {}
+for name, count in zip(names, counts):
+    catalogue[name] = catalogue.get(name, 0) + count
+for name, total in catalogue.items():
+    print(f"{name}: {total}")
+print(catalogue.get(wanted, 0))
+print("TOTAL", sum(catalogue.values()))
+print("PARTS", sorted(catalogue.keys()))
+
+# time the same search in three structures
+stores = [("list", list(catalogue)), ("set", set(catalogue)), ("dict", catalogue)]
+for kind, store in stores:
+    start = time.perf_counter()
+    found = wanted in store
+    print("TIME", kind, time.perf_counter() - start)
+'''
+wrong = '''
+import time
+
+names = ["bolt", "gear", "bolt"]
+counts = [10, 4, 5]
+wanted = "laser"
+# keeps only the last count for each name
+catalogue = {}
+for name, count in zip(names, counts):
+    catalogue[name] = count
+for name, total in catalogue.items():
+    print(f"{name}: {total}")
+print(catalogue.get(wanted, 0))
+print("TOTAL", sum(catalogue.values()))
+print("PARTS", sorted(catalogue.keys()))
+'''
+hints = [
+  "What should happen when a name is already in the catalogue?",
+  "Add each count to get(name, 0). For timing, read perf_counter(), search, then subtract.",
+  "Inside the first loop: catalogue[name] = catalogue.get(name, 0) + count",
+]
+
+[[wave.test]]
+expected_stdout_contains = ["bolt: 15\ngear: 4\n0\nTOTAL 19\nPARTS ['bolt', 'gear']\n"]
+
+[[wave.test]]
+expected_stdout_contains = ["cog: 2\nnut: 12\n12\nTOTAL 14\nPARTS ['cog', 'nut']\n"]
+values = { names = ["cog", "nut", "nut"], counts = [2, 5, 7], wanted = "nut" }
+
+[[wave.test]]
+expected_stdout_contains = ["TIME list", "TIME set", "TIME dict"]
+
+[[wave.test]]
+require = ["Dict", "For", "Import"]
+
+[[wave]]
+kind = "debug"
+mode = "choice"
+goal = "Choose list, tuple, set or dict for each job."
+brief = "Pick the best data structure for each job in the knowledge base."
+wrong = "1: b, 2: a, 3: a, 4: a"
+
+[[wave.question]]
+ask = "Part names in delivery order, repeats kept, more added later."
+options = ["list", "tuple", "set", "dict"]
+answer = "a"
+explanation = "A list keeps order and repeats, and it can grow."
+
+[[wave.question]]
+ask = "A sensor's fixed position (x, y) that must never change."
+options = ["list", "tuple", "set", "dict"]
+answer = "b"
+explanation = "A tuple is a fixed record: it cannot be changed."
+
+[[wave.question]]
+ask = "Serial numbers already scanned: no repeats, fast membership test."
+options = ["list", "tuple", "set", "dict"]
+answer = "c"
+explanation = "A set holds each item once, and in is O(1) on average."
+
+[[wave.question]]
+ask = "Find a part's shelf quickly from its name."
+options = ["list", "tuple", "set", "dict"]
+answer = "d"
+explanation = "A dict maps each name (key) to its shelf (value)."

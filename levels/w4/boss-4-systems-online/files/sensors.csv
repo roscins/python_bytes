@@ -1,0 +1,8 @@
+name,value,limit
+heat,82,70
+flow,12,20
+pump,??,50
+volt,24,24
+fan,95.5,90
+gas,,5
+heat,75,70

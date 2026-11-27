@@ -1,0 +1,302 @@
+[level]
+id = "4-4"
+title = "The Test Bench"
+world = 4
+new_concepts = ["black-box and glass-box test design", "boundary cases", "assert-based test functions", "systematic debugging and reviewing a provided solution"]
+power_up = "test"
+
+cutscene = '''
+# >> Every repair in the Core breaks an older one.
+# >> Snek drags a dusty test bench into the light.
+def is_low(charge):
+    """Return True when charge is under 20."""
+    return charge < 20
+
+def test_is_low():
+    """Check both sides of the limit."""
+    assert is_low(19)
+    assert not is_low(20)
+
+test_is_low()
+print("ALL PASS")
+# >> Snek: "NOW BREAKAGE HAS TO ANNOUNCE ITSELF."
+'''
+
+tips = [
+  "Black-box tests come from the spec; glass-box tests come from reading the code's branches.",
+  "A boundary case sits at a limit or just beside it, such as 19 and 20, an empty list or the last item.",
+  "A test function holds assert lines; a False assert raises AssertionError.",
+  "Debug in steps: reproduce, change one input, find the line, fix, rerun all tests. Review line by line.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Pick boundary inputs that catch an off-by-one."
+brief = """
+is_overheating(temp) must return True only when the whole number temp is
+above 80. Fill each blank with the input that sits right at that limit, so the
+tests pass the good version and catch the broken ones.
+"""
+starter = '''
+version = "good"  # the bench also tries broken versions
+
+def is_overheating(temp):
+    """Return True when temp is above 80."""
+    if version == "early":
+        return temp >= 80
+    if version == "late":
+        return temp > 81
+    return temp > 80
+
+def test_is_overheating():
+    """Check both sides of the limit."""
+    assert not is_overheating(___)
+    assert is_overheating(___)
+
+try:
+    test_is_overheating()
+    print("ALL PASS")
+except AssertionError:
+    print("BUG FOUND")
+'''
+reference = '''
+version = "good"  # the bench also tries broken versions
+
+def is_overheating(temp):
+    """Return True when temp is above 80."""
+    if version == "early":
+        return temp >= 80
+    if version == "late":
+        return temp > 81
+    return temp > 80
+
+def test_is_overheating():
+    """Check both sides of the limit."""
+    assert not is_overheating(80)
+    assert is_overheating(81)
+
+try:
+    test_is_overheating()
+    print("ALL PASS")
+except AssertionError:
+    print("BUG FOUND")
+'''
+wrong = '''
+version = "good"  # the bench also tries broken versions
+
+def is_overheating(temp):
+    """Return True when temp is above 80."""
+    if version == "early":
+        return temp >= 80
+    if version == "late":
+        return temp > 81
+    return temp > 80
+
+def test_is_overheating():
+    """Check both sides of the limit."""
+    assert not is_overheating(50)
+    assert is_overheating(100)
+
+try:
+    test_is_overheating()
+    print("ALL PASS")
+except AssertionError:
+    print("BUG FOUND")
+'''
+hints = [
+  "Values far from the limit behave the same in every version. Where do the versions differ?",
+  "One input is the largest that gives False, the other the smallest that gives True.",
+  "The first assert uses 80.",
+]
+
+[[wave.test]]
+values = { version = "good" }
+expected_stdout = "ALL PASS\n"
+
+[[wave.test]]
+values = { version = "early" }
+expected_stdout = "BUG FOUND\n"
+
+[[wave.test]]
+values = { version = "late" }
+expected_stdout = "BUG FOUND\n"
+
+[[wave]]
+kind = "build"
+goal = "Find and fix two hidden bugs by experiment."
+brief = """
+count_safe(readings, low, high) must count the readings from low to high,
+both limits included. It hides two bugs, so experiment with short lists that
+probe the edges. Fix both bugs. Add a function test_count_safe() with assert
+lines, and call it.
+"""
+starter = '''
+def count_safe(readings, low, high):
+    """Count the readings from low to high, limits included."""
+    count = 0
+    for index in range(1, len(readings)):
+        if readings[index] >= low and readings[index] < high:
+            count += 1
+    return count
+
+# Experiment here.
+print(count_safe([15, 15, 15], 10, 20))
+'''
+reference = '''
+def count_safe(readings, low, high):
+    """Count the readings from low to high, limits included."""
+    count = 0
+    for reading in readings:
+        if reading >= low and reading <= high:
+            count += 1
+    return count
+
+def test_count_safe():
+    """Probe the first item, both limits and an empty list."""
+    assert count_safe([15], 10, 20) == 1
+    assert count_safe([9, 10, 20, 21], 10, 20) == 2
+    assert count_safe([], 10, 20) == 0
+
+# Run the tests after every change.
+test_count_safe()
+'''
+wrong = '''
+def count_safe(readings, low, high):
+    """Count the readings from low to high, limits included."""
+    count = 0
+    for reading in readings:
+        if reading >= low and reading < high:
+            count += 1
+    return count
+
+def test_count_safe():
+    """Probe the first item only."""
+    assert count_safe([15], 10, 20) == 1
+
+# Run the tests.
+test_count_safe()
+'''
+hints = [
+  "Try a list with one reading. Then try a reading equal to each limit.",
+  "Check which index the loop starts at, and how each limit is compared.",
+  "Loop with: for reading in readings, then compare reading with both limits.",
+]
+
+[[wave.test]]
+call = "count_safe"
+args = [[15], 10, 20]
+expected = 1
+
+[[wave.test]]
+call = "count_safe"
+args = [[10, 20], 10, 20]
+expected = 2
+
+[[wave.test]]
+call = "count_safe"
+args = [[4, 5, 6, 8, 9, 10], 5, 9]
+expected = 4
+
+[[wave.test]]
+call = "count_safe"
+args = [[], 0, 5]
+expected = 0
+
+[[wave.test]]
+catches = { test = "test_count_safe", function = "count_safe", correct = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings:
+        if low <= reading <= high:
+            count += 1
+    return count
+''', broken = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings[1:]:
+        if low <= reading <= high:
+            count += 1
+    return count
+''' }
+
+[[wave.test]]
+catches = { test = "test_count_safe", function = "count_safe", correct = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings:
+        if low <= reading <= high:
+            count += 1
+    return count
+''', broken = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings:
+        if low <= reading < high:
+            count += 1
+    return count
+''' }
+
+[[wave.test]]
+catches = { test = "test_count_safe", function = "count_safe", correct = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings:
+        if low <= reading <= high:
+            count += 1
+    return count
+''', broken = '''
+def count_safe(readings, low, high):
+    count = 0
+    for reading in readings:
+        if low < reading <= high:
+            count += 1
+    return count
+''' }
+
+[[wave.test]]
+require = ["Assert", "FunctionDef"]
+
+[[wave]]
+kind = "debug"
+mode = "review"
+goal = "Mark each faulty line and name its fault."
+brief = """
+Review this solution. average_valid(readings) must return the average of the
+readings from 0 to 100, limits included, or None if there are none.
+"""
+code = '''
+def average_valid(readings):
+    """Average the readings from 0 to 100, or None."""
+    total = 0
+    count = 0
+    for reading in readings:
+        if reading > 0 and reading <= 100:
+            total += reading
+            count += 1
+    if count < 0:
+        return None
+    return total // count
+'''
+categories = ["a valid reading is left out", "no readings is not caught",
+              "the fraction is lost", "an invalid reading is counted"]
+wrong = "3: a"
+hints = [
+  "Test it in your head with [0], with [] and with [1, 2].",
+  "Check the lower limit, the guard before dividing, and the division itself.",
+  "One fault is on line 6.",
+]
+
+[[wave.fault]]
+line = 6
+category = "a"
+explanation = "> 0 leaves out 0, which is a valid reading."
+
+[[wave.fault]]
+line = 9
+category = "b"
+explanation = "count is never below 0, so no readings divides by zero."
+
+[[wave.fault]]
+line = 11
+category = "c"
+explanation = "// drops the fraction; an average needs /."

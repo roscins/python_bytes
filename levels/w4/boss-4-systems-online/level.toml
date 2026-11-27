@@ -1,0 +1,219 @@
+[level]
+id = "boss-4"
+title = "Systems Online"
+world = 4
+boss = true
+time_limit = 1200
+sprite = "boss-systems-online"
+
+cutscene = '''
+# >> The Core hums. Every sensor light blinks at once, and none of them agree.
+reading = "??"
+try:
+    print(float(reading))
+except ValueError:
+    print("BAD READING")
+# >> Snek: "ALARMS UNSORTED. BUILD THE WARNING SYSTEM, TECHNICIAN."
+'''
+
+[[wave]]
+kind = "boss"
+goal = "Write warnings.txt from sensors.csv, with assert tests."
+files = ["sensors.csv"]
+brief = """
+sensors.csv has a header, then name,value,limit rows.
+is_warning(value, limit): True if value is above limit.
+total(numbers): their sum, by recursion (0 if empty).
+build_report(rows): rows are [name, value, limit] texts. Return lines:
+WARN name value per warning, in order; COUNT name n per warned name (use a
+dict), by first warning; EXCESS total of value - limit; SKIPPED n (non-numbers).
+Numbers have 1 decimal, except counts. Write the lines to warnings.txt.
+Write test_is_warning() with asserts.
+"""
+starter = '''
+# Sensor warnings
+import csv
+'''
+reference = '''
+# Sensor warnings
+import csv
+
+
+def is_warning(value, limit):
+    """Return True if value is above limit."""
+    return value > limit
+
+
+def total(numbers):
+    """Return the sum of numbers, by recursion."""
+    if len(numbers) == 0:
+        return 0
+    return numbers[0] + total(numbers[1:])
+
+
+def build_report(rows):
+    """Return the report lines for rows of [name, value, limit] text."""
+    lines = []
+    skipped = 0
+    counts = {}
+    excess = []
+    for name, value_text, limit_text in rows:
+        try:
+            value = float(value_text)
+            limit = float(limit_text)
+        except ValueError:
+            skipped += 1
+            continue
+        if is_warning(value, limit):
+            lines.append(f"WARN {name} {value:.1f}")
+            counts[name] = counts.get(name, 0) + 1
+            excess.append(value - limit)
+    for name, count in counts.items():
+        lines.append(f"COUNT {name} {count}")
+    lines.append(f"EXCESS {total(excess):.1f}")
+    lines.append(f"SKIPPED {skipped}")
+    return lines
+
+
+def test_is_warning():
+    """Check both sides of the limit and the limit itself."""
+    assert is_warning(11, 10)
+    assert not is_warning(10, 10)
+    assert not is_warning(9, 10)
+
+
+test_is_warning()
+with open("sensors.csv", newline="") as source:
+    reader = csv.reader(source)
+    next(reader)
+    report = build_report(reader)
+with open("warnings.txt", "w") as target:
+    for line in report:
+        target.write(line + "\n")
+'''
+wrong = '''
+# Sensor warnings
+import csv
+
+
+def is_warning(value, limit):
+    """Return True if value is above limit."""
+    return value >= limit
+
+
+def total(numbers):
+    """Return the sum of numbers, by recursion."""
+    if len(numbers) == 0:
+        return 0
+    return numbers[0] + total(numbers[1:])
+
+
+def build_report(rows):
+    """Return the report lines for rows of [name, value, limit] text."""
+    lines = []
+    skipped = 0
+    counts = {}
+    excess = []
+    for name, value_text, limit_text in rows:
+        try:
+            value = float(value_text)
+            limit = float(limit_text)
+        except ValueError:
+            skipped += 1
+            continue
+        if is_warning(value, limit):
+            lines.append(f"WARN {name} {value:.1f}")
+            counts[name] = counts.get(name, 0) + 1
+            excess.append(value - limit)
+    for name, count in counts.items():
+        lines.append(f"COUNT {name} {count}")
+    lines.append(f"EXCESS {total(excess):.1f}")
+    lines.append(f"SKIPPED {skipped}")
+    return lines
+
+
+def test_is_warning():
+    """Check both sides of the limit and the limit itself."""
+    assert is_warning(11, 10)
+    assert not is_warning(9, 10)
+
+
+test_is_warning()
+with open("sensors.csv", newline="") as source:
+    reader = csv.reader(source)
+    next(reader)
+    report = build_report(reader)
+with open("warnings.txt", "w") as target:
+    for line in report:
+        target.write(line + "\n")
+'''
+hints = [
+  "Split the job: judge one reading, build the lines, then deal with the files. What does float(\"??\") do?",
+  "Use try / except ValueError around float(), count the skips, read with csv.reader and skip the header with next().",
+  "with open(\"sensors.csv\", newline=\"\") as source: reader = csv.reader(source), then next(reader).",
+]
+
+[[wave.test]]
+call = "is_warning"
+args = [10.5, 10]
+expected = true
+
+[[wave.test]]
+call = "is_warning"
+args = [10, 10]
+expected = false
+
+[[wave.test]]
+call = "is_warning"
+args = [-8, -5]
+expected = false
+
+[[wave.test]]
+call = "build_report"
+args = [[["a", "6", "5"], ["b", "x", "5"], ["c", "5", "5"]]]
+expected = ["WARN a 6.0", "COUNT a 1", "EXCESS 1.0", "SKIPPED 1"]
+
+[[wave.test]]
+call = "build_report"
+args = [[]]
+expected = ["EXCESS 0.0", "SKIPPED 0"]
+
+[[wave.test]]
+call = "total"
+args = [[2, 3, 4]]
+expected = 9
+
+[[wave.test]]
+expected_file = { name = "warnings.txt", contents = "WARN heat 82.0\nWARN fan 95.5\nWARN heat 75.0\nCOUNT heat 2\nCOUNT fan 1\nEXCESS 22.5\nSKIPPED 2\n" }
+
+[[wave.test]]
+expected_file = { name = "warnings.txt", contents = "WARN arm 3.0\nWARN oven 300.0\nWARN oven 260.0\nCOUNT arm 1\nCOUNT oven 2\nEXCESS 60.5\nSKIPPED 1\n" }
+files = { "sensors.csv" = "sensors-b.csv" }
+
+[[wave.test]]
+expected_file = { name = "warnings.txt", contents = "WARN duct -3.0\nWARN duct 1.0\nCOUNT duct 2\nEXCESS 3.0\nSKIPPED 1\n" }
+files = { "sensors.csv" = "sensors-c.csv" }
+
+[[wave.test]]
+catches = { test = "test_is_warning", function = "is_warning", correct = '''
+def is_warning(value, limit):
+    return value > limit
+''', broken = '''
+def is_warning(value, limit):
+    return value >= limit
+''' }
+
+[[wave.test]]
+catches = { test = "test_is_warning", function = "is_warning", correct = '''
+def is_warning(value, limit):
+    return value > limit
+''', broken = '''
+def is_warning(value, limit):
+    return False
+''' }
+
+[[wave.test]]
+require = ["Assert", "Dict"]
+
+[[wave.test]]
+require = ["FunctionDef", "With", "Try"]
