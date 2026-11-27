@@ -13,6 +13,7 @@ Like the other command modules, this one returns text and never prints.
 
 import builtins
 
+from engine.data_files import written_lines
 from engine.code_mode import (
     NOT_PLAYING,
     apply_edit,
@@ -37,6 +38,7 @@ def get_repl(state):
     """Return the game's quick console, starting it the first time it is needed."""
     if state.repl is None:
         state.repl = ReplSession(state.repl_timeout)
+    state.repl.data = state.wave_files()
     return state.repl
 
 
@@ -176,7 +178,7 @@ def continue_pending(state, line):
 
 def run_wave_code(state, code, stdin_text):
     """Run the code of a wave (not graded) and return what it printed, or the friendly error."""
-    result = run_code(code, stdin_text)
+    result = run_code(code, stdin_text, data=state.wave_files())
     locked = locked_message(state)
     if locked:
         return locked
@@ -185,6 +187,7 @@ def run_wave_code(state, code, stdin_text):
         lines.append(result.stdout.rstrip("\n"))
     elif result.finished_cleanly():
         lines.append("(no output)")
+    lines.extend(written_lines(result.written))
     if result.timed_out:
         lines.append(friendly_timeout(DEFAULT_TIME_LIMIT).headline)
     elif result.exit_code != 0:

@@ -10,6 +10,7 @@ tests, and so on) are checked by tests/test_levels.py.
 """
 
 import ast
+import re
 import tomllib
 from pathlib import Path
 
@@ -31,6 +32,13 @@ QUIZ_KINDS = ["fill-in", "debug"]
 MIN_QUESTIONS, MAX_QUESTIONS = 1, 6
 MIN_OPTIONS, MAX_OPTIONS = 2, len(LETTERS)
 MIN_FAULTS, MAX_FAULTS = 1, 4
+
+# A data file has a plain name: no folders, and not a name the runner uses.
+DATA_FILE_NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*")
+RESERVED_FILE_NAMES = ["call.json"]
+MAX_DATA_FILE_BYTES = 100_000
+# The folder of a level that holds its data files.
+DATA_FOLDER = "files"
 
 # A boss level has exactly one wave, of this kind.
 BOSS_WAVE_KIND = "boss"
@@ -69,6 +77,7 @@ class Wave:
         faults: a review wave's faults, dicts with "line", "category" and
             "explanation".
         categories: what a review wave's faults can be called.
+        files: {name: text} of the data files the wave's code can open.
         lock: True if the console is locked while this wave is open.
         tests: a list of dicts, one per [[wave.test]] in the file.
         hints: the wave's three hints (nudge, outline, partial solution),
@@ -82,7 +91,7 @@ class Wave:
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
                  reference=None, wrong=None, answer=None, tests=None, hints=None,
                  time_limit=None, explanation=None, goal=None, questions=None,
-                 lock=False, faults=None, categories=None):
+                 lock=False, faults=None, categories=None, files=None):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -105,6 +114,7 @@ class Wave:
         self.lock = lock
         self.faults = list(faults or [])
         self.categories = list(categories or [])
+        self.files = dict(files or {})
 
     def code_lines(self):
         """Return the lines of the code the player reads, numbered from 1 in a review."""
@@ -229,19 +239,21 @@ def load_level(path):
             raise LevelError(f"{path}: a boss level has exactly one [[wave]]")
     for wave_table in data["wave"]:
         wave_number = wave_number + 1
-        waves.append(make_wave(wave_table, f"{path}, wave {wave_number}", allowed_kinds))
+        waves.append(make_wave(wave_table, f"{path}, wave {wave_number}", allowed_kinds,
+                               path.parent))
 
     return Level(level_id, title, world, new_concepts, power_up,
                  cutscene, tips, waves, folder=path.parent, boss=boss,
                  time_limit=time_limit, sprite=sprite)
 
 
-def make_wave(table, place, allowed_kinds=WAVE_KINDS):
+def make_wave(table, place, allowed_kinds=WAVE_KINDS, folder=None):
     """Turn one [[wave]] table into a Wave, checking the parts it needs.
 
     `place` says which file and wave this is, for error messages.
     `allowed_kinds` are the kinds this level may use: the normal three, or
-    only "boss" in a boss level.
+    only "boss" in a boss level. `folder` is the level's folder, where its
+    data files are.
     """
     kind = get_text(table, "kind", place)
     if kind not in allowed_kinds:
@@ -275,6 +287,10 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
     for test in tests:
         test_number = test_number + 1
         check_test(test, f"{place}, test {test_number}")
+
+    files = get_data_files(table, place, folder)
+    for test in tests:
+        add_data(test, files, place, folder)
 
     explanation = None
     if "explanation" in table:
@@ -329,7 +345,53 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         lock=lock,
         faults=faults,
         categories=categories,
+        files=files,
     )
+
+
+def read_data_file(name, place, folder):
+    """Return the text of the data file `name` of the level in `folder`, checked."""
+    if (not isinstance(name, str) or not DATA_FILE_NAME.fullmatch(name)
+            or name.lower().endswith(".py") or name.lower() in RESERVED_FILE_NAMES):
+        raise LevelError(f"{place}: {name!r} is not a plain data file name")
+    if folder is None:
+        raise LevelError(f"{place}: data files need a level folder")
+    path = folder / DATA_FOLDER / name
+    if not path.is_file():
+        raise LevelError(f"{place}: there is no file {DATA_FOLDER}/{name}")
+    if path.stat().st_size > MAX_DATA_FILE_BYTES:
+        raise LevelError(f"{place}: {name} is larger than {MAX_DATA_FILE_BYTES} bytes")
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise LevelError(f"{place}: {name} is not UTF-8 text") from error
+
+
+def get_data_files(table, place, folder):
+    """Return {name: text} for the wave's `files` list."""
+    if "files" not in table:
+        return {}
+    files = {}
+    for name in get_list_of_text(table, "files", place):
+        files[name] = read_data_file(name, place, folder)
+    return files
+
+
+def add_data(test, files, place, folder):
+    """Put the data files this test runs with in test["data"].
+
+    A test's own `files` table puts another file under a wave file's name.
+    """
+    replaced = test.get("files", {})
+    if not isinstance(replaced, dict):
+        raise LevelError(f"{place}: a test's files must be a table")
+    data = dict(files)
+    for name, other in replaced.items():
+        if name not in files:
+            raise LevelError(f"{place}: a test replaces {name!r}, which the wave does not list")
+        data[name] = read_data_file(other, place, folder)
+    if data:
+        test["data"] = data
 
 
 def get_faults(table, place):
@@ -402,6 +464,13 @@ def check_test(test, place):
             raise LevelError(f"{place}: a call test needs an expected value")
         if "args" in test and not isinstance(test["args"], list):
             raise LevelError(f"{place}: args must be a list, like [1, 2]")
+    if kind == "expected_file":
+        wanted = test["expected_file"]
+        if not isinstance(wanted, dict):
+            raise LevelError(f"{place}: expected_file needs a name and contents")
+        get_text(wanted, "contents", place)
+        if not DATA_FILE_NAME.fullmatch(get_text(wanted, "name", place)):
+            raise LevelError(f"{place}: expected_file needs a plain file name")
     if kind == "expected_stdout":
         get_text(test, "expected_stdout", place)
     if kind == "expected_stdout_contains":
@@ -409,7 +478,7 @@ def check_test(test, place):
     if "stdin" in test:
         get_text(test, "stdin", place)
     if "values" in test:
-        if kind not in ("expected_stdout", "expected_stdout_contains"):
+        if kind not in ("expected_stdout", "expected_stdout_contains", "expected_file"):
             raise LevelError(f"{place}: values only goes with an output test")
         if not isinstance(test["values"], dict) or not test["values"]:
             raise LevelError(f"{place}: values must be a table, like {{ capacity = 400 }}")

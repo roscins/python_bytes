@@ -8,6 +8,9 @@ process, in its own temporary folder, with:
   typing;
 - its output captured, so the grader can compare it with what was expected.
 
+A wave's data files are copied into that folder, and what the program writes
+there is read back. The folder is only a throwaway working folder.
+
 This protects the game against mistakes like infinite loops and crashes. It
 is not a security sandbox: players run their own code on their own machine.
 """
@@ -39,15 +42,18 @@ class RunResult:
             crashed, or None when it was stopped by the time limit.
         timed_out: True if the program was stopped by the time limit.
         output_cut: True if stdout or stderr was too long and was cut off.
+        written: {name: text} of the files the program made or changed.
     """
 
-    def __init__(self, stdout, stderr, exit_code, timed_out=False, output_cut=False):
+    def __init__(self, stdout, stderr, exit_code, timed_out=False, output_cut=False,
+                 written=None):
         """Remember every part of the result."""
         self.stdout = stdout
         self.stderr = stderr
         self.exit_code = exit_code
         self.timed_out = timed_out
         self.output_cut = output_cut
+        self.written = written or {}
 
     def finished_cleanly(self):
         """Return True if the program ended by itself, without an error."""
@@ -108,15 +114,36 @@ def shorten_paths(text, folder):
     return text.replace(str(folder) + "/", "").replace(str(folder) + "\\", "")
 
 
-def run_files(files, main_file, stdin_text="", time_limit=DEFAULT_TIME_LIMIT):
+def read_written(folder, code_files, data):
+    """Return {name: text} of the files in `folder` that the program made or changed.
+
+    `code_files` are left out, and so are the `data` files left as they were.
+    Folders are not looked into, and a long file is cut.
+    """
+    written = {}
+    for path in sorted(folder.iterdir()):
+        if path.name in code_files or path.is_symlink() or not path.is_file():
+            continue
+        with open(path, encoding="utf-8", errors="replace") as written_file:
+            text = written_file.read(MAX_OUTPUT_CHARACTERS)
+        if data.get(path.name) != text:
+            written[path.name] = text
+    return written
+
+
+def run_files(files, main_file, stdin_text="", time_limit=DEFAULT_TIME_LIMIT, data=None):
     """Write `files` into a new temporary folder, run `main_file` there, return a RunResult.
 
     `files` is a dict from file name to the file's text, for example
     {"main.py": 'print("HI")'}. `stdin_text` is sent to the program as if
-    it were typed. The folder is deleted afterwards.
+    it were typed. `data` is a dict of data files, copied in the same way.
+    The folder is deleted afterwards.
     """
+    data = data or {}
     with tempfile.TemporaryDirectory() as folder_name:
         folder = Path(folder_name)
+        for name in data:
+            (folder / name).write_text(data[name], encoding="utf-8")
         for name in files:
             (folder / name).write_text(files[name], encoding="utf-8")
 
@@ -149,9 +176,10 @@ def run_files(files, main_file, stdin_text="", time_limit=DEFAULT_TIME_LIMIT):
 
         stdout, stdout_cut = cut_output(stdout)
         stderr, stderr_cut = cut_output(shorten_paths(stderr, folder))
-        return RunResult(stdout, stderr, exit_code, timed_out, stdout_cut or stderr_cut)
+        return RunResult(stdout, stderr, exit_code, timed_out, stdout_cut or stderr_cut,
+                         read_written(folder, files, data))
 
 
-def run_code(code, stdin_text="", time_limit=DEFAULT_TIME_LIMIT):
+def run_code(code, stdin_text="", time_limit=DEFAULT_TIME_LIMIT, data=None):
     """Run one piece of code as main.py and return a RunResult."""
-    return run_files({MAIN_FILE: code}, MAIN_FILE, stdin_text, time_limit)
+    return run_files({MAIN_FILE: code}, MAIN_FILE, stdin_text, time_limit, data)

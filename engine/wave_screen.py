@@ -15,6 +15,7 @@ from engine.boss_turns import submit_to_boss
 from engine.choice_picker import ChoicePicker
 from engine.commands import clear_frames, reveal_text, run_command
 from engine.console import continue_pending
+from engine.data_files import files_line
 from engine.display import split_art_and_message
 from engine.editor import BLANK, Editor
 from engine.focus import Choice
@@ -173,15 +174,23 @@ class WaveScreen:
         self.small = False
         # A boss gave its task on the screens before; its code needs the room.
         if not self.level.boss:
-            self.panel = Panel("TASK", wave.brief.strip().splitlines())
+            self.panel = Panel("TASK", self.task_lines())
         elif self.state.boss_fight is None and not self.passed():
             self.state.boss_fight = BossFight(self.level)
         self.buttons = Choice(self.labels())
 
+    def task_lines(self):
+        """Return the task as lines, with the data files named first."""
+        lines = self.wave().brief.strip().splitlines()
+        named = files_line(self.wave(), keys=True)
+        if named:
+            lines = [named] + lines
+        return lines
+
     def show_panel(self):
         """Show the panel at its full size; with none, show the task."""
         if self.panel is None:
-            self.panel = Panel("TASK", self.wave().brief.strip().splitlines())
+            self.panel = Panel("TASK", self.task_lines())
         self.hidden = False
         self.small = False
 
@@ -607,7 +616,7 @@ class WaveScreen:
             explained, mark = explain_error(syntax_error_of(code), code)
             lines = lines[:1] + explained
         elif crashed:
-            explained, mark = run_report(code)
+            explained, mark = run_report(code, data=self.wave().files)
             if mark is not None:
                 lines = lines[:1] + explained
         self.show_result("RESULTS", lines, mark)
@@ -640,7 +649,7 @@ class WaveScreen:
                 self.on_buttons = False
                 return
             stdin_text = self.input_editor.text()
-        lines, mark = run_report(code, stdin_text)
+        lines, mark = run_report(code, stdin_text, self.wave().files)
         self.show_result("RUN (not graded)", lines, mark)
 
     def hint(self):
@@ -684,7 +693,7 @@ class WaveScreen:
     def help(self):
         """Show the task and the keys on a screen of their own."""
         keys = HELP_KEYS if self.picker is None else self.picker.help_lines
-        lines = ["TASK"] + self.wave().brief.strip().splitlines() + ["", "KEYS"] + keys
+        lines = ["TASK"] + self.task_lines() + ["", "KEYS"] + keys
         self.display.browse(self.display.pages_of("\n".join(lines)))
 
     # ---- Ctrl-E

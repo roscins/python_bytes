@@ -52,11 +52,12 @@ def console_variables(state):
     return state.repl.variables()
 
 
-def wave_variables(code):
+def wave_variables(code, data=None):
     """Run `code` in a fresh console and return the variable descriptions it leaves."""
     if BLANK in code:
         raise NotAllowed(f"There is still a {BLANK} blank in your code. Replace it first.")
     session = ReplSession(DEFAULT_TIME_LIMIT)
+    session.data = dict(data or {})
     try:
         session.run(code, whole_program=True)
         return session.variables()
@@ -71,7 +72,8 @@ def variable_values(state, tree):
         return {}
     level = state.find_level(state.current_level)
     if state.coding and level is not None:
-        variables = wave_variables(state.wave_text(level, state.current_wave))
+        variables = wave_variables(state.wave_text(level, state.current_wave),
+                                   state.wave_files())
     else:
         variables = console_variables(state)
     values = {}

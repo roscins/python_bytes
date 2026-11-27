@@ -23,6 +23,7 @@ TEST_KINDS = [
     "require",
     "forbid",
     "require_comment",
+    "expected_file",
 ]
 
 # Friendly names for the Python constructs levels ask for most. Any other
@@ -234,7 +235,7 @@ def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
     code, problem = code_for_test(test, code)
     if problem:
         return CheckResult(False, name, problem)
-    result = run_code(code, test.get("stdin", ""), time_limit)
+    result = run_code(code, test.get("stdin", ""), time_limit, test.get("data"))
     problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem, error_text=traceback_of(test, result))
@@ -254,7 +255,7 @@ def check_expected_stdout_contains(test, code, time_limit=DEFAULT_TIME_LIMIT):
     code, problem = code_for_test(test, code)
     if problem:
         return CheckResult(False, name, problem)
-    result = run_code(code, test.get("stdin", ""), time_limit)
+    result = run_code(code, test.get("stdin", ""), time_limit, test.get("data"))
     problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem, error_text=traceback_of(test, result))
@@ -299,6 +300,31 @@ def values_match(got, expected):
     return got == expected
 
 
+def check_expected_file(test, code, time_limit=DEFAULT_TIME_LIMIT):
+    """After the run, the file test["expected_file"]["name"] must hold its "contents"."""
+    wanted = test["expected_file"]
+    file_name = wanted["name"]
+    name = f"writes the right {file_name}" + input_note(test)
+    code, problem = code_for_test(test, code)
+    if problem:
+        return CheckResult(False, name, problem)
+    data = test.get("data", {})
+    result = run_code(code, test.get("stdin", ""), time_limit, data)
+    problem = problem_with_run(result, time_limit)
+    if problem:
+        return CheckResult(False, name, problem, error_text=traceback_of(test, result))
+    written = result.written.get(file_name, data.get(file_name))
+    if written is None:
+        return CheckResult(False, name, f"Your program did not write {file_name}.")
+    expected = normalise_output(wanted["contents"])
+    found = normalise_output(written)
+    if found == expected:
+        return CheckResult(True, name)
+    message = (f"Expected in {file_name}:\n" + indent_block(expected)
+               + "\nYour file holds:\n" + indent_block(found))
+    return CheckResult(False, name, message, expected=expected, printed=found)
+
+
 def call_text(test):
     """Return the call a function test makes, for example "distance(3, 4)"."""
     arguments = []
@@ -322,7 +348,8 @@ def check_call(test, code, time_limit=DEFAULT_TIME_LIMIT):
     name = f"{call} returns {test['expected']!r}"
     call_json = json.dumps({"name": test["call"], "args": test.get("args", [])})
     files = {PLAYER_FILE: code, CALL_FILE: call_json, CALL_SCRIPT_FILE: CALL_SCRIPT}
-    result = run_files(files, CALL_SCRIPT_FILE, test.get("stdin", ""), time_limit)
+    result = run_files(files, CALL_SCRIPT_FILE, test.get("stdin", ""), time_limit,
+                       test.get("data"))
     problem = problem_with_run(result, time_limit)
     if problem:
         return CheckResult(False, name, problem, error_text=traceback_of(test, result))
@@ -428,6 +455,7 @@ CHECK_FUNCTIONS = {
     "expected_stdout": check_expected_stdout,
     "expected_stdout_contains": check_expected_stdout_contains,
     "call": check_call,
+    "expected_file": check_expected_file,
     "require": check_require,
     "forbid": check_forbid,
     "require_comment": check_require_comment,
@@ -443,7 +471,7 @@ def test_kind(test):
 
 
 # The kinds of test that run the player's program, and so have a time limit.
-RUNNING_KINDS = ["expected_stdout", "expected_stdout_contains", "call"]
+RUNNING_KINDS = ["expected_stdout", "expected_stdout_contains", "call", "expected_file"]
 
 
 def run_check(test, code, time_limit=DEFAULT_TIME_LIMIT):

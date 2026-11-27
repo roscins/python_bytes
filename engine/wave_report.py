@@ -2,6 +2,7 @@
 
 import re
 
+from engine.data_files import written_lines
 from engine.friendly import PLAYER_FILES, friendly_for_source, friendly_timeout
 from engine.results_screen import CROSS, TICK, results_text
 from engine.scoring import GUESSES_BEFORE_REVEAL
@@ -135,15 +136,16 @@ def submit_report(level, submission, reward, progress):
     return lines, mark
 
 
-def run_report(code, stdin_text=""):
+def run_report(code, stdin_text="", data=None):
     """Run `code` without grading; return (panel lines, Mark or None)."""
-    result = run_code(code, stdin_text)
+    result = run_code(code, stdin_text, data=data)
     lines = []
     mark = None
     if result.stdout.strip() != "":
         lines = result.stdout.rstrip("\n").split("\n")
     elif result.finished_cleanly():
         lines = ["(no output)"]
+    lines.extend(written_lines(result.written))
     if result.timed_out:
         lines.append(friendly_timeout(DEFAULT_TIME_LIMIT).headline)
     elif result.exit_code != 0:
