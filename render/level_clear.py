@@ -104,6 +104,17 @@ def reward_block(score, coins_shown, power_up_text):
     return [f"SCORE {score} %", f"COINS +{coins_shown}", power_up_text]
 
 
+def level_clear_text(level_id, title, score, stars, coins_gained, power_up):
+    """Return the level-clear screen as words only, for the plain mode."""
+    lines = [f"LEVEL {level_id} CLEARED · {title.upper()}",
+             "STARS " + "★" * stars + "☆" * (MAX_STARS - stars)]
+    power_up_text = ""
+    if power_up:
+        power_up_text = NEW_COMMAND + power_up
+    lines.extend(reward_block(score, coins_gained, power_up_text))
+    return "\n".join(lines).rstrip()
+
+
 def level_clear_frames(level_id, title, score, stars, coins_gained, power_up, art):
     """Return the frames of the level-clear animation.
 
