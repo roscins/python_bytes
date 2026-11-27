@@ -12,7 +12,7 @@ earned by clearing the level and stays for the rest of the game.
   `Clear 1-3 to earn calc.`
 - **Free.** No coins, and no effect on score, stars or combo.
 - **Boss fights:** every power-up works there; none shows the hidden tests.
-- **Predict waves:** inside one, every power-up is refused, like `:run`. While
+- **Predict waves:** inside an unanswered one, every power-up is refused. While
   a predict wave is unanswered, nothing can run code anywhere (see below).
 - **Your own names still work.** Today a command name wins over Python, so
   `read = 5` would run the command. A line where the name is followed by `=`
