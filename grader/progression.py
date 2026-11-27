@@ -338,6 +338,9 @@ def code_fields(level):
         if wave.mode == "predict":
             fields.append((place + " code", wave.code))
             continue
+        if wave.mode == "review":
+            fields.append((place + " code", wave.code))
+            continue
         if wave.is_quiz():
             for question in wave.questions:
                 if "code" in question:

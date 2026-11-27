@@ -20,6 +20,7 @@ from engine.editor import BLANK, Editor
 from engine.focus import Choice
 from engine.hints import ask_for_hint, hint_lines
 from engine.predict_lock import locked_message
+from engine.review_picker import ReviewPicker
 from engine.progression_help import next_level_to_play
 from engine.rewards import apply_submission
 from engine.scoring import HINT_NAMES, HINT_PRICES, is_unlocked
@@ -154,7 +155,11 @@ class WaveScreen:
         self.editor = Editor(text, blanks=wave.kind == "fill-in")
         self.synced = list(self.editor.lines)
         self.place_cursor()
-        self.picker = ChoicePicker(wave, text) if wave.is_quiz() else None
+        self.picker = None
+        if wave.mode == "choice":
+            self.picker = ChoicePicker(wave, text)
+        elif wave.mode == "review":
+            self.picker = ReviewPicker(wave, text)
         self.view = View()
         self.input_editor = None
         self.mark = None
@@ -451,7 +456,9 @@ class WaveScreen:
 
     def escape(self):
         """Cancel the input, hide the panel, or go between editor and buttons."""
-        if self.input_editor is not None:
+        if self.picker is not None and self.picker.choosing and not self.on_buttons:
+            self.press_in_picker("escape")
+        elif self.input_editor is not None:
             self.input_editor = None
             self.panel = None
             self.on_buttons = False

@@ -111,6 +111,14 @@ def wave_screen_text(level, number, buffer_text, plain=False, color=False):
         lines.extend(code_lines(wave.code, color))
         lines.append("")
         lines.append("YOUR ANSWER (what it prints):")
+    elif wave.mode == "review":
+        lines.append("")
+        lines.extend(numbered_code("\n".join(wave.code_lines()), plain, color))
+        lines.append("")
+        for letter, category in zip(LETTERS, wave.categories):
+            lines.append(f"   {letter}) {category}")
+        lines.append("")
+        lines.append(f"YOUR ANSWERS (line: letter, one for each of {len(wave.faults)} faults):")
     elif wave.is_quiz():
         lines.extend(question_lines(wave, color))
         lines.append("")

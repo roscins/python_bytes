@@ -1,7 +1,8 @@
 """The answer sheet of a quiz wave: reading it, writing it and grading it.
 
 A sheet is text with one answer per line, "number: letter", for example
-"2: b". The key screens write the sheet; in plain mode the player types it.
+"2: b". The number is a question (choice waves) or a code line (review
+waves). The key screens write the sheet; in plain mode the player types it.
 """
 
 import re
@@ -43,19 +44,36 @@ def write_sheet(answers):
     return "".join(lines)
 
 
+def choices_for(wave, number):
+    """Return (the allowed letters for `number`, why the number is not allowed)."""
+    if wave.mode == "review":
+        if not 1 <= number <= len(wave.code_lines()):
+            return "", f"The code has no line {number}."
+        return LETTERS[:len(wave.categories)], ""
+    if not 1 <= number <= len(wave.questions):
+        return "", f"There is no question {number}."
+    return LETTERS[:len(wave.questions[number - 1]["options"])], ""
+
+
 def sheet_problem(wave, text):
-    """Return why `text` cannot be graded for `wave`, or "" if it can."""
+    """Return why `text` cannot be graded for `wave`, or "" if it can.
+
+    A review sheet may not mark more lines than there are faults, so that
+    marking every line cannot score.
+    """
     answers, problem = read_sheet(text)
     if problem:
         return problem
     if not answers:
         return "You have not answered yet. Answer first, then submit."
+    if wave.mode == "review" and len(answers) > len(wave.faults):
+        return f"Mark at most as many lines as there are faults: {len(wave.faults)}."
     for number, letter in answers.items():
-        if not 1 <= number <= len(wave.questions):
-            return f"There is no question {number}."
-        letters = LETTERS[:len(wave.questions[number - 1]["options"])]
+        letters, problem = choices_for(wave, number)
+        if problem:
+            return problem
         if letter not in letters:
-            return f"Question {number} has the letters {', '.join(letters)}."
+            return f"The letters for {number} are {', '.join(letters)}."
     return ""
 
 
@@ -67,17 +85,41 @@ def key_sheet(questions):
     return write_sheet(answers)
 
 
+def fault_sheet(faults):
+    """Return the right sheet for a list of faults."""
+    answers = {}
+    for fault in faults:
+        answers[fault["line"]] = fault["category"]
+    return write_sheet(answers)
+
+
+def check(passed, name, message):
+    """Return a CheckResult that has `message` only if it failed."""
+    if passed:
+        return CheckResult(True, name)
+    return CheckResult(False, name, message)
+
+
 def grade_sheet(wave, text):
-    """Return one CheckResult per question of `wave` for the sheet `text`."""
+    """Return the CheckResults of the sheet `text`.
+
+    A choice wave has one check per question. A review wave has two per
+    fault: the line is marked, and it has the right category.
+    """
     problem = sheet_problem(wave, text)
     if problem:
         return [CheckResult(False, "answers the questions", problem)]
     answers, _ = read_sheet(text)
     checks = []
+    if wave.mode == "review":
+        for number, fault in enumerate(wave.faults, start=1):
+            marked = answers.get(fault["line"])
+            checks.append(check(marked is not None, f"finds fault {number}",
+                                f"Fault {number} is not marked yet."))
+            checks.append(check(marked == fault["category"], f"names fault {number}",
+                                f"Fault {number} does not have its right name yet."))
+        return checks
     for number, question in enumerate(wave.questions, start=1):
-        name = f"answers question {number}"
-        if answers.get(number) == question["answer"]:
-            checks.append(CheckResult(True, name))
-        else:
-            checks.append(CheckResult(False, name, f"Question {number} is not right yet."))
+        checks.append(check(answers.get(number) == question["answer"],
+                            f"answers question {number}", f"Question {number} is not right yet."))
     return checks
