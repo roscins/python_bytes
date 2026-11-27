@@ -283,6 +283,14 @@ def check_test(test, place):
         get_list_of_text(test, "expected_stdout_contains", place)
     if "stdin" in test:
         get_text(test, "stdin", place)
+    if "values" in test:
+        if kind not in ("expected_stdout", "expected_stdout_contains"):
+            raise LevelError(f"{place}: values only goes with an output test")
+        if not isinstance(test["values"], dict) or not test["values"]:
+            raise LevelError(f"{place}: values must be a table, like {{ capacity = 400 }}")
+        for value in test["values"].values():
+            if not isinstance(value, (str, int, float, bool)):
+                raise LevelError(f"{place}: a value must be text, a number, true or false")
 
 
 def get_text(table, key, place):

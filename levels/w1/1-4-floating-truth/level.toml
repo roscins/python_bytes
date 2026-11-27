@@ -58,7 +58,11 @@ hints = [
 expected_stdout = "False\nTrue\n"
 
 [[wave.test]]
-require = ["Compare"]
+require = ["Name", "Compare"]
+
+[[wave.test]]
+expected_stdout = "True\nTrue\n"
+values = { total = 0.3 }
 
 [[wave]]
 kind = "build"
@@ -99,10 +103,14 @@ hints = [
 expected_stdout = "Exact: False\nAbsolute: True\nRelative: False\n"
 
 [[wave.test]]
-require = ["Compare"]
+require = ["Name", "BinOp", "Compare"]
 
 [[wave.test]]
 require_comment = true
+
+[[wave.test]]
+expected_stdout = "Exact: False\nAbsolute: True\nRelative: True\n"
+values = { reading_a = 50.4, reading_b = 50.0 }
 
 [[wave]]
 kind = "debug"

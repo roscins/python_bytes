@@ -63,7 +63,9 @@ Each `[[wave.test]]` table has exactly one of these keys:
 | `forbid = ["For"]` | the code uses none of them |
 | `require_comment = true` | the code has a `#` comment |
 
-`stdin = "..."` gives fake input to the first three. Build waves are also scored on code quality: snake_case names, 4-space indents, a comment, and docstrings on functions and classes.
+`stdin = "..."` gives fake input to the first three.
+
+`values = { capacity = 400 }` goes with the first two: the first line `capacity = ...` of the player's code gets this value before it runs. Use it in every code wave from 1-2, so that printing the expected text cannot pass. The brief or starter must name the variable. Build waves are also scored on code quality: snake_case names, 4-space indents, a comment, and docstrings on functions and classes.
 
 ## Boss levels
 

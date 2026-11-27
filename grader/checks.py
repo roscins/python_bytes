@@ -32,6 +32,9 @@ CONSTRUCT_NAMES = {
     "AugAssign": "an update like += or -=",
     "BinOp": "an arithmetic operator",
     "Compare": "a comparison",
+    "Name": "a variable",
+    "Subscript": "indexing or slicing",
+    "Slice": "a slice like [0:5]",
     "BoolOp": "and / or",
     "If": "an if statement",
     "While": "a while loop",
@@ -161,9 +164,56 @@ def input_note(test):
     return ""
 
 
+def values_note(test):
+    """Return " when capacity = 400" for a test that changes values, or ""."""
+    if "values" not in test:
+        return ""
+    changes = []
+    for variable, value in test["values"].items():
+        changes.append(f"{variable} = {value!r}")
+    return " when " + ", ".join(changes)
+
+
+def change_values(code, values):
+    """Return (new code, missing names): `code` with other values for some variables.
+
+    For each name in `values`, the first top-level line `name = ...` gets the
+    new value. A program that really works from its variables then prints
+    something else; a program that only prints the expected text does not.
+    `code` must be readable by Python.
+    """
+    tree = ast.parse(code)
+    missing = list(values)
+    for statement in tree.body:
+        if not isinstance(statement, ast.Assign) or len(statement.targets) != 1:
+            continue
+        target = statement.targets[0]
+        if isinstance(target, ast.Name) and target.id in missing:
+            statement.value = ast.Constant(values[target.id])
+            missing.remove(target.id)
+    return ast.unparse(tree), missing
+
+
+def code_for_test(test, code):
+    """Return (the code to run, "") or (None, why the test cannot change its values)."""
+    if "values" not in test:
+        return code, ""
+    problem = parse_problem(code)
+    if problem:
+        return None, problem
+    changed, missing = change_values(code, test["values"])
+    if missing:
+        return None, (f"Keep a line  {missing[0]} = ...  in your code: the grader gives "
+                      "it another value to test your program.")
+    return changed, ""
+
+
 def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """The program must print exactly test["expected_stdout"]."""
-    name = "prints the right output" + input_note(test)
+    name = "prints the right output" + values_note(test) + input_note(test)
+    code, problem = code_for_test(test, code)
+    if problem:
+        return CheckResult(False, name, problem)
     result = run_code(code, test.get("stdin", ""), time_limit)
     problem = problem_with_run(result, time_limit)
     if problem:
@@ -180,7 +230,10 @@ def check_expected_stdout(test, code, time_limit=DEFAULT_TIME_LIMIT):
 def check_expected_stdout_contains(test, code, time_limit=DEFAULT_TIME_LIMIT):
     """Every text in test["expected_stdout_contains"] must appear in the output."""
     pieces = test["expected_stdout_contains"]
-    name = "prints " + ", ".join(pieces) + input_note(test)
+    name = "prints " + ", ".join(pieces) + values_note(test) + input_note(test)
+    code, problem = code_for_test(test, code)
+    if problem:
+        return CheckResult(False, name, problem)
     result = run_code(code, test.get("stdin", ""), time_limit)
     problem = problem_with_run(result, time_limit)
     if problem:

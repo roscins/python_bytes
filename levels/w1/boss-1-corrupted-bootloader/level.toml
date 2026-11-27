@@ -87,3 +87,7 @@ require = ["Subscript"]
 
 [[wave.test]]
 expected_stdout = "UNIT SNEK\nVOLTS 3.70\nCELLS 3\nTOTAL 11.1\nMATCH True\n"
+
+[[wave.test]]
+expected_stdout = "UNIT BOLT\nVOLTS 7.40\nCELLS 2\nTOTAL 14.8\nMATCH False\n"
+values = { raw = "  unit:bolt|volts:7.4|cells:2  " }

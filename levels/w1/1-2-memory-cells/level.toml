@@ -58,7 +58,11 @@ hints = [
 expected_stdout = "Snek\n12\n"
 
 [[wave.test]]
-require = ["Assign"]
+require = ["Assign", "Name"]
+
+[[wave.test]]
+expected_stdout = "Bolt\n47\n"
+values = { unit_name = "Bolt", battery_level = 47 }
 
 [[wave]]
 kind = "build"
@@ -99,7 +103,11 @@ hints = [
 expected_stdout = "SN-7\n87.5\nTrue\n<class 'float'>\n"
 
 [[wave.test]]
-require = ["Assign"]
+require = ["Assign", "Name"]
+
+[[wave.test]]
+expected_stdout = "XR-2\n40\nTrue\n<class 'int'>\n"
+values = { serial_number = "XR-2", battery_level = 40 }
 
 [[wave]]
 kind = "debug"

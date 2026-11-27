@@ -94,6 +94,52 @@ class TestBossOne(unittest.TestCase):
             self.assertEqual(len(row), 16)
 
 
+def code_waves():
+    """Yield (level id, wave) for every World 1 wave where code is written, from 1-2 on.
+
+    1-1 teaches print() and text, so there printing the text is the task. A
+    predict wave asks for the output itself.
+    """
+    for level in load_levels(LEVELS_FOLDER):
+        if level.world == 1 and level.id != "1-1":
+            for wave in level.waves:
+                if wave.mode != "predict":
+                    yield level.id, wave
+
+
+class TestPrintingTheAnswerFails(unittest.TestCase):
+    """Typing the expected output into print() must not pass a wave."""
+
+    def cheat_for(self, wave):
+        """Return a program that sets the tested variables, then only prints the expected text."""
+        lines = ["# cheat"]
+        expected = ""
+        for test in wave.tests:
+            if "values" in test:
+                for name in test["values"]:
+                    lines.append(f"{name} = 1")
+            elif "expected_stdout" in test:
+                expected = test["expected_stdout"]
+        # Dead code that uses every construct the wave asks for.
+        lines.append('padding = "abc"')
+        lines.append('unused = f"{padding[0:1]}" == str(1 + 1)')
+        lines.append(f"print({expected.rstrip()!r})")
+        return "\n".join(lines) + "\n"
+
+    def test_every_code_wave_has_a_changed_values_test(self):
+        """Each code wave runs the player's code with other data."""
+        for level_id, wave in code_waves():
+            with self.subTest(level=level_id, wave=wave.kind):
+                self.assertTrue(any("values" in test for test in wave.tests))
+
+    def test_print_only_cheats_fail(self):
+        """The cheat prints the right text and still does not pass."""
+        for level_id, wave in code_waves():
+            with self.subTest(level=level_id, wave=wave.kind):
+                result = grade_wave(wave, self.cheat_for(wave))
+                self.assertFalse(result.all_passed())
+
+
 class TestWorldOneThroughTheGame(unittest.TestCase):
     """A new player can clear the whole of World 1 in one sitting."""
 
