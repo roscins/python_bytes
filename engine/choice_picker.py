@@ -15,6 +15,9 @@ class ChoicePicker:
         option: the index of the option the cursor is on.
     """
 
+    # A choice wave has no list to close with Esc.
+    choosing = False
+
     footer = "↑↓ option  ←→ question  Enter pick  ^S submit  ^T hint  ^O map"
 
     help_lines = [

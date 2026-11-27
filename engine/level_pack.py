@@ -13,7 +13,7 @@ import ast
 import tomllib
 from pathlib import Path
 
-from grader.answer_sheet import LETTERS, key_sheet
+from grader.answer_sheet import LETTERS, fault_sheet, key_sheet
 from grader.checks import TEST_KINDS
 
 # The three kinds of wave a level can have, in the order the guide lists them.
@@ -21,8 +21,8 @@ WAVE_KINDS = ["fill-in", "build", "debug"]
 
 # The ways a wave can be answered without writing code. A quiz wave is
 # answered with an answer sheet (see grader/answer_sheet.py).
-MODES = ["predict", "choice"]
-QUIZ_MODES = ["choice"]
+MODES = ["predict", "choice", "review"]
+QUIZ_MODES = ["choice", "review"]
 
 # Quiz modes are only for these kinds of wave: a build wave scores code
 # quality, and a boss is graded by tests.
@@ -30,6 +30,7 @@ QUIZ_KINDS = ["fill-in", "debug"]
 
 MIN_QUESTIONS, MAX_QUESTIONS = 1, 6
 MIN_OPTIONS, MAX_OPTIONS = 2, len(LETTERS)
+MIN_FAULTS, MAX_FAULTS = 1, 4
 
 # A boss level has exactly one wave, of this kind.
 BOSS_WAVE_KIND = "boss"
@@ -56,15 +57,18 @@ class Wave:
     Attributes:
         kind: "fill-in", "build" or "debug".
         brief: the task, as the player reads it.
-        mode: "predict", "choice" or None (the player writes code).
+        mode: "predict", "choice", "review" or None (the player writes code).
         starter: code the player starts from (fill-in waves), or None.
-        code: code the player reads (predict waves), or None.
+        code: code the player reads (predict and review waves), or None.
         reference: a solution that must pass, or None for predict waves.
         wrong: a typical mistake that must fail.
         answer: the right output (predict waves) or the right answer sheet
             (quiz waves), or None.
         questions: a choice wave's questions, dicts with "ask", "options",
             "answer", "explanation" and optionally "code".
+        faults: a review wave's faults, dicts with "line", "category" and
+            "explanation".
+        categories: what a review wave's faults can be called.
         lock: True if the console is locked while this wave is open.
         tests: a list of dicts, one per [[wave.test]] in the file.
         hints: the wave's three hints (nudge, outline, partial solution),
@@ -78,7 +82,7 @@ class Wave:
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
                  reference=None, wrong=None, answer=None, tests=None, hints=None,
                  time_limit=None, explanation=None, goal=None, questions=None,
-                 lock=False):
+                 lock=False, faults=None, categories=None):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -99,6 +103,12 @@ class Wave:
         self.goal = goal
         self.questions = list(questions or [])
         self.lock = lock
+        self.faults = list(faults or [])
+        self.categories = list(categories or [])
+
+    def code_lines(self):
+        """Return the lines of the code the player reads, numbered from 1 in a review."""
+        return (self.code or "").strip().splitlines()
 
     def is_quiz(self):
         """Return True if the wave is answered with an answer sheet."""
@@ -292,9 +302,14 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
     if mode == "choice":
         questions = get_questions(table, place)
         answer = key_sheet(questions)
+    faults = []
+    categories = []
+    if mode == "review":
+        faults, categories = get_faults(table, place)
+        answer = fault_sheet(faults)
     lock = table.get("lock", False)
-    if not isinstance(lock, bool):
-        raise LevelError(f"{place}: lock must be true or false")
+    if not isinstance(lock, bool) or (lock and mode != "choice"):
+        raise LevelError(f"{place}: lock must be true or false, and only a choice wave can set it")
 
     return Wave(
         kind,
@@ -312,7 +327,32 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         goal=goal,
         questions=questions,
         lock=lock,
+        faults=faults,
+        categories=categories,
     )
+
+
+def get_faults(table, place):
+    """Return (faults, categories) of a review wave, checked."""
+    line_count = len(get_text(table, "code", place).strip().splitlines())
+    categories = get_list_of_text(table, "categories", place)
+    if not MIN_OPTIONS <= len(categories) <= MAX_OPTIONS:
+        raise LevelError(f"{place}: needs {MIN_OPTIONS} to {MAX_OPTIONS} categories")
+    faults = table.get("fault", [])
+    if not isinstance(faults, list) or not MIN_FAULTS <= len(faults) <= MAX_FAULTS:
+        raise LevelError(f"{place}: a review wave has {MIN_FAULTS} to {MAX_FAULTS} "
+                         "[[wave.fault]] tables")
+    lines = []
+    for number, fault in enumerate(faults, start=1):
+        where = f"{place}, fault {number}"
+        line = get_whole_number(fault, "line", where)
+        if not 1 <= line <= line_count or line in lines:
+            raise LevelError(f"{where}: line must be a line of the code, one fault per line")
+        lines.append(line)
+        get_text(fault, "explanation", where)
+        if get_text(fault, "category", where) not in list(LETTERS[:len(categories)]):
+            raise LevelError(f"{where}: category must be the letter of one of the categories")
+    return faults, categories
 
 
 def get_questions(table, place):

@@ -18,6 +18,8 @@ MAX_BRIEF_SENTENCES = 5
 MIN_TESTS_PER_WAVE = 2
 MAX_GOAL_LENGTH = 60
 MAX_QUESTION_CODE_LINES = 8
+MAX_REVIEW_CODE_LINES = 30
+MAX_REVIEW_LINE_LENGTH = 60
 STORY_MARK = "# >>"
 
 # A debug wave holds at most this much code: 10 lines, and from World 3, 30.
@@ -81,6 +83,8 @@ def player_texts(level):
         for question in wave.questions:
             for text in [question["ask"], question["explanation"]] + question["options"]:
                 texts.append((place + " question", text))
+        for text in wave.categories + [fault["explanation"] for fault in wave.faults]:
+            texts.append((place + " review", text))
     return texts
 
 
@@ -112,6 +116,8 @@ def check_wave(world, number, wave):
         if grade_wave(wave, wave.wrong).all_passed():
             problems.append(f"{place} wrong answers are right")
         problems.extend(check_question_code(place, wave))
+        if wave.mode == "review":
+            problems.extend(check_review_code(place, wave))
     elif wave.mode == "predict":
         if wave.answer.strip() == wave.wrong.strip():
             problems.append(f"{place} answer and wrong are the same")
@@ -156,6 +162,21 @@ def check_question_code(place, wave):
         if count_lines(code) > MAX_QUESTION_CODE_LINES:
             problems.append(f"{place} question {number} code has more than "
                             f"{MAX_QUESTION_CODE_LINES} lines")
+    return problems
+
+
+def check_review_code(place, wave):
+    """Return the problems of the code a review wave shows."""
+    problems = []
+    if not is_valid_python(wave.code):
+        problems.append(f"{place} code is not valid Python")
+    lines = wave.code_lines()
+    if len(lines) > MAX_REVIEW_CODE_LINES:
+        problems.append(f"{place} code has more than {MAX_REVIEW_CODE_LINES} lines")
+    for line in lines:
+        if len(line) > MAX_REVIEW_LINE_LENGTH:
+            problems.append(f"{place} code has a line over {MAX_REVIEW_LINE_LENGTH} characters")
+            break
     return problems
 
 

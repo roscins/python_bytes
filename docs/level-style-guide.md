@@ -190,3 +190,18 @@ explanation = "A list keeps order and repeats."
 ```
 
 A question has 2 to 5 options and one right letter, and may show `code` of at most 8 lines. The console is locked while a wave with question code is open; set `lock = true` for a question about code behaviour that shows none. After 3 failed submits the answers are shown.
+
+## Review waves
+
+A `fill-in` or `debug` wave with `mode = "review"` shows a solution to review. The player marks each faulty line with Space and picks a category; in plain mode they type `4: a` (line, category). It has `code` (at most 30 lines of 60 characters), 2 to 5 `categories`, 1 to 4 faults and a `wrong` sheet.
+
+```toml
+categories = ["wrong boundary", "unclear name", "missing check"]
+
+[[wave.fault]]
+line = 4
+category = "a"
+explanation = "< leaves out the limit itself."
+```
+
+The player may mark only as many lines as there are faults. After 3 failed submits the faults are shown. Review waves do not lock the console.

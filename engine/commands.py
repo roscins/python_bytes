@@ -202,6 +202,12 @@ def reveal_text(wave):
             option = question["options"][LETTERS.index(question["answer"])]
             lines.append(f"  {number}: {question['answer']}) {option}")
             lines.append(f"     {question['explanation'].strip()}")
+    elif wave.mode == "review":
+        lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The faults are:"]
+        for fault in wave.faults:
+            category = wave.categories[LETTERS.index(fault["category"])]
+            lines.append(f"  line {fault['line']}: {fault['category']}) {category}")
+            lines.append(f"     {fault['explanation'].strip()}")
     else:
         lines = [f"That was guess {GUESSES_BEFORE_REVEAL}. The program prints:"]
         for line in wave.answer.rstrip("\n").split("\n"):
