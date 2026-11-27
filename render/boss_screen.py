@@ -74,12 +74,12 @@ def header(level_id, title, lives_left):
     return left + " " * gap + right
 
 
-def health_bar(hp_left, hp_total):
+def health_bar(hp_left, hp_total, full=FULL_BLOCK, empty=EMPTY_BLOCK):
     """Return the health bar line, for example "BOSS HP [████░░░░]  2 of 4 hidden tests ..."."""
     filled = 0
     if hp_total > 0:
         filled = round(BAR_BLOCKS * hp_left / hp_total)
-    bar = FULL_BLOCK * filled + EMPTY_BLOCK * (BAR_BLOCKS - filled)
+    bar = full * filled + empty * (BAR_BLOCKS - filled)
     tests_word = "tests"
     if hp_total == 1:
         tests_word = "test"
@@ -114,6 +114,14 @@ def boss_screen(level_id, title, hp_left, hp_total, lives_left, seconds_left, ar
     lines.extend(boss_picture(lives_left, art))
     lines.append(health_bar(hp_left, hp_total))
     lines.append(timer_text(seconds_left))
+    return "\n".join(lines)
+
+
+def boss_text(level_id, title, hp_left, hp_total, lives_left, seconds_left):
+    """Return the boss screen as words only, for the plain mode: no picture and no box characters."""
+    lines = [header(level_id, title, lives_left),
+             health_bar(hp_left, hp_total, full="#", empty="-"),
+             timer_text(seconds_left)]
     return "\n".join(lines)
 
 

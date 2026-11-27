@@ -25,8 +25,8 @@ from engine.rewards import apply_submission
 from engine.scoring import is_unlocked
 from engine.submission import grade_text
 from engine.workspace import export_wave
-from render.level_clear import level_clear_frames, load_clear_art
-from render.world_map import load_map_art, map_screen, slither_frames
+from render.level_clear import level_clear_frames, level_clear_text, load_clear_art
+from render.world_map import load_map_art, map_screen, slither_frames, text_map
 
 
 def parse_command(line):
@@ -103,10 +103,15 @@ def do_map(state, arguments):
     ids = level_ids(world_slots)
     status = map_status(state, world_slots)
     current = state.find_level(state.current_level)
+    snek_index = None
+    if current is not None:
+        snek_index = ids.index(current.id)
+    if state.plain:
+        picture = text_map(world, ids, snek_index, status)
+    else:
+        picture = map_screen(world, ids, snek_index, load_map_art(), status)
     if current is None:
-        picture = map_screen(world, ids, None, load_map_art(), status)
         return picture + "\n\nType play <level> to start, for example: play " + ids[0]
-    picture = map_screen(world, ids, ids.index(current.id), load_map_art(), status)
     return picture + f"\n\nYou are at [{current.id}] {current.title}."
 
 
@@ -140,7 +145,8 @@ def do_play(state, arguments):
         intro = boss_intro_text(level) + "\n\n" + start_boss_fight(state, level) + "\n\n" + HELP_LINE
     else:
         intro = intro_text(level) + "\n\n" + show_wave(state)
-    if previous is None or previous.world != level.world or previous.id == level.id:
+    # The plain mode has no pictures, so Snek does not slither there.
+    if state.plain or previous is None or previous.world != level.world or previous.id == level.id:
         return intro
     world_slots = state.slots_in_world(level.world)
     ids = level_ids(world_slots)
@@ -188,6 +194,9 @@ def do_submit(state, arguments):
     results = results + "\n\n" + advance_after_submit(state, level, number, submission.result)
     if not reward.cleared_now and reward.stars <= reward.old_stars:
         return results
+    if state.plain:
+        return level_clear_text(level.id, level.title, reward.best_score, reward.stars,
+                                reward.coins_gained, level.power_up) + "\n\n" + results
     frames = level_clear_frames(level.id, level.title, reward.best_score, reward.stars,
                                 reward.coins_gained, level.power_up, load_clear_art())
     frames[-1] = frames[-1] + "\n\n" + results
