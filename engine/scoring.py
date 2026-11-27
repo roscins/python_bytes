@@ -30,6 +30,11 @@ QUALITY_COINS = 5
 # A new player starts with enough coins for one nudge.
 STARTING_COINS = 10
 
+# A predict wave shows its answer after this many wrong guesses, and then
+# counts at this share of its score.
+GUESSES_BEFORE_REVEAL = 3
+REVEALED_SHARE = 0.5
+
 # The three hint levels, cheapest first, with their prices in coins.
 HINT_NAMES = ["nudge", "outline", "partial solution"]
 HINT_PRICES = [5, 15, 30]

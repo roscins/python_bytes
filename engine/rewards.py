@@ -8,6 +8,7 @@ engine/scoring.py.
 from engine.roadmap import is_written
 from engine.scoring import (
     FIRST_TRY_COINS,
+    GUESSES_BEFORE_REVEAL,
     QUALITY_COINS,
     combo_multiplier,
     level_score,
@@ -104,6 +105,13 @@ def update_wave(state, progress, submission):
     else:
         state.combo = 0
 
+    # The third wrong prediction: the answer is shown and the wave is done.
+    # A passed wave is never graded again, so every earlier attempt was wrong.
+    if (submission.wave.mode == "predict" and not result.all_passed()
+            and progress.wave_attempts[index] >= GUESSES_BEFORE_REVEAL):
+        progress.revealed[index] = True
+        progress.wave_best[index] = 1.0
+
     quality = result.quality_share()
     if quality is not None:
         if quality > progress.best_quality:
@@ -132,7 +140,7 @@ def apply_submission(state, level, submissions):
     quality = None
     if has_build_wave(level):
         quality = progress.best_quality
-    score = level_score(level.waves, progress.wave_best, quality)
+    score = level_score(level.waves, progress.scored_shares(), quality)
     if score > progress.best_score:
         progress.best_score = score
 

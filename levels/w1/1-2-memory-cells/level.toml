@@ -123,6 +123,11 @@ print(type("9"))
 '''
 answer = "9\n5\n<class 'str'>"
 wrong = "9\n9\n<class 'int'>"
+explanation = '''
+backup = power gave backup the value power had then: 5.
+Giving power a new value later does not change backup.
+"9" has quotes, so it is text: its type is str.
+'''
 hints = [
   "When backup = power ran, which value did power have?",
   "Giving power a new value does not change backup. Quotes decide the type of \"9\".",

@@ -1,5 +1,7 @@
 """The player's progress in one level: best results, attempts and hints bought."""
 
+from engine.scoring import REVEALED_SHARE
+
 
 class LevelProgress:
     """Everything the game remembers about one level the player has worked on.
@@ -14,6 +16,7 @@ class LevelProgress:
         quality_rewarded: True once the coins for full quality were given.
         best_score: the best level score, a whole percent.
         stars: the most stars earned (0 to 3).
+        revealed: True for a predict wave whose answer the game showed.
     """
 
     def __init__(self, wave_count):
@@ -25,6 +28,17 @@ class LevelProgress:
         self.quality_rewarded = False
         self.best_score = 0
         self.stars = 0
+        self.revealed = [False] * wave_count
+
+    def scored_shares(self):
+        """Return the share of each wave that counts: less for a revealed answer."""
+        shares = []
+        for index in range(len(self.wave_best)):
+            if self.revealed[index]:
+                shares.append(REVEALED_SHARE)
+            else:
+                shares.append(self.wave_best[index])
+        return shares
 
     def hints_used(self):
         """Return True if any hint was bought in this level."""
@@ -52,6 +66,7 @@ class LevelProgress:
             "quality_rewarded": self.quality_rewarded,
             "best_score": self.best_score,
             "stars": self.stars,
+            "revealed": self.revealed,
         }
 
 
@@ -99,4 +114,9 @@ def progress_from_dict(data, wave_count):
     progress.quality_rewarded = data["quality_rewarded"]
     progress.best_score = data["best_score"]
     progress.stars = data["stars"]
+    # Saves from before answers could be revealed have no "revealed" list.
+    revealed = data.get("revealed", [])
+    if not isinstance(revealed, list) or not all(isinstance(value, bool) for value in revealed):
+        raise ValueError("revealed must be a list of true or false")
+    progress.revealed = [bool(value) for value in fit_list(revealed, wave_count)]
     return progress

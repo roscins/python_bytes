@@ -22,6 +22,7 @@ Bosses: `levels/w1/boss-1-corrupted-bootloader/level.toml`. The last boss is `bo
 | Wave 2 `build` | Write a program from a short brief, optionally from a `starter` | Brief: 5 sentences |
 | Wave 3 `debug` | Predict the output, or find and fix one bug | 10 lines of code; from World 3: up to 3 bugs and 30 lines |
 | Tests | At least 2 tests per wave. In a predict-mode debug wave, `answer` and `wrong` count as its tests | – |
+| `explanation` (predict waves) | Why the answer is right; shown after 3 wrong guesses | Every predict wave |
 | Reference + wrong solution | One solution that must pass, one typical mistake that must fail | Per wave |
 | `hints` (optional) | A nudge, an outline and a partial solution, bought with coins | Exactly 3 per wave |
 | `time_limit` (optional, per wave) | Seconds the player's code may run, for missions that time code (Level 8-2) | Runner default if left out |
@@ -159,6 +160,10 @@ print("THREE")
 '''
 answer = "ONE\nTHREE"
 wrong = "ONE\nTWO\nTHREE"
+explanation = '''
+The first and third lines call print(), so ONE and THREE appear.
+The second line starts with #: it is a comment, and Python skips it.
+'''
 hints = [
   "Look at the start of each line. Does Python run all of them?",
   "Python skips a line that starts with #. Only two lines run.",

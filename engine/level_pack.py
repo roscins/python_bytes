@@ -54,11 +54,12 @@ class Wave:
             or an empty list if it has none.
         time_limit: how many seconds the player's program may run in this
             wave, or None for the runner's default.
+        explanation: why a predict wave's answer is right, or None.
     """
 
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
                  reference=None, wrong=None, answer=None, tests=None, hints=None,
-                 time_limit=None):
+                 time_limit=None, explanation=None):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -75,6 +76,7 @@ class Wave:
             hints = []
         self.hints = list(hints)
         self.time_limit = time_limit
+        self.explanation = explanation
 
 
 class Level:
@@ -223,6 +225,10 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         test_number = test_number + 1
         check_test(test, f"{place}, test {test_number}")
 
+    explanation = None
+    if "explanation" in table:
+        explanation = get_text(table, "explanation", place)
+
     hints = []
     if "hints" in table:
         hints = get_list_of_text(table, "hints", place)
@@ -248,6 +254,7 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         tests=tests,
         hints=hints,
         time_limit=time_limit,
+        explanation=explanation,
     )
 
 
