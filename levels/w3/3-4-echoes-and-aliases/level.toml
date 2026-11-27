@@ -1,0 +1,314 @@
+[level]
+id = "3-4"
+title = "Echoes and Aliases"
+world = 3
+new_concepts = ["mutability and aliasing", "is versus ==", "cloning with slices and copy", "the mutable default argument trap"]
+power_up = "clone"
+
+cutscene = '''
+# >> You change one robot's settings. A second robot changes too.
+import copy
+arm = ["arm", 40]
+echo = arm                 # a second name for the SAME list
+echo[1] = 99
+print(arm, echo is arm)    # ['arm', 99] True
+twin = arm[:]              # a clone; arm.copy() and copy.copy(arm) do the same
+print(twin == arm, twin is arm, id(twin) == id(arm))   # True False False
+racks = [["saw"], ["lamp"]]
+shallow = racks.copy()     # new outer list, SAME inner lists
+deep = copy.deepcopy(racks)             # inner lists are cloned too
+racks[0].append("drill")
+print(shallow[0], deep[0])  # ['saw', 'drill'] ['saw']
+def remember(word, seen=[]):         # trap: this [] is made only once
+    seen.append(word)
+    return seen
+remember("a")
+print(remember("b"))        # ['a', 'b']
+def recall(word, seen=None):         # fix: make the list inside
+    if seen is None:
+        seen = []
+    seen.append(word)
+    return seen
+# >> Snek: "TWO NAMES. ONE LIST. THERE IS YOUR GHOST."
+'''
+
+tips = [
+  "Lists are mutable: after b = a, both names mean one list, so changing b changes a.",
+  "a == b asks for equal values; a is b asks for the very same object (id(a) == id(b)). Test with: is None.",
+  "a[:], a.copy() and copy.copy(a) clone only the outer list; copy.deepcopy(a) clones inner lists too.",
+  "A default like seen=[] is made once and shared by calls; use seen=None, then if seen is None: seen = [].",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Clone the settings, then test who is the same list."
+brief = """
+Fill in the blanks: welder is a clone made with a list method, and painter is a clone made with a slice.
+The last line must show whether painter is the very same list as default_settings, not whether they are equal.
+"""
+starter = '''
+speed = 40
+default_settings = ["arm", speed]
+welder = default_settings.___()
+painter = default_settings[___]
+welder[1] = speed + 10
+print("Default:", default_settings)
+print("Welder:", welder)
+print("Painter:", painter)
+print("Same list?", painter ___ default_settings)
+'''
+reference = '''
+speed = 40
+default_settings = ["arm", speed]
+welder = default_settings.copy()
+painter = default_settings[:]
+welder[1] = speed + 10
+print("Default:", default_settings)
+print("Welder:", welder)
+print("Painter:", painter)
+print("Same list?", painter is default_settings)
+'''
+wrong = '''
+speed = 40
+default_settings = ["arm", speed]
+welder = default_settings.copy()
+painter = default_settings[:]
+welder[1] = speed + 10
+print("Default:", default_settings)
+print("Welder:", welder)
+print("Painter:", painter)
+print("Same list?", painter == default_settings)
+'''
+hints = [
+  "A clone has equal contents but is a different list. Which comparison notices that?",
+  "Use the cloning method from the story, a slice with no start or stop, and the identity test.",
+  "The first clone line is: welder = default_settings.copy()",
+]
+
+[[wave.test]]
+values = { speed = 40 }
+expected_stdout = "Default: ['arm', 40]\nWelder: ['arm', 50]\nPainter: ['arm', 40]\nSame list? False\n"
+
+[[wave.test]]
+values = { speed = 70 }
+expected_stdout = "Default: ['arm', 70]\nWelder: ['arm', 80]\nPainter: ['arm', 70]\nSame list? False\n"
+
+[[wave.test]]
+require = ["Is"]
+
+[[wave]]
+kind = "build"
+goal = "Write make_variant() without touching the template."
+brief = """
+Write make_variant(robot, new_name, new_tool), with a docstring, for a record robot = [name, speed, tools].
+It returns a clone with the name replaced and new_tool appended to the clone's tools, leaving robot and its tools list unchanged.
+Keep the starter lines, then set welder = make_variant(template, "welder", new_tool).
+Print template, then welder, then welder[2] is template[2], each on its own line.
+Add a # comment.
+"""
+starter = '''
+import copy
+
+new_tool = "torch"
+template = ["unit", 40, ["gripper"]]
+'''
+reference = '''
+import copy
+
+new_tool = "torch"
+template = ["unit", 40, ["gripper"]]
+
+
+def make_variant(robot, new_name, new_tool):
+    """Return a renamed clone of robot with one more tool."""
+    # deepcopy also clones the inner tools list
+    variant = copy.deepcopy(robot)
+    variant[0] = new_name
+    variant[2].append(new_tool)
+    return variant
+
+
+welder = make_variant(template, "welder", new_tool)
+print(template)
+print(welder)
+print(welder[2] is template[2])
+'''
+wrong = '''
+import copy
+
+new_tool = "torch"
+template = ["unit", 40, ["gripper"]]
+
+
+def make_variant(robot, new_name, new_tool):
+    """Return a renamed clone of robot with one more tool."""
+    # clone the record
+    variant = robot[:]
+    variant[0] = new_name
+    variant[2].append(new_tool)
+    return variant
+
+
+welder = make_variant(template, "welder", new_tool)
+print(template)
+print(welder)
+print(welder[2] is template[2])
+'''
+hints = [
+  "The record holds a list inside a list. Does a slice clone the inner one?",
+  "Clone the whole record, inner list included, change the clone's name and tools, and return it.",
+  "Inside the function, start with: variant = copy.deepcopy(robot)",
+]
+
+[[wave.test]]
+values = { new_tool = "torch" }
+expected_stdout = "['unit', 40, ['gripper']]\n['welder', 40, ['gripper', 'torch']]\nFalse\n"
+
+[[wave.test]]
+values = { new_tool = "laser" }
+expected_stdout = "['unit', 40, ['gripper']]\n['welder', 40, ['gripper', 'laser']]\nFalse\n"
+
+[[wave.test]]
+call = "make_variant"
+args = [["base", 15, ["clamp", "lamp"]], "scout", "radio"]
+expected = ["scout", 15, ["clamp", "lamp", "radio"]]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Fix three aliasing bugs so no robot echoes another."
+brief = """
+This program has three aliasing bugs; fix all three. tune() must return a changed clone and leave the list it was given unchanged.
+log_event() called without a log must start a new list every time, and called with a log must add to that log.
+spare_rack must be a clone of rack that shares no list with it, inner lists included.
+Keep the names, the first three variables and the print lines.
+"""
+starter = '''
+import copy
+
+boost = 90
+new_tool = "saw"
+first_event = "boot"
+
+
+def log_event(event, log=[]):
+    """Add event to log (a new log if none is given) and return it."""
+    log.append(event)
+    return log
+
+
+def tune(settings, speed):
+    """Return a copy of settings with a new speed."""
+    tuned = settings
+    tuned[1] = speed
+    return tuned
+
+
+base = ["arm", 40]
+fast = tune(base, boost)
+rack = [["gripper"], ["lamp"]]
+spare_rack = rack[:]
+spare_rack[0].append(new_tool)
+print("Base:", base, "Fast:", fast)
+print("Welder log:", log_event(first_event))
+print("Painter log:", log_event("paint"))
+print("Rack:", rack, "Spare:", spare_rack)
+'''
+reference = '''
+import copy
+
+boost = 90
+new_tool = "saw"
+first_event = "boot"
+
+
+def log_event(event, log=None):
+    """Add event to log (a new log if none is given) and return it."""
+    if log is None:
+        log = []
+    log.append(event)
+    return log
+
+
+def tune(settings, speed):
+    """Return a copy of settings with a new speed."""
+    tuned = settings[:]
+    tuned[1] = speed
+    return tuned
+
+
+base = ["arm", 40]
+fast = tune(base, boost)
+rack = [["gripper"], ["lamp"]]
+spare_rack = copy.deepcopy(rack)
+spare_rack[0].append(new_tool)
+print("Base:", base, "Fast:", fast)
+print("Welder log:", log_event(first_event))
+print("Painter log:", log_event("paint"))
+print("Rack:", rack, "Spare:", spare_rack)
+'''
+wrong = '''
+import copy
+
+boost = 90
+new_tool = "saw"
+first_event = "boot"
+
+
+def log_event(event, log=None):
+    """Add event to log (a new log if none is given) and return it."""
+    if log is None:
+        log = []
+    log.append(event)
+    return log
+
+
+def tune(settings, speed):
+    """Return a copy of settings with a new speed."""
+    tuned = settings.copy()
+    tuned[1] = speed
+    return tuned
+
+
+base = ["arm", 40]
+fast = tune(base, boost)
+rack = [["gripper"], ["lamp"]]
+spare_rack = rack.copy()
+spare_rack[0].append(new_tool)
+print("Base:", base, "Fast:", fast)
+print("Welder log:", log_event(first_event))
+print("Painter log:", log_event("paint"))
+print("Rack:", rack, "Spare:", spare_rack)
+'''
+hints = [
+  "Look for places where two names, or two calls, may be sharing one list.",
+  "Check the default value of log_event, the first line of tune, and how deep the rack clone goes.",
+  "One of the fixes is: tuned = settings[:]",
+]
+
+# Bug: tune() changes the list it was given.
+[[wave.test]]
+values = { boost = 75 }
+expected_stdout_contains = ["Base: ['arm', 40] Fast: ['arm', 75]"]
+
+# Bug: the mutable default log is shared between calls.
+[[wave.test]]
+values = { first_event = "dock" }
+expected_stdout_contains = ["Welder log: ['dock']\n", "Painter log: ['paint']"]
+
+# Bug: the rack clone is shallow.
+[[wave.test]]
+values = { new_tool = "drill" }
+expected_stdout_contains = ["Rack: [['gripper'], ['lamp']] Spare: [['gripper', 'drill'], ['lamp']]"]
+
+[[wave.test]]
+call = "log_event"
+args = ["scan"]
+expected = ["scan"]
+
+[[wave.test]]
+call = "log_event"
+args = ["scan", ["boot"]]
+expected = ["boot", "scan"]

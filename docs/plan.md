@@ -603,7 +603,7 @@ Phase 4 – Playtest round 1
 [ ] Rewrite the levels where most students stalled
 Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
-[ ] Write Levels 3-1 to 3-5 and Boss 3
+[x] Write Levels 3-1 to 3-5 and Boss 3
 [ ] Add the peer-review mode, just before World 4
 [ ] Write Levels 4-1 to 4-5 and Boss 4 (both phases)
 [ ] Data files for waves (the sensor CSVs of Level 4-3 and Boss 4)

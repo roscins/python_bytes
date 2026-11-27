@@ -1,0 +1,381 @@
+[level]
+id = "3-3"
+title = "Subroutines II"
+world = 3
+new_concepts = ["default and keyword arguments", "returning several values", "min, max, sum and sorted", "decomposition, specifications and Newton-Raphson"]
+power_up = "refactor"
+
+cutscene = '''
+# >> The vault's control code is one long block. Nobody dares touch it.
+# >> You cut it into small functions, each with a stated job.
+def stats(values, digits=1):          # digits has a default value
+    """Return the lowest, highest and mean of values."""
+    mean = sum(values) / len(values)
+    return min(values), max(values), round(mean, digits)
+
+def cube_root(target, tolerance=0.001):
+    """Return x with x ** 3 close to target (Newton-Raphson)."""
+    guess = target
+    while abs(guess ** 3 - target) >= tolerance:
+        error = guess ** 3 - target
+        guess = guess - error / (3 * guess ** 2)   # slope of x ** 3
+    return guess
+
+loads = [7, 2, 8]
+low, high, mean = stats(loads)               # three values come back
+print(low, high, mean)
+print(stats(loads, digits=3))                # keyword argument
+print(sorted(loads), loads)                  # a new sorted list
+print(round(cube_root(27), 2), round(cube_root(8, tolerance=0.01), 2))
+# >> Snek: "ONE BLOCK BECOMES FOUR LINES OF CALLS."
+'''
+
+tips = [
+  "def f(x, digits=1) has a default; f(x) uses it, and f(x, digits=3) replaces it by keyword.",
+  "return a, b hands back several values; unpack them with first, second = f(x).",
+  "min(v), max(v) and sum(v) reduce a list to one number; sorted(v) returns a new sorted list.",
+  "Split work into functions with a stated job. Newton-Raphson for a root of f(x) = 0: x = x - f(x) / slope(x).",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Complete the report: lowest, keyword, sorted list."
+brief = "Fill in the blanks: summarise returns lowest, highest and mean, the second call asks for 2 digits by keyword, and the last line shows the readings in order."
+
+starter = '''
+def summarise(readings, digits=1):
+    """Return the lowest reading, the highest and the mean."""
+    mean = sum(readings) / len(readings)
+    return ___(readings), max(readings), round(mean, digits)
+
+spike = 9
+readings = [4, spike, 3]
+low, high, mean = summarise(readings)
+print("Default:", low, high, mean)
+low, high, mean = summarise(readings, ___=2)
+print("Precise:", low, high, mean)
+print("In order:", ___(readings))
+'''
+reference = '''
+def summarise(readings, digits=1):
+    """Return the lowest reading, the highest and the mean."""
+    mean = sum(readings) / len(readings)
+    return min(readings), max(readings), round(mean, digits)
+
+spike = 9
+readings = [4, spike, 3]
+low, high, mean = summarise(readings)
+print("Default:", low, high, mean)
+low, high, mean = summarise(readings, digits=2)
+print("Precise:", low, high, mean)
+print("In order:", sorted(readings))
+'''
+wrong = '''
+def summarise(readings, digits=1):
+    """Return the lowest reading, the highest and the mean."""
+    mean = sum(readings) / len(readings)
+    return min(readings), max(readings), round(mean, digits)
+
+spike = 9
+readings = [4, spike, 3]
+low, high, mean = summarise(readings)
+print("Default:", low, high, mean)
+low, high, mean = summarise(readings, digits=2)
+print("Precise:", low, high, mean)
+print("In order:", list(readings))
+'''
+hints = [
+  "One built-in finds the smallest item, and one returns a new list in order.",
+  "The middle blank is the name of the parameter that has a default.",
+  "The return line starts: return min(readings),",
+]
+
+[[wave.test]]
+expected_stdout = "Default: 3 9 5.3\nPrecise: 3 9 5.33\nIn order: [3, 4, 9]\n"
+
+[[wave.test]]
+expected_stdout = "Default: 1 4 2.7\nPrecise: 1 4 2.67\nIn order: [1, 3, 4]\n"
+values = { spike = 1 }
+
+[[wave.test]]
+call = "summarise"
+args = [[8, 2, 2]]
+expected = [2, 8, 4.0]
+
+[[wave.test]]
+call = "summarise"
+args = [[1, 2, 2], 3]
+expected = [1, 2, 1.667]
+
+[[wave.test]]
+forbid = ["For", "While"]
+
+[[wave]]
+kind = "build"
+goal = "Write newton_root, then compare it with bisection."
+brief = """
+The starter has bisect_root(target, tolerance=0.01), which returns guess, tries. Write newton_root with the same parameters, return values and loop test, and a docstring.
+It starts with guess = target and tries = 0, and each pass sets guess = guess - (guess ** 2 - target) / (2 * guess) and adds 1 to tries.
+Call bisect_root(target), then print Bisection:, the tries and round(root, 2);
+then call newton_root with target and the keyword tolerance=0.0001, and print Newton:, the tries and round(root, 4).
+Keep target = 25 as the top line, and add a # comment.
+"""
+starter = '''
+target = 25
+
+def bisect_root(target, tolerance=0.01):
+    """Return the square root of target by bisection, and the tries."""
+    low = 0.0
+    high = target
+    guess = (low + high) / 2
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        if guess ** 2 < target:
+            low = guess
+        else:
+            high = guess
+        guess = (low + high) / 2
+        tries += 1
+    return guess, tries
+'''
+reference = '''
+target = 25
+
+def bisect_root(target, tolerance=0.01):
+    """Return the square root of target by bisection, and the tries."""
+    low = 0.0
+    high = target
+    guess = (low + high) / 2
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        if guess ** 2 < target:
+            low = guess
+        else:
+            high = guess
+        guess = (low + high) / 2
+        tries += 1
+    return guess, tries
+
+def newton_root(target, tolerance=0.01):
+    """Return the square root of target by Newton-Raphson, and the tries."""
+    guess = target
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        guess = guess - (guess ** 2 - target) / (2 * guess)
+        tries += 1
+    return guess, tries
+
+# Compare the two methods
+root, tries = bisect_root(target)
+print("Bisection:", tries, round(root, 2))
+root, tries = newton_root(target, tolerance=0.0001)
+print("Newton:", tries, round(root, 4))
+'''
+wrong = '''
+target = 25
+
+def bisect_root(target, tolerance=0.01):
+    """Return the square root of target by bisection, and the tries."""
+    low = 0.0
+    high = target
+    guess = (low + high) / 2
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        if guess ** 2 < target:
+            low = guess
+        else:
+            high = guess
+        guess = (low + high) / 2
+        tries += 1
+    return guess, tries
+
+def newton_root(target, tolerance=0.01):
+    """Return the square root of target by Newton-Raphson, and the tries."""
+    guess = target
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        guess = guess - (guess ** 2 - target) / (2 * guess)
+        tries += 1
+    return guess, tries
+
+# Compare the two methods
+root, tries = bisect_root(target)
+print("Bisection:", tries, round(root, 2))
+root, tries = newton_root(target)
+print("Newton:", tries, round(root, 4))
+'''
+hints = [
+  "newton_root has the same shape as bisect_root. What differs is the start and the update.",
+  "Both functions share the loop test and the counter. Only the start values and the update differ.",
+  "The second function begins: def newton_root(target, tolerance=0.01): then guess = target and tries = 0.",
+]
+
+[[wave.test]]
+expected_stdout = "Bisection: 13 5.0\nNewton: 6 5.0\n"
+values = { target = 25 }
+
+[[wave.test]]
+expected_stdout = "Bisection: 10 2.5\nNewton: 4 2.5\n"
+values = { target = 6.25 }
+
+[[wave.test]]
+expected_stdout = "Bisection: 7 1.41\nNewton: 3 1.4142\n"
+values = { target = 2 }
+
+[[wave.test]]
+call = "bisect_root"
+args = [12.25]
+expected = [3.4991455078125, 10]
+
+[[wave.test]]
+call = "bisect_root"
+args = [49, 1.0]
+expected = [6.986328125, 8]
+
+[[wave.test]]
+call = "newton_root"
+args = [12.25]
+expected = [3.5005764660323386, 4]
+
+[[wave.test]]
+call = "newton_root"
+args = [49, 1.0]
+expected = [7.001406475243939, 5]
+
+[[wave.test]]
+require = ["FunctionDef", "Return", "Tuple", "While", "keyword"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs in the calibration report."
+brief = """
+spread must return what its docstring says, and average must give the mean of only the readings left after dropping the skip lowest.
+newton_root must find a square root within the tolerance.
+There are three bugs; fix them.
+"""
+
+starter = '''
+# Calibration report for the vault sensors
+def newton_root(target, tolerance=0.001):
+    """Return the square root of target and the number of tries."""
+    guess = target
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        guess = guess - (guess ** 2 - target) / 2 * guess
+        tries += 1
+    return guess, tries
+
+def spread(readings):
+    """Return the lowest reading, then the highest."""
+    return max(readings), min(readings)
+
+def average(readings, skip=0):
+    """Return the mean after leaving out the skip lowest readings."""
+    kept = sorted(readings)[skip:]
+    return sum(kept) / len(readings)
+
+peak = 25
+readings = [16, 4, peak, 9]
+low, high = spread(readings)
+print("Range:", low, high)
+print("Mean:", round(average(readings), 2))
+print("Trimmed:", round(average(readings, skip=1), 2))
+root, tries = newton_root(high)
+print("Root:", round(root, 2))
+'''
+reference = '''
+# Calibration report for the vault sensors
+def newton_root(target, tolerance=0.001):
+    """Return the square root of target and the number of tries."""
+    guess = target
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        guess = guess - (guess ** 2 - target) / (2 * guess)
+        tries += 1
+    return guess, tries
+
+def spread(readings):
+    """Return the lowest reading, then the highest."""
+    return min(readings), max(readings)
+
+def average(readings, skip=0):
+    """Return the mean after leaving out the skip lowest readings."""
+    kept = sorted(readings)[skip:]
+    return sum(kept) / len(kept)
+
+peak = 25
+readings = [16, 4, peak, 9]
+low, high = spread(readings)
+print("Range:", low, high)
+print("Mean:", round(average(readings), 2))
+print("Trimmed:", round(average(readings, skip=1), 2))
+root, tries = newton_root(high)
+print("Root:", round(root, 2))
+'''
+wrong = '''
+# Calibration report for the vault sensors
+def newton_root(target, tolerance=0.001):
+    """Return the square root of target and the number of tries."""
+    guess = target
+    tries = 0
+    while abs(guess ** 2 - target) >= tolerance:
+        guess = guess - (guess ** 2 - target) / (2 * guess)
+        tries += 1
+    return guess, tries
+
+def spread(readings):
+    """Return the lowest reading, then the highest."""
+    return min(readings), max(readings)
+
+def average(readings, skip=0):
+    """Return the mean after leaving out the skip lowest readings."""
+    kept = sorted(readings)[skip:]
+    return sum(kept) / len(readings)
+
+peak = 25
+readings = [16, 4, peak, 9]
+low, high = spread(readings)
+print("Range:", low, high)
+print("Mean:", round(average(readings), 2))
+print("Trimmed:", round(average(readings, skip=1), 2))
+root, tries = newton_root(high)
+print("Root:", round(root, 2))
+'''
+hints = [
+  "Check each function against its docstring and the brief, one at a time.",
+  "Look at the brackets in the update, the order of the returned values, and what the mean divides by.",
+  "In newton_root the divisor needs brackets: / (2 * guess)",
+]
+
+[[wave.test]]
+expected_stdout = "Range: 4 25\nMean: 13.5\nTrimmed: 16.67\nRoot: 5.0\n"
+
+[[wave.test]]
+expected_stdout = "Range: 4 49\nMean: 19.5\nTrimmed: 24.67\nRoot: 7.0\n"
+values = { peak = 49 }
+
+[[wave.test]]
+call = "spread"
+args = [[8, 3, 5]]
+expected = [3, 8]
+
+[[wave.test]]
+call = "average"
+args = [[9, 3], 1]
+expected = 9.0
+
+[[wave.test]]
+call = "average"
+args = [[10, 2, 6]]
+expected = 6.0
+
+[[wave.test]]
+call = "newton_root"
+args = [49]
+expected = [7.000000141269659, 6]
+
+[[wave.test]]
+require = ["FunctionDef", "Tuple", "keyword"]

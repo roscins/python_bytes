@@ -1,0 +1,242 @@
+[level]
+id = "3-1"
+title = "Inventory"
+world = 3
+new_concepts = ["lists: literals, indexing and slicing", "adding, removing and sorting items", "searching with in", "lists of lists"]
+power_up = "inventory"
+
+cutscene = '''
+# >> The parts storage has no index. Drawers everywhere, labels nowhere.
+drawer = ["gear", "fuse", "cable"]  # a list: items in order
+print(drawer[0])                    # first item: gear
+print(drawer[-1])                   # last item: cable
+print(drawer[0:2])                  # a slice: ['gear', 'fuse']
+drawer[1] = "lens"                  # replace an item
+drawer.append("motor")              # add at the end
+drawer.insert(0, "belt")            # add at position 0
+drawer.remove("gear")               # remove by value
+last = drawer.pop()                 # take out the last item
+first = drawer.pop(0)               # take out the item at position 0
+del drawer[0]                       # delete by position
+drawer.sort()                       # put in order, changes drawer itself
+print(len(drawer), drawer)
+if "cable" in drawer:               # search: True or False
+    print("CABLE FOUND")
+for part in drawer:                 # one item at a time
+    print(part)
+print(list("AB"))                # ['A', 'B']
+stock = []                       # an empty list
+stock.append(["gear", 4])        # a list inside a list
+stock[0][1] += 2                 # item 0, then its item 1
+print(stock[0][0], stock[0][1])  # gear 6
+# >> Snek: "INDEX RESTORED. SOMEONE FILED A SANDWICH."
+'''
+
+tips = [
+  "A list is written [a, b, c]. drawer[0] is the first item, drawer[-1] the last, drawer[0:2] a slice that stops before 2.",
+  "append, insert, remove, pop and del add or take items; drawer.sort() reorders drawer itself and gives nothing back.",
+  "value in drawer is True if the list holds that value. Check before remove(): a missing value stops the program.",
+  "A list can hold lists: stock[0] is the first [name, count] pair and stock[0][1] is its count.",
+]
+
+[[wave]]
+kind = "fill-in"
+goal = "Add a lens, then show the last and middle parts."
+brief = '''
+The names in stored are split into the list parts.
+Fill in the blanks so that "lens" is added to the end of parts.
+Then the program prints the last part, and a slice with the second and third parts.
+'''
+starter = '''
+stored = "gear,motor,fuse,cable"
+parts = stored.split(",")
+parts.___("lens")
+print(parts[___])
+print(parts[1:___])
+'''
+reference = '''
+stored = "gear,motor,fuse,cable"
+parts = stored.split(",")
+parts.append("lens")
+print(parts[-1])
+print(parts[1:3])
+'''
+wrong = '''
+stored = "gear,motor,fuse,cable"
+parts = stored.split(",")
+parts.append("lens")
+print(parts[-1])
+print(parts[1:2])
+'''
+hints = [
+  "Which method adds at the end? Which index counts from the back? Where does a slice stop?",
+  "Use the add-at-the-end method, a negative index, and a slice end one past the third part.",
+  "The second line is: parts.append(\"lens\")",
+]
+
+[[wave.test]]
+expected_stdout = "lens\n['motor', 'fuse']\n"
+
+[[wave.test]]
+require = ["Slice"]
+
+[[wave.test]]
+expected_stdout = "lens\n['belt', 'chip']\n"
+values = { stored = "axle,belt,chip,dial,coil,pump" }
+
+[[wave]]
+kind = "build"
+goal = "Book the delivery, remove the broken part, and search."
+brief = '''
+Add each part named in delivery (names separated by commas, like stored) to the end of the list shelf.
+If the part named broken is on the shelf, remove one of it.
+Then sort the shelf and print the whole list.
+Last, print FOUND if the part named wanted is on the shelf, or MISSING if it is not.
+'''
+starter = '''
+stored = "motor,cable,fuse,gear"
+shelf = stored.split(",")
+delivery = "lens,belt"
+broken = "fuse"
+wanted = "gear"
+'''
+reference = '''
+stored = "motor,cable,fuse,gear"
+shelf = stored.split(",")
+delivery = "lens,belt"
+broken = "fuse"
+wanted = "gear"
+# Book the delivery, drop the broken part, sort and search
+for part in delivery.split(","):
+    shelf.append(part)
+if broken in shelf:
+    shelf.remove(broken)
+shelf.sort()
+print(shelf)
+if wanted in shelf:
+    print("FOUND")
+else:
+    print("MISSING")
+'''
+wrong = '''
+stored = "motor,cable,fuse,gear"
+shelf = stored.split(",")
+delivery = "lens,belt"
+broken = "fuse"
+wanted = "gear"
+# Book the delivery, drop the broken part, sort and search
+for part in delivery.split(","):
+    shelf.append(part)
+shelf.remove(broken)
+shelf.sort()
+print(shelf)
+if wanted in shelf:
+    print("FOUND")
+else:
+    print("MISSING")
+'''
+hints = [
+  "How do you turn one string into several names? What happens if you remove a part that is not there?",
+  "Split delivery and append in a loop, remove only after an in check, sort, print, then if/else.",
+  "Start with: for part in delivery.split(\",\"):",
+]
+
+[[wave.test]]
+expected_stdout = "['belt', 'cable', 'gear', 'lens', 'motor']\nFOUND\n"
+
+[[wave.test]]
+require = ["For", "In"]
+
+[[wave.test]]
+require_comment = true
+
+[[wave.test]]
+expected_stdout = "['axle', 'chip', 'dial']\nMISSING\n"
+values = { stored = "dial,axle", delivery = "chip", broken = "pump", wanted = "gear" }
+
+[[wave.test]]
+expected_stdout = "['coil', 'pump', 'valve']\nMISSING\n"
+values = { stored = "valve,relay", delivery = "pump,coil", broken = "relay", wanted = "relay" }
+
+[[wave.test]]
+expected_stdout = "['chip', 'dial', 'dial', 'nut']\nFOUND\n"
+values = { stored = "dial,nut,dial", delivery = "dial,chip", broken = "dial", wanted = "chip" }
+
+[[wave]]
+kind = "debug"
+goal = "Fix three bugs in the stock list."
+brief = '''
+stock holds [name, count] pairs, and amount more pieces of the part named delivered have arrived.
+The program should add them to that part's count, then add new_part with a count of 1.
+It should print stock, then a list of only the part names in alphabetical order.
+Fix the three bugs.
+'''
+starter = '''
+stock = [["motor", 2], ["gear", 4], ["fuse", 0]]
+delivered = "gear"
+amount = 3
+new_part = "lens"
+# Add the delivery to the matching part
+for entry in stock:
+    if entry[0] == delivered:
+        entry[1] = amount
+stock.append([new_part, 1])
+print(stock)
+# Collect the names and sort them
+names = []
+for entry in stock:
+    names.append(entry[1])
+names = names.sort()
+print(names)
+'''
+reference = '''
+stock = [["motor", 2], ["gear", 4], ["fuse", 0]]
+delivered = "gear"
+amount = 3
+new_part = "lens"
+# Add the delivery to the matching part
+for entry in stock:
+    if entry[0] == delivered:
+        entry[1] += amount
+stock.append([new_part, 1])
+print(stock)
+# Collect the names and sort them
+names = []
+for entry in stock:
+    names.append(entry[0])
+names.sort()
+print(names)
+'''
+wrong = '''
+stock = [["motor", 2], ["gear", 4], ["fuse", 0]]
+delivered = "gear"
+amount = 3
+new_part = "lens"
+# Add the delivery to the matching part
+for entry in stock:
+    if entry[0] == delivered:
+        entry[1] += amount
+stock.append([new_part, 1])
+print(stock)
+# Collect the names and sort them
+names = []
+for entry in stock:
+    names.append(entry[0])
+names = names.sort()
+print(names)
+'''
+hints = [
+  "Check three things: how the count changes, which item of a pair is the name, and what sort() gives back.",
+  "Add to the count instead of replacing it, take item 0 for the name, and do not store sort().",
+  "One fixed line is: entry[1] += amount",
+]
+
+[[wave.test]]
+expected_stdout = "[['motor', 2], ['gear', 7], ['fuse', 0], ['lens', 1]]\n['fuse', 'gear', 'lens', 'motor']\n"
+
+[[wave.test]]
+require = ["List", "For", "Subscript"]
+
+[[wave.test]]
+expected_stdout = "[['motor', 7], ['gear', 4], ['fuse', 0], ['axle', 1]]\n['axle', 'fuse', 'gear', 'motor']\n"
+values = { delivered = "motor", amount = 5, new_part = "axle" }
