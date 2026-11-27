@@ -89,7 +89,7 @@ def failed_quality_rules(result):
 def check_wave_solutions(number, wave):
     """Run one wave's right and wrong solution; return the problems found."""
     place = f"wave {number} ({wave.kind})"
-    if wave.mode == "predict":
+    if wave.mode is not None:
         right_text, right_name = wave.answer, "answer"
         wrong_text, wrong_name = wave.wrong, "wrong answer"
     else:

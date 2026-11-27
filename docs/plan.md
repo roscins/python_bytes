@@ -604,7 +604,7 @@ Phase 4 – Playtest round 1
 Gate: the median student clears Worlds 1–2 without outside help.
 Phase 5 – Worlds 3–4
 [x] Write Levels 3-1 to 3-5 and Boss 3
-[ ] Add choice waves (design: docs/design/phase-5-wave-modes.md)
+[x] Add choice waves (design: docs/design/phase-5-wave-modes.md)
 [ ] Add review waves (the peer-review mode)
 [ ] Add wave data files (the sensor CSVs of Level 4-3 and Boss 4)
 [ ] Write Levels 4-1 to 4-5 and Boss 4

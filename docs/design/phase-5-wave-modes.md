@@ -58,7 +58,7 @@ explanation = "A list keeps order and repeats."
 - 1 to 6 questions, 2 to 5 options each, lettered a, b, c in file order.
 - A question may have `code = '''...'''`, shown above its options.
 - One correct letter per question. Multi-select is left out until needed.
-- The editor starts as `1: `, `2: ` and so on.
+- The sheet starts empty; a later line for a question replaces an earlier one.
 - One check per question, so the score is the share answered right.
 
 ## 2. Review waves (`mode = "review"`)

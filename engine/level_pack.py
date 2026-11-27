@@ -13,10 +13,23 @@ import ast
 import tomllib
 from pathlib import Path
 
+from grader.answer_sheet import LETTERS, key_sheet
 from grader.checks import TEST_KINDS
 
 # The three kinds of wave a level can have, in the order the guide lists them.
 WAVE_KINDS = ["fill-in", "build", "debug"]
+
+# The ways a wave can be answered without writing code. A quiz wave is
+# answered with an answer sheet (see grader/answer_sheet.py).
+MODES = ["predict", "choice"]
+QUIZ_MODES = ["choice"]
+
+# Quiz modes are only for these kinds of wave: a build wave scores code
+# quality, and a boss is graded by tests.
+QUIZ_KINDS = ["fill-in", "debug"]
+
+MIN_QUESTIONS, MAX_QUESTIONS = 1, 6
+MIN_OPTIONS, MAX_OPTIONS = 2, len(LETTERS)
 
 # A boss level has exactly one wave, of this kind.
 BOSS_WAVE_KIND = "boss"
@@ -43,12 +56,16 @@ class Wave:
     Attributes:
         kind: "fill-in", "build" or "debug".
         brief: the task, as the player reads it.
-        mode: for debug waves, "predict" or None.
+        mode: "predict", "choice" or None (the player writes code).
         starter: code the player starts from (fill-in waves), or None.
         code: code the player reads (predict waves), or None.
         reference: a solution that must pass, or None for predict waves.
         wrong: a typical mistake that must fail.
-        answer: the right output (predict waves), or None.
+        answer: the right output (predict waves) or the right answer sheet
+            (quiz waves), or None.
+        questions: a choice wave's questions, dicts with "ask", "options",
+            "answer", "explanation" and optionally "code".
+        lock: True if the console is locked while this wave is open.
         tests: a list of dicts, one per [[wave.test]] in the file.
         hints: the wave's three hints (nudge, outline, partial solution),
             or an empty list if it has none.
@@ -60,7 +77,8 @@ class Wave:
 
     def __init__(self, kind, brief, mode=None, starter=None, code=None,
                  reference=None, wrong=None, answer=None, tests=None, hints=None,
-                 time_limit=None, explanation=None, goal=None):
+                 time_limit=None, explanation=None, goal=None, questions=None,
+                 lock=False):
         """Remember every part of the wave. Parts a wave does not have are None."""
         self.kind = kind
         self.brief = brief
@@ -79,6 +97,21 @@ class Wave:
         self.time_limit = time_limit
         self.explanation = explanation
         self.goal = goal
+        self.questions = list(questions or [])
+        self.lock = lock
+
+    def is_quiz(self):
+        """Return True if the wave is answered with an answer sheet."""
+        return self.mode in QUIZ_MODES
+
+    def locks_console(self):
+        """Return True if running code would give this wave's answer away."""
+        if self.mode == "predict" or self.lock:
+            return True
+        for question in self.questions:
+            if "code" in question:
+                return True
+        return False
 
 
 class Level:
@@ -208,12 +241,18 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
     mode = None
     if "mode" in table:
         mode = get_text(table, "mode", place)
+        if mode not in MODES:
+            raise LevelError(f"{place}: mode must be one of {MODES}, got {mode!r}")
+    if mode in QUIZ_MODES and kind not in QUIZ_KINDS:
+        raise LevelError(f"{place}: a {mode} wave must be one of {QUIZ_KINDS}")
 
     # A predict wave shows code and asks for its output, so it has an
     # answer instead of a reference solution. Every other wave has a
     # reference solution. Both kinds have a wrong solution.
     if mode == "predict":
         needed = ["code", "answer", "wrong"]
+    elif mode in QUIZ_MODES:
+        needed = ["wrong"]
     else:
         needed = ["reference", "wrong"]
     for key in needed:
@@ -248,6 +287,15 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         if time_limit < 1:
             raise LevelError(f"{place}: time_limit must be at least 1 second")
 
+    answer = table.get("answer")
+    questions = []
+    if mode == "choice":
+        questions = get_questions(table, place)
+        answer = key_sheet(questions)
+    lock = table.get("lock", False)
+    if not isinstance(lock, bool):
+        raise LevelError(f"{place}: lock must be true or false")
+
     return Wave(
         kind,
         brief,
@@ -256,13 +304,36 @@ def make_wave(table, place, allowed_kinds=WAVE_KINDS):
         code=table.get("code"),
         reference=table.get("reference"),
         wrong=table.get("wrong"),
-        answer=table.get("answer"),
+        answer=answer,
         tests=tests,
         hints=hints,
         time_limit=time_limit,
         explanation=explanation,
         goal=goal,
+        questions=questions,
+        lock=lock,
     )
+
+
+def get_questions(table, place):
+    """Return the checked [[wave.question]] tables of a choice wave."""
+    questions = table.get("question", [])
+    if not isinstance(questions, list) or not MIN_QUESTIONS <= len(questions) <= MAX_QUESTIONS:
+        raise LevelError(f"{place}: a choice wave has {MIN_QUESTIONS} to {MAX_QUESTIONS} "
+                         "[[wave.question]] tables")
+    for number, question in enumerate(questions, start=1):
+        where = f"{place}, question {number}"
+        get_text(question, "ask", where)
+        get_text(question, "explanation", where)
+        if "code" in question:
+            get_text(question, "code", where)
+        options = get_list_of_text(question, "options", where)
+        if not MIN_OPTIONS <= len(options) <= MAX_OPTIONS:
+            raise LevelError(f"{where}: needs {MIN_OPTIONS} to {MAX_OPTIONS} options")
+        answer = get_text(question, "answer", where)
+        if answer not in list(LETTERS[:len(options)]):
+            raise LevelError(f"{where}: answer must be the letter of one of the options")
+    return questions
 
 
 def check_test(test, place):

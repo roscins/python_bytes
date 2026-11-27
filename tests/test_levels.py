@@ -96,6 +96,8 @@ class TestRealLevels(unittest.TestCase):
         """The starter of a fill-in wave has 1 to 3 blanks; the reference has none."""
         for level in self.levels:
             wave = level.waves[0]
+            if wave.is_quiz():
+                continue
             with self.subTest(level=level.id):
                 self.assertIsNotNone(wave.starter)
                 blanks = wave.starter.count(BLANK)
@@ -113,6 +115,8 @@ class TestRealLevels(unittest.TestCase):
         """The code in a debug wave is at most 10 lines."""
         for level in self.levels:
             wave = level.waves[2]
+            if wave.is_quiz():
+                continue
             with self.subTest(level=level.id):
                 if wave.mode == "predict":
                     code = wave.code
@@ -126,7 +130,7 @@ class TestRealLevels(unittest.TestCase):
         for level in self.levels:
             for wave in level.waves:
                 with self.subTest(level=level.id, wave=wave.kind):
-                    if wave.mode == "predict":
+                    if wave.mode is not None:
                         self.assertNotEqual(wave.answer.strip(), wave.wrong.strip())
                     else:
                         self.assertGreaterEqual(len(wave.tests), MIN_TESTS_PER_WAVE)
@@ -198,7 +202,7 @@ class TestPhaseTwoGate(unittest.TestCase):
         for level in self.levels:
             for wave in level.waves:
                 with self.subTest(level=level.id, wave=wave.kind):
-                    if wave.mode == "predict":
+                    if wave.mode is not None:
                         result = grade_wave(wave, wave.answer)
                     else:
                         result = grade_wave(wave, wave.reference)

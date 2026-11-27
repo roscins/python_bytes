@@ -12,6 +12,7 @@ the same functions as the typed commands of line mode.
 
 from engine.boss import BossFight
 from engine.boss_turns import submit_to_boss
+from engine.choice_picker import ChoicePicker
 from engine.commands import clear_frames, reveal_text, run_command
 from engine.console import continue_pending
 from engine.display import split_art_and_message
@@ -118,6 +119,8 @@ class WaveScreen:
     Attributes:
         level, number: the wave on screen.
         editor: its code, with the cursor.
+        picker: for a quiz wave, what the arrow keys move in; otherwise None.
+            The editor then only holds the answer sheet it writes.
         input_editor: the input lines being typed for Run, or None.
         mark: where the last error is, or None.
         panel: the Panel, or None if there is nothing to show.
@@ -137,6 +140,7 @@ class WaveScreen:
         self.level = None
         self.number = 0
         self.editor = None
+        self.picker = None
         self.leave = None
 
     # ---- opening a wave
@@ -150,6 +154,7 @@ class WaveScreen:
         self.editor = Editor(text, blanks=wave.kind == "fill-in")
         self.synced = list(self.editor.lines)
         self.place_cursor()
+        self.picker = ChoicePicker(wave, text) if wave.is_quiz() else None
         self.view = View()
         self.input_editor = None
         self.mark = None
@@ -239,6 +244,9 @@ class WaveScreen:
         room = total - 3
         if not self.panel_open():
             return room
+        if self.picker is not None:
+            rows, _ = self.picker.rows(INNER)
+            return min(len(rows), room - 2 - SMALLEST_PANEL)
         if self.wave().mode == "predict":
             wanted = len(self.code_to_read()) + 1 + max(ANSWER_ROWS, len(self.editor.lines))
             smallest = min(SMALLEST_PANEL, self.panel_rows())
@@ -252,6 +260,8 @@ class WaveScreen:
 
     def editor_frame(self, height):
         """Return the frame with the code (and, for predict, the code to read above the answer)."""
+        if self.picker is not None:
+            return self.picker_frame(height)
         cursor = None
         if not self.on_buttons and self.input_editor is None:
             cursor = (self.editor.row, self.editor.column)
@@ -266,6 +276,14 @@ class WaveScreen:
             rows.append(divider("YOUR ANSWER: one printed line per line", INNER))
         rows = rows + code_rows(self.editor.lines, self.view, height - len(rows), INNER, cursor, mark, follow)
         return frame(self.title(), rows, WIDTH)
+
+    def picker_frame(self, height):
+        """Return the frame of a quiz wave, scrolled so that the cursor's line shows."""
+        focused = not self.on_buttons
+        rows, cursor_row = self.picker.rows(INNER, focused)
+        top = max(0, cursor_row - height + 1)
+        shown = rows[top:top + height]
+        return frame(self.title(), shown + [""] * (height - len(shown)), WIDTH)
 
     def title(self):
         """Return the title of the editor frame."""
@@ -310,6 +328,8 @@ class WaveScreen:
         labels = self.labels()
         chosen = None
         footer = EDITOR_FOOTER
+        if self.picker is not None:
+            footer = self.picker.footer
         if self.input_editor is not None:
             footer = INPUT_FOOTER
         if self.on_buttons:
@@ -382,6 +402,8 @@ class WaveScreen:
             self.press_on_buttons(key)
         elif self.input_editor is not None:
             self.press_in_editor(self.input_editor, key)
+        elif self.picker is not None:
+            self.press_in_picker(key)
         else:
             self.press_in_editor(self.editor, key)
 
@@ -400,6 +422,15 @@ class WaveScreen:
             self.forget_mark(before, min(row, editor.row))
             if before != editor.lines:
                 self.small = True
+
+    def press_in_picker(self, key):
+        """Move in a quiz wave; keep the answer sheet up to date."""
+        before = self.picker.sheet()
+        where = self.picker.press(key)
+        if self.picker.sheet() != before:
+            self.editor = Editor(self.picker.sheet())
+        if where == "buttons":
+            self.focus_buttons()
 
     def forget_mark(self, before, first_row):
         """Remove the mark when its line was changed or moved."""
@@ -526,7 +557,8 @@ class WaveScreen:
             return
         submission = grade_text(self.wave(), self.number, self.editor.text())
         if submission.result is None:
-            self.say("RESULTS", "Your code is empty. Type your first line, then press Ctrl-S.")
+            self.say("RESULTS", submission.problem
+                     or "Your code is empty. Type your first line, then press Ctrl-S.")
             return
         combo = self.state.combo
         reward = apply_submission(self.state, self.level, [submission])
@@ -582,6 +614,8 @@ class WaveScreen:
         problem = ""
         if self.wave().mode == "predict":
             problem = "Snek will not tell you what that code prints. Type your answer and press Ctrl-S."
+        elif self.picker is not None:
+            problem = "There is nothing to run here. Answer, then press Ctrl-S."
         elif locked_message(self.state):
             problem = locked_message(self.state)
         elif code.strip() == "":
@@ -642,7 +676,8 @@ class WaveScreen:
 
     def help(self):
         """Show the task and the keys on a screen of their own."""
-        lines = ["TASK"] + self.wave().brief.strip().splitlines() + ["", "KEYS"] + HELP_KEYS
+        keys = HELP_KEYS if self.picker is None else self.picker.help_lines
+        lines = ["TASK"] + self.wave().brief.strip().splitlines() + ["", "KEYS"] + keys
         self.display.browse(self.display.pages_of("\n".join(lines)))
 
     # ---- Ctrl-E

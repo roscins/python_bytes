@@ -5,6 +5,7 @@ code, or for a predict wave the output they predicted. The result says
 which checks passed, and for a build wave also the code-quality rules.
 """
 
+from grader.answer_sheet import grade_sheet
 from grader.checks import CheckResult, normalise_output, run_check
 from grader.style import style_checks
 from runner.process import DEFAULT_TIME_LIMIT
@@ -75,6 +76,8 @@ def grade_wave(wave, text):
     """Grade the player's `text` for `wave` and return a WaveResult."""
     if wave.mode == "predict":
         return WaveResult([check_answer(wave, text)])
+    if wave.is_quiz():
+        return WaveResult(grade_sheet(wave, text))
 
     if wave.kind == "fill-in" and BLANK in text:
         blank_left = CheckResult(False, "fills in every blank",
